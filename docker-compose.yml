@@ -1,0 +1,28 @@
+# Infra local do RELEVO. Subir com: make db-up  (ou: docker compose up -d)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: relevo-postgres
+    environment:
+      POSTGRES_USER: relevo
+      POSTGRES_PASSWORD: relevo
+      POSTGRES_DB: relevo
+    ports:
+      - "5432:5432"
+    volumes:
+      - relevo-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U relevo"]
+      interval: 5s
+      retries: 10
+
+  adminer:
+    image: adminer
+    container_name: relevo-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  relevo-pgdata:
