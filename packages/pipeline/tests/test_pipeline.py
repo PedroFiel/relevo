@@ -85,3 +85,45 @@ def test_pipeline_ponta_a_ponta(fotos):
     comprimento, altura, largura = r.malha.extents
     assert abs(comprimento - 28) < 1.0, "o modelo deve sair em escala real"
     assert 0 < altura < comprimento and 0 < largura < comprimento
+
+
+# ---------- Segmentação: casos difíceis (tênis escuro com solado branco, fundo claro) ----------
+def _foto_com_solado_branco():
+    """Fundo cinza claro (236); corpo preto; solado BRANCO (255), mais claro que o fundo."""
+    img = np.full((400, 600, 3), 236, np.uint8)
+    img[100:260, 100:500] = 25  # corpo escuro
+    img[260:320, 90:510] = 255  # solado branco: mais claro que o fundo
+    return img
+
+
+def test_segmentacao_inclui_solado_branco_em_fundo_claro():
+    """Regressão: o Otsu por brilho jogava o solado branco no fundo (tênis ficava sem sola)."""
+    m = gerar_mascara(_foto_com_solado_branco())
+    assert m[290, 300], "o solado branco deve fazer parte do objeto"
+    assert m[180, 300] and not m[10, 10] and not m[380, 300]
+    esperado = 160 * 400 + 60 * 420
+    assert abs(m.sum() - esperado) / esperado < 0.05
+
+
+def test_segmentacao_ignora_sombra_de_contato_fina():
+    img = _foto_com_solado_branco()
+    img[322:326, 40:560] = 70  # faixa escura fina (~1% da altura) sob o solado, mais larga que ele
+    m = gerar_mascara(img)
+    assert not m[324, 60], "a ponta da sombra (fora da largura do solado) não pode virar objeto"
+    assert m[290, 300]
+
+
+def test_segmentacao_ignora_moldura_escura_da_foto():
+    img = _foto_com_solado_branco()
+    img[:, :3] = 45  # moldura escura de captura de tela
+    img[-4:, :] = 45
+    m = gerar_mascara(img)
+    assert not m[200, 0] and not m[-1, 300]
+    assert m[180, 300] and m[290, 300]
+
+
+def test_segmentacao_limiar_manual_pode_ser_mais_rigoroso():
+    img = np.full((100, 100, 3), 200, np.uint8)
+    img[30:70, 30:70] = 215  # objeto só um pouco mais claro que o fundo
+    assert gerar_mascara(img, limiar=5)[50, 50]
+    assert not gerar_mascara(img, limiar=60)[50, 50]
