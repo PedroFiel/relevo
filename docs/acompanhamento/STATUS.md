@@ -3,8 +3,8 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 0 — Setup e prova de conceito
-**Próxima tarefa:** F0-T08 (subir para o repo do grupo e ligar o CI)
-**Data de entrega:** _a definir_ · **Última atualização:** 30/09/2026
+**Próxima tarefa:** F0-T10 (repetir com fotos reais do grupo e medir com fita) e F0-T08 (repo + CI)
+**Data de entrega:** _a definir_ · **Última atualização:** 01/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
 
@@ -31,8 +31,8 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F0-T06 | PostgreSQL via Docker | Claude | feito | testado com Postgres 16 nativo; compose não testado no ambiente do Claude |
 | F0-T07 | Front React + Three.js esqueleto | Claude | feito | prints em `docs/revisoes/assets/` |
 | F0-T08 | Subir para o repo e CI | | a fazer | |
-| F0-T09 | Cada integrante roda o setup | todos | a fazer | |
-| F0-T10 | Prova com fotos reais | | a fazer | **mais importante da fase** |
+| F0-T09 | Cada integrante roda o setup | todos | em andamento | Pedro: ok (testes, banco Neon, visualizador). Faltam os demais |
+| F0-T10 | Prova com fotos reais | Pedro + Claude | em andamento | 1 tênis (imagens de catálogo, escuro com solado branco): reconhecível e colorido. Falta foto própria + fita métrica. Relatório em `docs/testes/relatorios/2026-10-01-fotos-reais-f0.md` |
 
 ## Fase 1 — Pipeline completo
 
@@ -42,8 +42,8 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F1-T02 | Suavização de Taubin | | a fazer |
 | F1-T03 | Decimação por erro quádrico | | a fazer |
 | F1-T04 | Transformação inversa 3D → pixel | | a fazer |
-| F1-T05 | Cor por vértice | | a fazer |
-| F1-T06 | Segmentação robusta | | a fazer |
+| F1-T05 | Cor por vértice | Pedro + Claude | feito |
+| F1-T06 | Segmentação robusta | Pedro + Claude | em andamento |
 | F1-T07 | Métricas (IoU, consistência) | | a fazer |
 | F1-T08 | Intermediários + progresso | | a fazer |
 | F1-T09 | Desempenho | | a fazer |
@@ -60,7 +60,7 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F2-T05 | Shader customizado (GLSL) | | a fazer |
 | F2-T06 | Ajudantes visuais | | a fazer |
 | F2-T07 | Estatísticas do modelo | | a fazer |
-| F2-T08 | Abrir arquivo local | | a fazer |
+| F2-T08 | Abrir arquivo local | Pedro + Claude | feito |
 | F2-T09 | Testes visuais (Playwright) | | a fazer |
 
 ## Fase 3 — Integração (MVP)

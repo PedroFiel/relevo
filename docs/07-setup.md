@@ -37,7 +37,16 @@ cd apps/api && uv run alembic upgrade head && cd ../..
 ```
 Adminer: sistema *PostgreSQL*, servidor `postgres`, usuário `relevo`, senha `relevo`, base `relevo`.
 
-**Sem Docker?** Instale o PostgreSQL 16 nativo e rode:
+**Sem Docker? Use um PostgreSQL na nuvem (Neon, grátis).** Crie um projeto em <https://neon.tech> (Postgres 16, só o
+serviço *Postgres database*), abra **Connect**, desligue *Pooled connection* e copie a string. No `.env`, troque o começo
+`postgresql://` por `postgresql+psycopg://` e mantenha `?sslmode=require`:
+```
+DATABASE_URL=postgresql+psycopg://USUARIO:SENHA@ep-xxxx.REGIAO.aws.neon.tech/neondb?sslmode=require
+```
+O `.env` não vai para o Git (tem a senha). Não cole a string em chat, issue ou PR; se vazar, *Roles → Reset password*.
+Turso/SQLite **não** serve: o projeto usa JSONB, UUID e `CHECK` do PostgreSQL.
+
+**Ou instale o PostgreSQL 16 nativo:** instale o PostgreSQL 16 nativo e rode:
 ```sql
 CREATE ROLE relevo LOGIN PASSWORD 'relevo' CREATEDB;
 CREATE DATABASE relevo OWNER relevo;
@@ -53,6 +62,12 @@ cd apps/web && npm run dev                      # abra http://localhost:5173/vis
 ```
 
 Você deve ver um "tênis" cinza girando com o mouse, e os botões Sólido / Wireframe / Normais funcionando.
+
+Para ver o tênis **colorido** gerado a partir das fotos reais de `samples/reais/tenis-01/`:
+```bash
+make real      # gera apps/web/public/samples/tenis-01.glb (~1,5 s); use CM=28.5 com a medida real
+make web       # /visualizador -> "Tênis 01 (fotos reais)"; ou "Abrir arquivo .glb…" para qualquer modelo
+```
 
 ## Problemas comuns
 
