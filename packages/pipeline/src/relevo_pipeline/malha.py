@@ -16,6 +16,8 @@ import trimesh
 from scipy.ndimage import gaussian_filter
 from skimage import measure
 
+PAD = 2  # voxels vazios nas bordas da grade (garantem malha fechada)
+
 
 def voxels_para_malha(
     ocupado: np.ndarray,
@@ -26,7 +28,7 @@ def voxels_para_malha(
     if not ocupado.any():
         raise ValueError("Nenhum voxel ocupado: as silhuetas não se intersectam.")
 
-    campo = np.pad(ocupado.astype(np.float32), 2)  # borda vazia garante malha fechada
+    campo = np.pad(ocupado.astype(np.float32), PAD)  # borda vazia garante malha fechada
     if suavizacao_campo > 0:
         campo = gaussian_filter(campo, sigma=suavizacao_campo)
 
@@ -38,8 +40,10 @@ def voxels_para_malha(
     malha = trimesh.Trimesh(vertices=verts, faces=faces, process=True)
     # Centraliza no chão: x/z centrados na origem, y mínimo = 0
     minimo, maximo = malha.bounds
-    malha.apply_translation(
-        [-(minimo[0] + maximo[0]) / 2, -minimo[1], -(minimo[2] + maximo[2]) / 2]
-    )
+    deslocamento = [-(minimo[0] + maximo[0]) / 2, -minimo[1], -(minimo[2] + maximo[2]) / 2]
+    malha.apply_translation(deslocamento)
     malha.fix_normals()
+    # Guardados para a cor por vértice conseguir voltar de cm para índice de voxel
+    malha.metadata["tamanho_voxel"] = float(tamanho_voxel)
+    malha.metadata["deslocamento"] = [float(d) for d in deslocamento]
     return malha
