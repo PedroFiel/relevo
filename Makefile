@@ -1,5 +1,5 @@
 # Atalhos do RELEVO. Rode `make help` para ver tudo.
-.PHONY: help setup db-up db-down migrate api web test test-py test-web lint poc
+.PHONY: help setup db-up db-down migrate api web test test-py test-web lint poc real
 
 help:  ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
@@ -41,3 +41,9 @@ poc:  ## gera fotos sintéticas e roda o pipeline ponta a ponta
 	uv run relevo-pipeline gerar --lateral samples/sintetico/lateral.png \
 		--topo samples/sintetico/topo.png --frente samples/sintetico/frente.png \
 		--comprimento-cm 28 --saida apps/web/public/samples/tenis-exemplo.glb --debug out/debug
+
+CM ?= 30
+real:  ## gera o modelo colorido do tenis-01 (fotos em samples/reais) -> /visualizador. Use CM=28.5 p/ a medida real
+	uv run relevo-pipeline gerar --lateral samples/reais/tenis-01/lateral.jpg \
+		--topo samples/reais/tenis-01/topo.jpg --frente samples/reais/tenis-01/frente.jpg \
+		--comprimento-cm $(CM) --resolucao 256 --saida apps/web/public/samples/tenis-01.glb --debug out/tenis-01
