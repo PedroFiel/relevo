@@ -34,15 +34,16 @@ modelo base para jogos/AR; makers que querem imprimir em 3D.
 
 ## Escopo do MVP (Fases 0–3)
 
-- Upload guiado das 3 fotos + tamanho real do calçado
-- Processamento com status por etapa
-- Visualizador 3D (rotação, zoom, sólido / wireframe / normais)
+- Upload guiado das 3 fotos + tamanho real do calçado, com **editor de foto** (cortar, girar, ampliar)
+- Processamento com status por etapa; **contorno detectado e avisos** mostrados sobre cada foto
+- Visualizador 3D (rotação, zoom no ponto, sólido / wireframe / normais, **plano de corte**, mover/girar/aumentar com
+  a matriz 4×4 visível)
 - Download do modelo (.glb)
 - Persistência em PostgreSQL (modelos, imagens, jobs, versões, arquivos)
 
 ## Depois do MVP (Fases 4–5)
 
-Login e créditos · editor de transformações (escala, rotação, pivô) · exportação .obj/.stl · textura UV real ·
+Login e créditos · editor de transformações completo (pivô, desfazer, salvar versão) · exportação .obj/.stl · textura UV real ·
 versões · Raio-X do pipeline · LOD · régua 3D · presets de destino · pincel de correção · link de incorporação.
 
 ## Fora de escopo (decisão consciente)

@@ -33,6 +33,8 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ### F4-T03 — Editor de transformações (escala, rotação, pivô)
 - **Frente:** front
+- **Depende de:** F2-T13 (mover/girar/aumentar e painel da matriz já existem no MVP; aqui entram pivô, atalhos,
+  desfazer e salvar versão)
 - **Como fazer:**
   1. Modo "Editar" no visualizador com `TransformControls` (drei) e seletor translação/rotação/escala; campos numéricos
      sincronizados (escala uniforme em %, rotação em graus por eixo, posição em cm).

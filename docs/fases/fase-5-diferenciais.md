@@ -30,6 +30,7 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
 
 ### F5-T03 — Régua 3D
 - **Frente:** front
+- **Depende de:** F2-T12 (raycasting do cursor já existe)
 - **Como fazer:** modo "Medir": clique 1 e clique 2 na superfície (evento `onPointerDown` do r3f traz o `point` do
   **raycasting**); desenhar linha + esferas nos pontos + rótulo com a distância em cm (`point1.distanceTo(point2)`,
   considerando a matriz de escala da versão).
@@ -43,6 +44,7 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
 
 ### F5-T05 — Pincel de correção da máscara
 - **Frente:** front, back, pipeline
+- **Depende de:** F2-T10 (`VisorFoto` com zoom/pan) e F3-T14 (máscara sobre a foto)
 - **Como fazer:** editor em `<canvas>` sobre a foto com a máscara semitransparente; ferramentas pincel (adiciona) e
   borracha (remove), tamanho ajustável; envia as máscaras corrigidas como PNG em `regerar`; o pipeline aceita
   `mascaras` prontas e pula a segmentação.

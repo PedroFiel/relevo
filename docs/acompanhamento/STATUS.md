@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 0 — Setup e prova de conceito
-**Próxima tarefa:** F0-T10 (repetir com fotos reais do grupo e medir com fita) e F0-T08 (repo + CI)
+**Próxima tarefa:** F0-T10 (fotos tiradas pelo grupo + fita métrica) e F0-T08 (repo + CI); pipeline F1-T01 → F1-T03 (decimação: 190–260 mil faces, 5–6,6 MB por .glb, ~5 s para abrir → ~20 mil) e F1-T04 → F1-T07
 **Data de entrega:** _a definir_ · **Última atualização:** 01/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -32,7 +32,7 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F0-T07 | Front React + Three.js esqueleto | Claude | feito | prints em `docs/revisoes/assets/` |
 | F0-T08 | Subir para o repo e CI | | a fazer | |
 | F0-T09 | Cada integrante roda o setup | todos | em andamento | Pedro: ok (testes, banco Neon, visualizador). Faltam os demais |
-| F0-T10 | Prova com fotos reais | Pedro + Claude | em andamento | 1 tênis (imagens de catálogo, escuro com solado branco): reconhecível e colorido. Falta foto própria + fita métrica. Relatório em `docs/testes/relatorios/2026-10-01-fotos-reais-f0.md` |
+| F0-T10 | Prova com fotos reais | Pedro + Claude | em andamento | 3 tênis de catálogo reconhecíveis, coloridos, fechados, escala exata; tenis-03 com 5 vistas, recorte e seção. Falta foto própria + fita métrica. Relatórios: `docs/testes/relatorios/2026-10-01-*.md` |
 
 ## Fase 1 — Pipeline completo
 
@@ -43,11 +43,13 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F1-T03 | Decimação por erro quádrico | | a fazer |
 | F1-T04 | Transformação inversa 3D → pixel | | a fazer |
 | F1-T05 | Cor por vértice | Pedro + Claude | feito |
-| F1-T06 | Segmentação robusta | Pedro + Claude | em andamento |
-| F1-T07 | Métricas (IoU, consistência) | | a fazer |
+| F1-T06 | Segmentação robusta | Pedro + Claude | feito |
+| F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | em andamento |
 | F1-T08 | Intermediários + progresso | | a fazer |
 | F1-T09 | Desempenho | | a fazer |
 | F1-T10 | Notebook didático | | a fazer |
+| F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | feito |
+| F1-T12 | Rastreamento de contorno | Pedro + Claude | feito |
 
 ## Fase 2 — Visualizador 3D
 
@@ -62,6 +64,12 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F2-T07 | Estatísticas do modelo | | a fazer |
 | F2-T08 | Abrir arquivo local | Pedro + Claude | feito |
 | F2-T09 | Testes visuais (Playwright) | | a fazer |
+| F2-T10 | Visor 2D: janela→viewport, zoom, pan, clipping | Pedro + Claude | feito |
+| F2-T11 | Plano de corte 3D (clipping + stencil) | Pedro + Claude | feito |
+| F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | feito |
+| F2-T13 | Mover, girar, aumentar (matriz 4×4) | Pedro + Claude | feito |
+| F2-T14 | Selecionar área, separar e mover | Pedro + Claude | feito |
+| F2-T15 | Rastreamento de raios × rasterização | Pedro + Claude | feito |
 
 ## Fase 3 — Integração (MVP)
 
@@ -79,6 +87,8 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F3-T10 | Detalhe + visualizador integrado | | a fazer |
 | F3-T11 | Meus modelos | | a fazer |
 | F3-T12 | E2E do MVP | | a fazer |
+| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | em andamento (editor em `/fotos` + "Aplicar e gerar o 3D" via API de dev; falta o upload real F3-T03/T08) |
+| F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | em andamento (página `/fotos` com contorno, máscara e avisos; falta ler da API na F3-T10) |
 
 ## Fase 4 — Produto
 
@@ -110,6 +120,8 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | Risco | Impacto | Plano |
 |---|---|---|
 | Fotos reais segmentam mal (sombra, fundo parecido) | alto | F0-T10 cedo; F1-T06 chroma key; F5-T05 pincel |
-| Perspectiva das fotos de celular distorce o hull | médio | guia de fotos (afastar + zoom); medir com IoU na F1-T07 |
+| Perspectiva das fotos de celular distorce o hull | médio | guia de fotos (afastar + zoom); `razao_frente` já avisa; IoU completo na F1-T07 |
+| Usuário envia foto girada/espelhada | médio | orientação automática por anatomia + aviso (feito); avisa quando a silhueta é ambígua |
 | Computador fraco de algum integrante | baixo | resolução 96 em dev; CI roda os testes |
 | Prazo | alto | MVP = Fases 0–3; Fase 5 prioriza T01 e T07 |
+| Conceitos exigidos pela professora (recorte, zoom, transformações, rastreamento, segmentação) | alto | 8 tarefas novas no MVP (ADR 0006); confirmar o sentido de "rastrear" com ela |

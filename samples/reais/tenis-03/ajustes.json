@@ -1,0 +1,4 @@
+{
+  "topo": {"rotacao_graus": 270, "recorte": [40, 110, 700, 270]},
+  "tras": {"rotacao_graus": 0, "recorte": [135, 305, 250, 315]}
+}

@@ -34,6 +34,8 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   - malha continua `is_watertight`;
   - "rugosidade" diminui: desvio-padrão do ângulo entre normais de faces vizinhas (`malha.face_adjacency_angles.std()`) cai.
 - **Aceite:** no visualizador, os degraus visíveis na Fase 0 somem.
+- **Nota (01/10):** os degraus já foram resolvidos na origem pelo campo de distância assinada (ADR 0005). Taubin
+  medido depois disso no tenis-02: desvio do ângulo entre faces 4,5° → 3,5°. Fica como refinamento (presets).
 - **Conceito de CG:** filtragem de malhas, operador Laplaciano discreto, encolhimento × filtro λ|μ.
 
 ### F1-T03 — Decimação por erro quádrico
@@ -89,6 +91,8 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
      mais de 1 componente grande (sombra?). Avisos vão para as métricas e depois para a tela.
 - **Testes:** imagem sintética de objeto branco em fundo verde funciona com `cor_fundo`; avisos disparam nos casos certos.
 - **Aceite:** os 2 tênis reais da F0-T10 segmentam bem com pelo menos um dos métodos.
+- **Feito (01/10):** `cor_fundo` virou o método único (o Otsu falhava com solado branco); `segmentar` +
+  `qualidade_mascara` com os avisos acima. Extra: orientação automática das fotos (`orientacao.py`).
 
 ### F1-T07 — Métricas de qualidade e consistência
 - **Frente:** pipeline
@@ -101,6 +105,9 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   3. Tudo em `ResultadoPipeline.metricas`.
 - **Testes:** IoU > 0,90 nas 3 vistas do sintético; aviso de consistência dispara quando a frente é esticada 30 %.
 - **Conceito de CG:** rasterização de polígonos, avaliação quantitativa de reconstrução.
+- **Parcial (01/10):** `metricas.py` já calcula o IoU **em voxels** (grade alinhada) e a razão de proporção da frente,
+  com avisos; o teste da frente esticada 30 % existe. Falta o IoU rasterizando a malha na resolução da foto (depende
+  da T04) — o IoU em voxels deu 1,00 nos 3 tênis, pouco sensível.
 
 ### F1-T08 — Intermediários para o Raio-X e progresso
 - **Frente:** pipeline
@@ -122,6 +129,44 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 - **Como fazer:** `notebooks/01-pipeline-passo-a-passo.ipynb` com cada etapa visualizada (imagens com matplotlib,
   fatias do volume de voxels, malha com `trimesh.Scene.show()` ou screenshot). Será usado na apresentação.
 - **Aceite:** "Run all" funciona do zero após `uv sync`.
+
+### F1-T11 — Ajuste da foto: recorte e rotação (região de interesse)
+- **Frente:** pipeline
+- **Por quê:** a professora pediu **recorte** e **transformações 2D**; o usuário também precisa tirar do quadro uma
+  caixa, um pé ou outro objeto sem refazer a foto (ver [08-ferramentas-similares.md](../08-ferramentas-similares.md)).
+- **Como fazer:**
+  1. `ajuste.py`: `@dataclass(frozen=True) class AjusteFoto`: `rotacao_graus: int` (0/90/180/270) e
+     `recorte: tuple[int, int, int, int] | None` (x, y, largura, altura em pixels da foto **já girada** — é o que o
+     usuário vê no editor).
+  2. `aplicar_ajuste(img, ajuste) -> (img_ajustada, M)`: primeiro rotaciona, depois recorta. `M` é a **matriz afim 3×3**
+     (coordenadas homogêneas) que leva um pixel da foto ajustada de volta à original: `M = R⁻¹ · T(x, y)`.
+     O retângulo é **recortado contra os limites da imagem** (interseção de retângulos) e recusado se ficar < 64 px.
+  3. `processar(..., ajustes: dict[str, AjusteFoto] | None)`: aplica antes da segmentação; a rotação manual tem
+     prioridade sobre a orientação automática (`orientacao.py` só roda nas vistas sem rotação manual).
+  4. `metricas["ajustes"]` guarda o ajuste e a matriz `M` de cada vista (o front usa para desenhar o contorno na foto).
+- **Testes:** recorte que tira um segundo objeto do quadro faz sumir o aviso "mais de um objeto"; máscara com
+  recorte = máscara da foto já recortada; `M` leva os 4 cantos do recorte aos pontos certos da original; recorte fora
+  da imagem é ajustado aos limites; recorte pequeno demais → `ValueError` com mensagem em português; rotação manual
+  impede a automática.
+- **Conceito de CG:** janela de recorte, transformações afins 2D, coordenadas homogêneas, composição e inversa de matrizes.
+
+### F1-T12 — Rastreamento do contorno da silhueta
+- **Status (01/10):** feito — junto com a F1-T11; ver relatório `2026-10-01-tenis-03.md`.
+- **Frente:** pipeline
+- **Depende de:** T11 (para devolver o contorno na foto original)
+- **Como fazer:**
+  1. `contorno.py`: `rastrear_contorno(mascara) -> np.ndarray (N, 2)` com `cv2.findContours(RETR_EXTERNAL,
+     CHAIN_APPROX_NONE)` (algoritmo de **seguimento de borda de Suzuki–Abe**), pegando o maior contorno externo.
+  2. Versão **didática** `rastrear_moore(mascara)` (vizinhança de Moore, critério de parada de Jacob) em NumPy puro —
+     usada nos testes e no notebook para explicar o algoritmo. O laço é por pixel **da borda** (O(perímetro)), exceção
+     consciente à regra de vetorização.
+  3. `simplificar(contorno, tolerancia_px)` com **Douglas–Peucker** (`cv2.approxPolyDP`, tolerância ≈ 0,2 % do perímetro).
+  4. Levar o contorno simplificado de volta à foto original com a matriz `M` da T11 e guardar em
+     `metricas["contornos"][vista]` (lista de `[x, y]`), mais `perimetro_px` e `area_px`.
+- **Testes:** num quadrado e num círculo, Moore e OpenCV dão o mesmo conjunto de pixels de borda; Douglas–Peucker reduz
+  o círculo a < 10 % dos pontos com erro < tolerância; perímetro de um quadrado 100×100 ≈ 400; contorno com recorte e
+  rotação cai sobre o tênis na foto original (> 98 % dos pontos a ≤ 2 px da borda da máscara original).
+- **Conceito de CG:** rastreamento (seguimento) de contorno, conectividade de pixels, simplificação de polilinhas.
 
 ## Encerramento da Fase 1
 

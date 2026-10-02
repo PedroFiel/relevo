@@ -14,7 +14,7 @@ describe('ErroModelo', () => {
         <Quebra />
       </ErroModelo>,
     )
-    expect(screen.getByRole('alert')).toHaveTextContent('make real')
+    expect(screen.getByRole('alert')).toHaveTextContent('make reais')
   })
 
   it('renderiza os filhos quando está tudo certo', () => {

@@ -101,6 +101,95 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
   Script `npm run e2e`.
 - **Aceite:** roda local e no CI (job separado, pode ser `continue-on-error` no começo).
 
+## Conceitos pedidos pela professora (recorte, zoom, transformações, rastreamento)
+
+Tarefas adicionadas em 01/10/2026 — ADR 0006 e [08-ferramentas-similares.md](../08-ferramentas-similares.md).
+Todas entram no MVP. **Status (01/10): T10 a T13 feitas** (verificadas no navegador; relatório `2026-10-01-tenis-03.md`).
+Diferença do plano: o plano de corte é definido nas coordenadas do modelo e acompanha a matriz do modelo.
+
+### F2-T10 — Pipeline de visualização 2D: janela → viewport, zoom, pan e recorte
+- **Frente:** front
+- **Como fazer:**
+  1. `src/lib/visualizacao2d.ts` (funções puras, sem React):
+     - `matrizJanelaViewport(janela, viewport) -> Mat3` (escala + translação; o eixo y da tela cresce para baixo);
+     - `zoomEmTorno(janela, ponto, fator)` → `T(p)·S(1/k)·T(−p)` aplicado à janela (o ponto sob o cursor fica parado);
+       `pan(janela, dx, dy)`; `enquadrar(imagem, viewport)` (mantém a proporção);
+     - **Cohen–Sutherland** `recortarSegmento(p0, p1, janela)` (códigos de região de 4 bits);
+     - **Sutherland–Hodgman** `recortarPoligono(pontos, janela)` (recorte sucessivo contra as 4 bordas).
+  2. Componente `src/components/VisorFoto.tsx`: `<canvas>` que desenha a foto pela matriz janela→viewport; roda do mouse
+     e pinça = zoom no cursor (limite 1×–16×), arrastar = pan, duplo clique = enquadrar; prop `poligonos` desenha
+     contornos **já recortados** com Sutherland–Hodgman (o recorte é nosso, não o do canvas — é o que mostramos na banca).
+  3. Toggle "mostrar janela de recorte" que desenha a janela e destaca os trechos descartados (modo didático).
+- **Testes (Vitest):** segmento totalmente dentro / fora / cruzando 1 e 2 bordas; polígono (triângulo e quadrado)
+  recortado tem os vértices esperados; polígono todo fora → vazio; zoom em torno do cursor mantém o ponto fixo;
+  `matrizJanelaViewport` leva os cantos da janela aos cantos do viewport.
+- **Aceite:** ampliar 8× uma foto de 1600 px continua fluido (≥ 30 FPS) e o contorno acompanha a foto sem sair do visor.
+- **Conceito de CG:** pipeline de visualização 2D, transformação janela–viewport, zoom/pan, recorte de linhas e
+  polígonos, rasterização no canvas.
+
+### F2-T11 — Plano de corte no modelo 3D (clipping)
+- **Frente:** front
+- **Como fazer:**
+  1. `src/lib/corte.ts`: `planoDeCorte(eixo: 'x'|'y'|'z', posicaoCm, inverter) -> { normal, constante }` e
+     `ladoDoPlano(ponto, plano)` (sinal de `n·p + d`).
+  2. Modo "Corte" no painel: eixo, slider de posição (limites = caixa do modelo) e "inverter lado".
+     `gl.localClippingEnabled = true` e `material.clippingPlanes = [new THREE.Plane(normal, constante)]`
+     (materiais em `useMemo`, como já fazemos).
+  3. **Tampa do corte** com *stencil buffer* (técnica do exemplo `webgl_clipping_stencil` do three.js): faces de trás
+     incrementam, faces da frente decrementam; um plano desenhado onde o stencil ≠ 0 "fecha" o corte — prova visual de
+     que a malha é **fechada** (watertight).
+  4. Explicação na tela: o corte é feito pela GPU depois do *vertex shader*, em coordenadas de recorte — o mesmo
+     mecanismo dos planos *near*/*far* da câmera (mostrar o valor de `camera.near`/`far`).
+- **Testes:** `planoDeCorte` para cada eixo e inversão; `ladoDoPlano` com pontos conhecidos.
+- **Aceite:** cortar o tênis no eixo x mostra a seção transversal preenchida, sem buracos.
+- **Conceito de CG:** recorte contra semiespaços, recorte no pipeline gráfico (*frustum*, coordenadas de recorte),
+  *stencil buffer*.
+
+### F2-T12 — Zoom no ponto e rastreamento do cursor (raycasting)
+- **Frente:** front
+- **Depende de:** T02
+- **Como fazer:**
+  1. `onPointerMove` do r3f (raycasting): mostrar no painel o ponto sob o cursor em **cm** (espaço do objeto) e a normal
+     da face; marcador pequeno no ponto.
+  2. Zoom no ponto: roda do mouse aproxima a câmera **em direção ao ponto atingido** (`dolly` ao longo do raio), em vez
+     do centro; sem interseção, comportamento normal do `OrbitControls`.
+  3. Seletor "tipo de zoom": aproximar (*dolly*) × lente (muda o FOV) × ortográfico (`camera.zoom`) — com a frase do
+     conceito: *dolly* muda a perspectiva, FOV não.
+  4. `src/lib/camera.ts`: `pontoDeZoom(origem, alvo, ponto, fator)` (puro, testável).
+- **Testes:** `pontoDeZoom` mantém a câmera na reta câmera→ponto e respeita `minDistance`; fator 1 não move.
+- **Aceite:** passar o mouse sobre o bico mostra x ≈ metade do comprimento (convenção: modelo centrado em x).
+- **Conceito de CG:** raycasting (interseção raio–triângulo), espaço do mundo × do objeto, *dolly* × FOV.
+
+### F2-T13 — Transformações interativas: mover, girar e aumentar (base)
+- **Frente:** front
+- **Como fazer:**
+  1. Modo "Transformar" com `TransformControls` (drei): translação, rotação e escala (uniforme em %), campos numéricos
+     sincronizados (posição em cm, rotação em graus) e botão "Restaurar".
+  2. `src/lib/matrizes.ts`: `compor(T, R, S)` montando a matriz homogênea 4×4 à mão (sem `Matrix4.compose`), e
+     `aplicar(M, ponto)`. O painel "Matriz" mostra a 4×4 ao vivo e um toggle troca a ordem (`T·R·S` × `S·R·T`) para
+     mostrar que **a ordem importa**.
+  3. Dimensões do painel (F2-T06) passam a refletir a escala ("aumentar 10 %" → 33 cm).
+  4. O que **fica para a F4-T03**: pivô por clique, atalhos G/R/S, desfazer e "salvar como nova versão".
+- **Testes:** `compor` igual ao `Matrix4.compose` do three.js para casos conhecidos; `T·R·S ≠ S·R·T` num exemplo;
+  escala 1,1 em 30 cm → 33 cm.
+- **Conceito de CG:** transformações geométricas, coordenadas homogêneas, composição e ordem de matrizes.
+
+### F2-T14 — Selecionar uma área, separar e mover (janela de seleção)
+- **Frente:** front · **Status (02/10):** feito — ADR 0008, guia em `docs/09-funcionalidades-cg.md` §3
+- **Como fazer:** retângulo desenhado sobre o canvas → NDC → 4 planos com a câmera (no espaço do objeto) →
+  classificar e recortar triângulos com Sutherland–Hodgman 3D (`lib/selecao.ts`) → duas malhas; a parte centrada em si
+  mesma, com `TransformControls` próprio; "Juntar de volta".
+- **Testes:** área conservada; parte = retângulo; cor interpolada; seleção vazia.
+- **Conceito de CG:** janela de seleção, recorte de polígonos contra planos, frustum, grafo de cena (nó com matriz).
+
+### F2-T15 — Rastreamento de raios (ray tracing) × rasterização
+- **Frente:** front · **Status (02/10):** feito — ADR 0008, guia em `docs/09-funcionalidades-cg.md` §5
+- **Como fazer:** capturar a cena (geometria no mundo, câmera, luz, plano de corte) e a imagem da GPU; BVH na mediana;
+  slab test; Möller–Trumbore; raio de sombra; Lambert com a cor por vértice; chão y = 0; render progressivo lado a lado;
+  modo passo a passo; clique num pixel explica o raio.
+- **Testes:** BVH = força bruta; casos do Möller–Trumbore; filtro do plano de corte; chão na sombra.
+- **Conceito de CG:** rastreamento de raios, estruturas de aceleração, interseção raio–primitiva, sombras.
+
 ## Encerramento da Fase 2
 
 - [ ] Prints de todos os modos no relatório da fase (são material para os slides)

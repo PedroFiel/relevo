@@ -58,8 +58,8 @@ sequenceDiagram
 
 | Camada | Conceitos de CG | Arquivos |
 |---|---|---|
-| Pipeline (back) | processamento de imagem (limiarização, morfologia), projeção ortográfica, voxelização, visual hull, Marching Cubes, malhas poligonais, normais, suavização (Taubin), decimação (erro quádrico), projeção de textura, mapeamento UV, LOD | `packages/pipeline/src/relevo_pipeline/*` |
-| Front | pipeline gráfico/rasterização (WebGL), câmera perspectiva, transformações por matrizes homogêneas 4×4, iluminação e shading (flat × suave, PBR), shaders GLSL, raycasting, LOD por distância | `apps/web/src/components/*` |
+| Pipeline (back) | processamento de imagem (segmentação por distância de cor, morfologia), recorte e rotação da foto (afim 2D, F1-T11), rastreamento de contorno + Douglas–Peucker (F1-T12), projeção ortográfica, voxelização, visual hull, Marching Cubes, malhas poligonais, normais, suavização (Taubin), decimação (erro quádrico), projeção de textura, mapeamento UV, LOD | `packages/pipeline/src/relevo_pipeline/*` |
+| Front | rastreamento de raios com BVH e raio de sombra (F2-T15); seleção por janela + recorte de triângulos contra planos e separação (F2-T14); recorte pelo plano near; pipeline de visualização 2D: janela→viewport, zoom/pan, recorte Cohen–Sutherland e Sutherland–Hodgman (F2-T10); plano de corte 3D com stencil (F2-T11); zoom no ponto (F2-T12); pipeline gráfico/rasterização (WebGL), câmera perspectiva, transformações por matrizes homogêneas 4×4 (F2-T13), iluminação e shading (flat × suave, PBR), shaders GLSL, raycasting, LOD por distância | `apps/web/src/components/*` |
 | Banco | representação persistente de malhas e versões, matriz de transformação 4×4 por versão, parâmetros e métricas do pipeline (reprodutibilidade) | `apps/api/src/relevo_api/models.py` |
 
 ## Estrutura de pastas (alvo ao fim da Fase 3)

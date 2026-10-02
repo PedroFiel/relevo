@@ -18,6 +18,7 @@ out/
 *.npy
 # modelos gerados por `make real` (o tenis-exemplo.glb é versionado)
 apps/web/public/samples/tenis-0*.glb
+apps/web/public/samples/tenis-0*/
 
 # SO / editores
 .DS_Store

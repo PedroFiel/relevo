@@ -4,14 +4,15 @@ Ideia (projeção de textura simplificada): cada vértice é projetado de volta 
 herda a cor do pixel onde cai. Como as vistas são ortográficas, a projeção é só descartar
 o eixo que a câmera não vê (o inverso do que o visual hull faz):
 
-    lateral enxerga (x, y)  -> usada onde a normal aponta para ±z (o lado de dentro usa a
-                               foto lateral espelhada: mesma posição, mesma cor)
-    topo    enxerga (x, z)  -> usada onde a normal aponta para cima (+y)
-    frente  enxerga (z, y)  -> usada onde a normal aponta para o bico (+x)
+    lateral / outro_lado  enxergam (x, y) -> faces com normal +z / −z (sem a foto do outro
+                                             lado, a lateral espelhada pinta os dois)
+    topo / sola           enxergam (x, z) -> faces voltadas para cima / para baixo
+    frente / tras         enxergam (z, y) -> faces voltadas para o bico / para o calcanhar
 
 Quando um vértice é visto por mais de uma foto, as cores são misturadas com peso
 |normal|^p (p alto: manda a foto que "olha de frente" para aquela parte da superfície).
-O solado (normal para baixo) e o calcanhar sem foto frontal ficam com a cor neutra / lateral.
+Sem foto da sola, o solado fica com cor neutra; sem foto frontal/traseira, bico e calcanhar
+ficam com a cor da lateral.
 
 Detalhe importante: os pixels da borda da silhueta misturam cor do tênis com cor do fundo.
 Por isso a foto é "estendida" antes de amostrar: os pixels de fora (e da faixa de 3 px
@@ -23,13 +24,19 @@ from __future__ import annotations
 import cv2
 import numpy as np
 import trimesh
+from scipy import sparse
 
 from relevo_pipeline.alinhamento import VistasAlinhadas
 from relevo_pipeline.malha import PAD
+from relevo_pipeline.vistas import VISTAS
 
 COR_SOLADO = np.array([90, 90, 90], np.float32)  # RGB neutro para o que nenhuma foto vê
 EXPOENTE_PESO = 4.0
+# cos⁴ a partir do qual a foto é "de confiança" (cos 0,67 ≈ 48°): abaixo, mistura com os vizinhos
+CONFIANCA_CHEIA = 0.2
+PESO_RESERVA_LATERAL = 1e-3  # ≈ cos(80°)^4: só decide onde nenhuma foto vê de frente
 FOLGA_BORDA_PX = 3
+FOLGA_BORDA_RELATIVA = 0.01
 
 
 def srgb_para_linear(c: np.ndarray) -> np.ndarray:
@@ -37,10 +44,17 @@ def srgb_para_linear(c: np.ndarray) -> np.ndarray:
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
 
-def estender_cor(
-    img_bgr: np.ndarray, mascara: np.ndarray, folga: int = FOLGA_BORDA_PX
-) -> np.ndarray:
-    """Preenche o fundo e a faixa junto à borda com a cor do pixel interno mais próximo."""
+def estender_cor(img_bgr: np.ndarray, mascara: np.ndarray, folga: int | None = None) -> np.ndarray:
+    """Preenche o fundo e a faixa junto à borda com a cor do pixel interno mais próximo.
+
+    A faixa acompanha o tamanho do tênis na foto (1 % do maior lado, mínimo 3 px): a borda de
+    uma foto de catálogo tem 6–10 px de degradê (sombra suave + desfoque); 3 px fixos bastavam a
+    1600 px mas deixavam o bico do tenis-03 (768 px) cinza-claro.
+    """
+    if folga is None:
+        ys, xs = np.nonzero(mascara)
+        lado = max(np.ptp(ys), np.ptp(xs)) if len(ys) else 0
+        folga = max(FOLGA_BORDA_PX, round(FOLGA_BORDA_RELATIVA * lado))
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * folga + 1, 2 * folga + 1))
     interior = cv2.erode(mascara.astype(np.uint8), k)
     if not interior.any():  # objeto muito fino: usa a máscara inteira
@@ -57,6 +71,33 @@ def estender_cor(
     mapa_y[rotulos[yi, xi]] = yi
     mapa_x[rotulos[yi, xi]] = xi
     return img_bgr[mapa_y[rotulos], mapa_x[rotulos]]
+
+
+def preencher_sem_foto(
+    malha: trimesh.Trimesh, cores: np.ndarray, confianca: np.ndarray, iteracoes: int = 200
+) -> np.ndarray:
+    """Onde nenhuma foto vê a face de frente, a cor vem dos vizinhos (interpolação harmônica).
+
+    Projetar uma foto numa face quase de lado (ângulo rasante) ESTICA uma tira fina de pixels da
+    borda sobre uma área grande — o "borrão" branco no bico do tenis-03, que não tem foto frontal.
+    Então misturamos: c = α·projetada + (1 − α)·média dos vizinhos na malha, com α = confiança da
+    melhor foto (cos⁴ do ângulo) normalizada. Iterar isso (Jacobi) resolve a equação de Laplace
+    discreta no grafo da malha: as faces bem fotografadas ficam fixas e a cor "escorre" delas para
+    as que nenhuma foto viu.
+    """
+    alfa = np.clip(confianca / CONFIANCA_CHEIA, 0.0, 1.0)[:, None]
+    if alfa.min() >= 1.0:
+        return cores
+    n = len(malha.vertices)
+    a, b = malha.edges_unique[:, 0], malha.edges_unique[:, 1]
+    adj = sparse.coo_matrix((np.ones(2 * len(a)), (np.r_[a, b], np.r_[b, a])), shape=(n, n)).tocsr()
+    grau = np.asarray(adj.sum(axis=1)).ravel()
+    media = sparse.diags(1.0 / np.maximum(grau, 1)) @ adj  # linha i: média dos vizinhos de i
+    fixo = alfa * cores
+    c = cores.copy()
+    for _ in range(iteracoes):
+        c = fixo + (1 - alfa) * (media @ c)
+    return c
 
 
 def _amostrar(img_rgb: np.ndarray, linhas: np.ndarray, colunas: np.ndarray) -> np.ndarray:
@@ -88,7 +129,7 @@ def colorir_malha(
     idx = (malha.vertices - desl) / tv - PAD + 0.5
     ix, iy, iz = idx[:, 0], idx[:, 1], idx[:, 2]
     n = malha.vertex_normals
-    nx, ny, nz = n[:, 0], n[:, 1], n[:, 2]
+    ny = n[:, 1]
 
     def pixel(vista: str, u_frac: np.ndarray, v_frac: np.ndarray):
         """Fração (0..1) dentro da caixa de recorte -> linha/coluna na foto original."""
@@ -97,31 +138,47 @@ def colorir_malha(
 
     cores, pesos = [], []
 
-    def adicionar(vista: str, linhas, colunas, peso):
+    def adicionar(vista: str, linhas, colunas, peso, reserva=0.0):
         img = estender_cor(fotos_bgr[vista], mascaras[vista])
         cores.append(_amostrar(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), linhas, colunas))
-        pesos.append(peso**EXPOENTE_PESO)
+        pesos.append(peso**EXPOENTE_PESO + reserva)
 
-    # lateral: linhas = y (invertido: topo da foto = topo do tênis), colunas = x
-    linhas, colunas = pixel("lateral", ix / L, 1 - iy / H)
-    adicionar("lateral", linhas, colunas, np.abs(nz))
+    # Posição do vértice como fração (coluna u, linha v) no quadro canônico de cada vista:
+    # lateral (y invertido: topo da foto = topo do tênis), topo (linhas = z), frente (colunas = z)
+    fracao = {
+        "lateral": (ix / L, 1 - iy / H),
+        "topo": (ix / L, iz / W),
+        "frente": (iz / W, 1 - iy / H),
+    }
+    for nome in vistas.mascaras:
+        vista = VISTAS[nome]
+        u, v = fracao[vista.quadro]
+        espelha_colunas, espelha_linhas = vistas.espelhos[nome]  # quadro -> foto (é involução)
+        u = 1 - u if espelha_colunas else u
+        v = 1 - v if espelha_linhas else v
+        linhas, colunas = pixel(nome, u, v)
+        alinhamento = n @ np.array(vista.direcao, np.float64)
+        if vista.quadro == "lateral" and len(vistas.do_quadro("lateral")) == 1:
+            # Sem a foto do outro lado, a lateral pinta os dois lados (espelhada: na projeção
+            # ortográfica, o ponto do outro lado cai no mesmo pixel)
+            peso = np.abs(alinhamento)
+        else:
+            peso = np.clip(alinhamento, 0, None)
+        # Calcanhar/bico sem foto própria: na dúvida, a cor vem da lateral (e não de uma média
+        # de todas as fotos com peso ~0)
+        reserva = PESO_RESERVA_LATERAL if vista.quadro == "lateral" else 0.0
+        adicionar(nome, linhas, colunas, peso, reserva)
 
-    # topo: linhas = z, colunas = x; só enxerga superfícies voltadas para cima
-    linhas, colunas = pixel("topo", ix / L, iz / W)
-    adicionar("topo", linhas, colunas, np.clip(ny, 0, None))
-
-    # frente: linhas = y (invertido), colunas = z invertido (câmera olha o bico, -z fica à direita)
-    if "frente" in vistas.caixas:
-        linhas, colunas = pixel("frente", 1 - iz / W, 1 - iy / H)
-        adicionar("frente", linhas, colunas, np.clip(nx, 0, None))
-
-    # Solado: nenhuma foto enxerga a parte de baixo -> cor neutra com peso crescente para baixo
-    cores.append(np.broadcast_to(COR_SOLADO, (len(ix), 3)))
-    pesos.append(np.clip(-ny, 0, None) ** EXPOENTE_PESO)
+    if "sola" not in vistas.mascaras:
+        # Nenhuma foto enxerga a parte de baixo -> cor neutra com peso crescente para baixo
+        cores.append(np.broadcast_to(COR_SOLADO, (len(ix), 3)))
+        pesos.append(np.clip(-ny, 0, None) ** EXPOENTE_PESO)
 
     pesos_m = np.stack(pesos, axis=1) + 1e-6  # (N, fontes); epsilon evita divisão por zero
+    confianca = pesos_m.max(axis=1)  # o quanto a MELHOR foto vê esta face de frente
     pesos_m /= pesos_m.sum(axis=1, keepdims=True)
     mistura = sum(c * p[:, None] for c, p in zip(cores, pesos_m.T, strict=True))
+    mistura = preencher_sem_foto(malha, mistura, confianca)
     rgb = np.clip(mistura, 0, 255).astype(np.uint8)
 
     # O glTF exige COLOR_0 em espaço LINEAR; as fotos estão em sRGB (curva gama ~2,2).
