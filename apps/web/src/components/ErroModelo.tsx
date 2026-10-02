@@ -20,7 +20,7 @@ export default class ErroModelo extends Component<Props, Estado> {
       <div role="alert" style={{ padding: 24, color: 'var(--muted)' }}>
         <p><strong style={{ color: 'var(--text)' }}>Não foi possível abrir esse modelo.</strong></p>
         <p>
-          Se for o &ldquo;Tênis 01&rdquo;, gere o arquivo com <code>make real</code> e recarregue a
+          Se for um dos tênis de exemplo, gere os arquivos com <code>make reais</code> e recarregue a
           página. Se for um arquivo seu, confira que é um .glb gerado pelo RELEVO.
         </p>
       </div>
