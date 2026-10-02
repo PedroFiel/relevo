@@ -1,5 +1,5 @@
 # Atalhos do RELEVO. Rode `make help` para ver tudo.
-.PHONY: help setup db-up db-down migrate api web test test-py test-web lint poc real
+.PHONY: help setup db-up db-down migrate api web test test-py test-web lint poc real reais
 
 help:  ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
@@ -43,7 +43,12 @@ poc:  ## gera fotos sintéticas e roda o pipeline ponta a ponta
 		--comprimento-cm 28 --saida apps/web/public/samples/tenis-exemplo.glb --debug out/debug
 
 CM ?= 30
-real:  ## gera o modelo colorido do tenis-01 (fotos em samples/reais) -> /visualizador. Use CM=28.5 p/ a medida real
-	uv run relevo-pipeline gerar --lateral samples/reais/tenis-01/lateral.jpg \
-		--topo samples/reais/tenis-01/topo.jpg --frente samples/reais/tenis-01/frente.jpg \
-		--comprimento-cm $(CM) --resolucao 256 --saida apps/web/public/samples/tenis-01.glb --debug out/tenis-01
+TENIS ?= tenis-01
+FOTOS = samples/reais/$(TENIS)
+real:  ## modelo de um tenis real (todas as fotos da pasta + ajustes.json) -> /visualizador e /fotos. Ex.: make real TENIS=tenis-03 CM=28.5
+	uv run relevo-pipeline gerar --pasta $(FOTOS) --comprimento-cm $(CM) --resolucao 256 \
+		--saida apps/web/public/samples/$(TENIS).glb --debug out/$(TENIS) \
+		--publicar apps/web/public/samples/$(TENIS)
+
+reais:  ## gera os modelos de todos os tenis em samples/reais
+	@for d in samples/reais/tenis-*/; do $(MAKE) --no-print-directory real TENIS=$$(basename $$d) > /dev/null && echo "ok: $$d"; done

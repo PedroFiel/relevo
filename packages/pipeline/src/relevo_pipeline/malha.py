@@ -5,8 +5,11 @@ dentro/fora (256 casos) e consulta uma tabela que diz quais triângulos gerar na
 A posição exata de cada vértice é interpolada linearmente na aresta onde o campo cruza o
 nível (isosuperfície).
 
-Antes do Marching Cubes aplicamos um leve desfoque gaussiano 3D no campo de ocupação para
-evitar o aspecto de "escada" (voxels duros).
+Duas entradas possíveis:
+- `campo_para_malha`: campo de distância assinada do visual hull (voxel.campo_implicito),
+  nível 0. É o caminho do pipeline: a borda já vem com precisão de fração de voxel.
+- `voxels_para_malha`: grade 0/1 (escultura binária), nível 0,5 após um desfoque gaussiano 3D.
+  Mais simples de explicar, mas deixa "degraus" de um voxel visíveis na superfície.
 """
 
 from __future__ import annotations
@@ -31,9 +34,29 @@ def voxels_para_malha(
     campo = np.pad(ocupado.astype(np.float32), PAD)  # borda vazia garante malha fechada
     if suavizacao_campo > 0:
         campo = gaussian_filter(campo, sigma=suavizacao_campo)
+    return _malha_do_campo(campo, 0.5, comprimento_cm)
 
-    tamanho_voxel = comprimento_cm / ocupado.shape[0]
-    verts, faces, _, _ = measure.marching_cubes(campo, level=0.5, spacing=(tamanho_voxel,) * 3)
+
+def campo_para_malha(campo: np.ndarray, comprimento_cm: float = 28.0) -> trimesh.Trimesh:
+    """Converte o campo de distância assinada (< 0 = dentro, em voxels) em malha em centímetros."""
+    if not (campo < 0).any():
+        raise ValueError("Nenhum voxel ocupado: as silhuetas não se intersectam.")
+    # Valor EXATAMENTE no nível faz o Marching Cubes criar triângulos degenerados (vértices
+    # repetidos) e a malha deixa de ser fechada. Acontece quando a borda cai bem no meio de dois
+    # pixels (+1 e -1 -> 0). Empurrar esses pontos para "fora" por um epsilon resolve.
+    campo = np.where(campo == 0, np.float32(1e-4), campo)
+    # Borda "fora" (distância positiva) garante malha fechada mesmo onde o objeto toca a grade
+    campo = np.pad(campo, PAD, constant_values=float(PAD))
+    return _malha_do_campo(-campo, 0.0, comprimento_cm)
+
+
+def _malha_do_campo(campo: np.ndarray, nivel: float, comprimento_cm: float) -> trimesh.Trimesh:
+    """Marching Cubes (campo maior que `nivel` = dentro) + escala real + centraliza no chão."""
+    verts, faces, _, _ = measure.marching_cubes(campo, level=nivel)  # em unidades de voxel
+    # Escala real: o comprimento MEDIDO da malha (eixo x) vira exatamente o informado pelo
+    # usuário. (A borda cai numa fração de voxel que depende do campo; não dá para assumir L.)
+    tamanho_voxel = comprimento_cm / float(np.ptp(verts[:, 0]))
+    verts = verts * tamanho_voxel
 
     # As normais são recalculadas pelo trimesh a partir da orientação (winding) das faces,
     # depois de fix_normals() garantir que todas apontam para FORA do objeto.
