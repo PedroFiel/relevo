@@ -8,7 +8,7 @@
 
 ## 1. O projeto em uma frase
 
-**RELEVO converte 3 fotos de um tênis (lateral, de cima e frontal) em um modelo 3D pronto para usar
+**RELEVO converte 3 fotos de um tênis (lateral, de cima e frontal — até 6, com outro lado, sola e traseira) em um modelo 3D pronto para usar
 (.glb / .obj / .stl), em escala real, usando apenas técnicas clássicas de Computação Gráfica — sem IA.**
 
 - **Contexto:** trabalho em grupo da disciplina de Computação Gráfica (Engenharia de Computação — UNASP).
@@ -30,7 +30,7 @@ Os valores **guiam decisões de código e de produto**:
 | **Acessibilidade** | O usuário não precisa saber nada de 3D: upload guiado com gabarito, textos simples, mensagens de erro que dizem *o que fazer*. Funciona no celular (375 px). |
 | **Qualidade de entrega** | Malha sempre fechada, escala real correta, testes para toda tarefa, CI verde antes do merge. |
 | **Propriedade do criador** | O modelo é do usuário: download livre nos formatos abertos, sem marca d'água, apagar o modelo apaga os arquivos. |
-| **Transparência sobre os limites** | Dizemos ao usuário o que o algoritmo **não** consegue (abertura do pé fechada, lado oposto espelhado, solado sem foto). Métricas de qualidade visíveis. Nunca vender como "IA". |
+| **Transparência sobre os limites** | Dizemos ao usuário o que o algoritmo **não** consegue (abertura do pé fechada, lado oposto espelhado e solado cinza quando faltam essas fotos, seção estimada). Métricas de qualidade visíveis. Nunca vender como "IA". |
 
 ## 3. Objetivos
 
@@ -39,7 +39,11 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 
 | Conceito | Onde aparece |
 |---|---|
-| Processamento de imagem (limiarização de Otsu, morfologia matemática) | pipeline — segmentação |
+| Processamento de imagem e **segmentação** (distância de cor em Lab, morfologia matemática) | pipeline — segmentação; front — máscara/contorno sobre a foto (F3-T14) |
+| **Recorte 2D (cortar / clipping)**: janela→viewport, Cohen–Sutherland, Sutherland–Hodgman | pipeline (recorte da foto, F1-T11) e front (visor 2D, F2-T10; editor de foto, F3-T13) |
+| **Ampliar / zoom e pan** (zoom em torno de um ponto, *dolly* × FOV) | front (visor 2D, F2-T10; zoom no ponto 3D, F2-T12) |
+| **Rastreamento de contorno** (Suzuki–Abe / Moore) + Douglas–Peucker | pipeline (F1-T12) |
+| **Recorte 3D** (plano de corte, *frustum*, *stencil*) | front (F2-T11) |
 | Projeção ortográfica e perspectiva | pipeline (visual hull) e front (câmeras) |
 | Voxelização e visual hull (shape from silhouette) | pipeline |
 | Marching Cubes (campo implícito → malha) | pipeline |
@@ -47,13 +51,16 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | Projeção de textura, mapeamento UV, PBR | pipeline (cor/textura) e front (modo UV) |
 | Pipeline gráfico, rasterização, iluminação e shading | front (WebGL / Three.js) |
 | Shaders programáveis (GLSL) | front |
-| Transformações com matrizes homogêneas 4×4 (escala, rotação, pivô) | front (editor) e back (versões) |
-| Raycasting | front (pivô, régua 3D) |
+| Transformações com matrizes homogêneas 4×4 (**mover, girar, aumentar**, pivô) | front (F2-T13 no MVP; pivô/versões na F4-T03) e back (versões) |
+| Raycasting (o ponto sob o cursor) | front (zoom no ponto e cursor, F2-T12; pivô; régua 3D) |
+| **Rastreamento de raios** (ray tracing): BVH, Möller–Trumbore, raio de sombra × rasterização | front (aba Rastrear raios, F2-T15) |
+| **Selecionar área → recortar → mover** (janela de seleção, Sutherland–Hodgman 3D, nó com matriz própria) | front (aba Selecionar e mover, F2-T14) |
 | LOD (níveis de detalhe) | pipeline + front |
 
 ### 3.2 Objetivo de produto
-- **MVP (Fases 0–3):** subir 3 fotos no site → acompanhar o processamento por etapa → ver o tênis 3D colorido no
-  navegador → baixar o .glb → encontrá-lo depois em "Meus modelos". Tudo persistido no PostgreSQL.
+- **MVP (Fases 0–3):** subir 3 fotos no site (cortando/girando/ampliando se precisar) → acompanhar o processamento por
+  etapa → ver o contorno detectado em cada foto → ver o tênis 3D colorido no navegador (zoom no ponto, plano de corte,
+  mover/girar/aumentar) → baixar o .glb → encontrá-lo depois em "Meus modelos". Tudo persistido no PostgreSQL.
 - **Produto (Fase 4):** conta e créditos, editor de escala/rotação/pivô, versões, exportação .obj/.stl, textura UV, S3.
 - **Diferenciais (Fase 5):** Raio-X do pipeline (mostra cada etapa), LOD, régua 3D, presets, correção de máscara, embed.
 
@@ -72,8 +79,8 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | # | Decisão | Por quê | Registro |
 |---|---|---|---|
 | D1 | **Nenhuma IA no núcleo de conversão** (TripoSR e afins foram descartados) | requisito da disciplina | ADR 0001 |
-| D2 | **3 fotos em vistas ortogonais padronizadas**: lateral e topo obrigatórias, frontal recomendada | 1 foto não tem profundidade sem IA | ADR 0001 |
-| D3 | **Reconstrução por visual hull** (escultura de voxels) + **Marching Cubes** | clássico, explicável, implementável | ADR 0001 |
+| D2 | **Fotos em vistas ortogonais padronizadas**: lateral e topo obrigatórias, frontal recomendada; outro lado, sola e traseira opcionais | 1 foto não tem profundidade sem IA | ADR 0001, 0007 |
+| D3 | **Reconstrução por visual hull** (escultura de voxels) + **Marching Cubes**; a malha sai do campo de distância assinada das silhuetas | clássico, explicável, implementável; sem degraus | ADR 0001, 0005 |
 | D4 | **Segmentação clássica** (Otsu + morfologia; chroma key como alternativa) — nunca rede neural | idem D1 | `docs/03-pipeline-cg.md` |
 | D5 | **Back-end único em Python/FastAPI** (não NestJS) importando o pipeline como pacote | menos peças, MVP mais rápido | ADR 0002 |
 | D6 | **Jobs com BackgroundTasks do FastAPI + polling** (sem Redis/Celery) | volume acadêmico | ADR 0003 |
@@ -85,6 +92,9 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | D12 | **Monorepo com workspace `uv`** (Python) + npm (front) | um lockfile, setup em minutos | `docs/01-stack.md` |
 | D13 | **Escala real em centímetros** informada pelo usuário (comprimento do calcanhar ao bico) | modelo útil para loja e impressão 3D | `docs/03-pipeline-cg.md` |
 | D14 | **Ordem de entrega: Fase 0 → (1 ∥ 2) → 3 = MVP → 4 → 5** | reduzir risco cedo, paralelizar | `docs/fases/README.md` |
+| D15 | **Recorte (2D e 3D), zoom, transformações, rastreamento e segmentação visíveis entram no MVP** | exigência da professora | ADR 0006 |
+| D16 | **Até 6 vistas + registro por IoU + seção transversal comum (cilindro generalizado)** | cor real de todos os lados e forma sem "caixa" | ADR 0007 |
+| D17 | **"Rastrear" = rastreamento de raios; selecionar/separar/mover; ferramentas ao lado do modelo; API de dev para regerar amostras** | pedido da professora + revisão de uso | ADR 0008 |
 
 ## 5. Regras inegociáveis
 
@@ -147,6 +157,12 @@ relevo/
 | `lateral` | y (topo da foto = topo do tênis) | x | calcanhar à esquerda, bico à direita |
 | `topo` | z | x | calcanhar à esquerda, bico à direita |
 | `frente` | y | z | olhando o bico |
+| `outro_lado` | y | x | calcanhar à **direita** (câmera do outro lado) |
+| `sola` | z | x | de baixo; qualquer sentido (giramos sozinhos) |
+| `tras` | y | z | olhando o calcanhar |
+
+Cada vista vai a um de 3 quadros canônicos (lateral, topo, frente) pelo espelhamento físico da câmera — fonte única
+em `packages/pipeline/src/relevo_pipeline/vistas.py`. Rotações são sempre no sentido **horário**.
 
 **Pipeline:** etapas são funções puras (sem I/O, exceto `cli.py` e `exportar.py`); tudo vetorizado com NumPy
 (sem laço Python por voxel/vértice); cada etapa nova reporta métricas em `ResultadoPipeline.metricas`.
@@ -202,16 +218,21 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
 
 ## 12. Onde estamos
 
-- **Fase atual:** 0 — Setup e prova de conceito. Parte técnica pronta (monorepo, pipeline PoC com 10 testes, API com
-  health checks, banco com migração baseline, visualizador com modos sólido/wireframe/normais).
-- **Pendente na Fase 0:** F0-T08 (repo + CI), F0-T09 (setup de cada integrante), **F0-T10 (teste com fotos reais —
-  a mais importante)**.
+- **Fase atual:** 0 — Setup e prova de conceito, com boa parte das Fases 1 e 2 adiantada: pipeline com até 6 vistas,
+  recorte/rotação da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção
+  transversal, cor por vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting e transformações 4×4;
+  página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte. API só com health checks; banco com baseline.
+  3 tênis de catálogo (`samples/reais/`) geram modelos reconhecíveis (`make reais`).
+- **Pendente na Fase 0:** F0-T08 (repo + CI), F0-T09 (setup de cada integrante), **F0-T10 (fotos tiradas pelo grupo +
+  fita métrica — falta o erro dimensional)**.
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
 
 ## 13. Limites conhecidos (comunicar, não esconder)
 
 - Concavidades não aparecem em nenhuma silhueta → **abertura do pé fica fechada** (limite teórico do visual hull).
-- O lado oposto ao fotografado usa a foto lateral **espelhada**; o **solado** não é fotografado (cor neutra).
+- Sem a foto do outro lado, ele usa a lateral **espelhada**; sem a foto da sola, o **solado** fica com cor neutra.
+- A seção transversal é uma **hipótese** (todas as fatias com o mesmo perfil, ADR 0007): arredonda o "bico quadrado",
+  mas detalhes que nenhuma silhueta mostra continuam inventados. `--sem-secao` volta ao visual hull puro.
 - Fotos de celular têm perspectiva; o algoritmo assume vista ortográfica → pedir câmera afastada + zoom.
 - Tênis claro em fundo claro (ou escuro em escuro) segmenta mal → pedir fundo contrastante; chroma key e pincel de correção.
 
@@ -231,6 +252,8 @@ calibração de câmera (só como extensão opcional) · app mobile nativo · pa
 | Banco (ER + tabelas) | `docs/04-banco-de-dados.md` |
 | Contrato da API | `docs/05-api.md` |
 | Guia de fotos (vira tela de ajuda) | `docs/06-guia-de-fotos.md` |
+| Ferramentas parecidas → conceitos → tarefas | `docs/08-ferramentas-similares.md` |
+| **Cada ferramenta de CG: como usar, como funciona, código, testes** | `docs/09-funcionalidades-cg.md` |
 | Setup passo a passo | `docs/07-setup.md` |
 | Fases e tarefas | `docs/fases/` |
 | Status, changelog, diário | `docs/acompanhamento/` |
