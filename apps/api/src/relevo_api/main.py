@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from relevo_api.config import settings
 from relevo_api.db import banco_disponivel
+from relevo_api.routers import amostras
 
 app = FastAPI(title="RELEVO API", version="0.1.0")
 app.add_middleware(
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(amostras.router)
 
 
 @app.get("/health")
