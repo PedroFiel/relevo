@@ -38,18 +38,22 @@ Unidade final: **centímetros**. O modelo sai centrado em x/z e apoiado no chão
 
 **Arquivo:** `segmentacao.py` · **Função:** `gerar_mascara(img) -> bool[H, W]`
 
-1. **Tons de cinza + desfoque gaussiano 5×5** — reduz ruído do sensor.
-2. **Limiarização de Otsu** — escolhe automaticamente o limiar *t* que maximiza a variância entre as classes
-   "fundo" e "objeto" no histograma: `σ²_B(t) = ω₀(t)·ω₁(t)·[μ₀(t) − μ₁(t)]²`.
-3. **Polaridade pela borda** — a borda da foto é quase toda fundo; se ela saiu "branca", invertemos.
-   Assim funciona com fundo claro ou escuro.
-4. **Morfologia matemática** — *fechamento* (dilatação → erosão) fecha frestas; *abertura* (erosão → dilatação) remove ruído.
+1. **Filtro de mediana 5×5** — reduz ruído do sensor sem "alargar" as bordas (o gaussiano alargava o objeto).
+2. **Cor do fundo** — mediana dos pixels da **borda** da foto, em **CIE Lab** (a borda é quase toda fundo; a mediana
+   ignora molduras e cantos sujos).
+3. **Distância de cor ao fundo** — `d = ‖Lab(pixel) − Lab(fundo)‖`; é objeto se `d > limiar`. O limiar é
+   adaptativo: 4× o ruído típico da borda, entre 10 e 30. Funciona com fundo claro ou escuro e enxerga o
+   **solado branco** em fundo cinza claro (o Otsu, que olha só o brilho, o jogava no fundo).
+4. **Morfologia matemática** — *fechamento* (dilatação → erosão) fecha frestas; *abertura* (erosão → dilatação)
+   com elemento ~1,5% do lado da imagem remove ruído e a **sombra de contato** (faixa fina escura sob o solado).
 5. **Maior componente conexa** — descarta sujeiras soltas.
 6. **Preenchimento de buracos** — *flood fill* a partir do canto; o que não foi alcançado é buraco interno
    (ex.: logo branco no tênis) e passa a ser objeto.
 
-**Limitação:** tênis branco em fundo branco falha (Otsu precisa de contraste). Solução de produto: guia de fotos
-pede fundo contrastante; Fase 1 adiciona modo *chroma key* (HSV) e a Fase 5 um pincel de correção.
+**Limitações:** objeto da mesma cor do fundo (tênis branco em fundo branco) continua falhando — o guia de fotos pede
+fundo contrastante; sombras largas/suaves entram na máscara; faltam o aviso de qualidade da máscara e o pincel de
+correção (F1-T06 restante e Fase 5). A versão antiga (Otsu) foi trocada porque falhava no caso comum de tênis
+escuro com sola branca (relatório `docs/testes/relatorios/2026-10-01-fotos-reais-f0.md`).
 
 ## [2] Alinhamento — colocar as 3 silhuetas na mesma grade
 
@@ -122,10 +126,18 @@ tem menor erro `vᵀQv`. Alvos: e-commerce ≈ 20 mil faces, jogo ≈ 5 mil, imp
 
 ## [7] Cor e textura (Fase 1: cor por vértice · Fase 4: textura UV)
 
-**Cor por vértice (Fase 1):** para cada vértice com normal `n`, cada vista tem direção `d` (lateral ±z, topo +y,
-frente ±x). Peso `w = max(0, n·d)^p` — a foto que "vê de frente" aquele ponto manda mais. O vértice é projetado na
-foto original (inverso do alinhamento) e a cor é a média ponderada.
-- O lado não fotografado usa a foto lateral **espelhada**; a traseira usa a frontal espelhada; o solado fica neutro.
+**Cor por vértice (Fase 1 — `cor.py`):** cada vértice é projetado de volta nas fotos (o inverso do visual hull: com
+vistas ortográficas, basta descartar o eixo que a câmera não vê). Cada vista tem uma direção `d` (lateral ±z, topo +y,
+frente +x) e peso `w = max(0, n·d)^4` — a foto que "vê de frente" aquele ponto manda mais; a cor é a média ponderada
+com amostragem **bilinear**.
+- O lado não fotografado usa a foto lateral **espelhada** (mesma posição na projeção ortográfica); o calcanhar (sem foto
+  traseira) usa a lateral; o solado (nenhuma foto) fica cinza neutro.
+- **Borda da silhueta:** os pixels da borda misturam tênis e fundo (halo claro). Antes de amostrar, a foto é "estendida":
+  fora da máscara, e numa faixa de 3 px dentro dela, cada pixel copia o interior mais próximo (transformada de distância).
+- **Espaço de cor:** as fotos estão em sRGB; o glTF exige `COLOR_0` em **linear**. Convertemos (curva IEC 61966-2-1);
+  sem isso o vermelho aparece rosa e o preto, cinza.
+- **Detalhe visual** depende da resolução da malha: a 128 voxels (~0,23 cm/vértice) o cadarço e o logo ficam borrados;
+  a 256 aparecem. Por isso o `make real` usa 256 (~1,5 s).
 
 **Textura UV (Fase 4):** `xatlas` "desdobra" a malha num plano (atlas UV, minimizando distorção). Para cada *texel* do
 atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma regra de pesos → imagem de textura

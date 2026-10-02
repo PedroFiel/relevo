@@ -11,3 +11,6 @@ tenis-01/
 ```
 
 Reduza para ~1600 px no maior lado (< 1 MB por foto) antes de commitar. Siga o guia: `docs/06-guia-de-fotos.md`.
+
+Gerar e ver o modelo colorido: `make real` (padrão 30 cm; use `make real CM=28.5` com a medida real) e abrir
+http://localhost:5173/visualizador. Qualquer `.glb` também pode ser aberto pelo botão "Abrir arquivo .glb…".
