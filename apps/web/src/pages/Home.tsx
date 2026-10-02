@@ -8,6 +8,9 @@ export default function Home() {
       <p>
         <Link to="/visualizador">Abrir modelo de exemplo →</Link>
       </p>
+      <p>
+        <Link to="/fotos">Ver as fotos, os contornos e ajustar o recorte →</Link>
+      </p>
     </main>
   )
 }
