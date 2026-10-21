@@ -36,10 +36,10 @@ O RELEVO tem os dois: as **fotos** (2D, a entrada) e o **modelo** (3D, a saída)
 | | |
 |---|---|
 | **Conceito** | recorte = descartar o que está fora de uma região. No 3D: **volume de visão** (frustum) e **planos de recorte** |
-| **Na tela** | aba **Recortar**. (a) *Plano de corte*: eixo (comprimento/altura/largura), posição, inverter lado, tampa. O plano aparece em amarelo. (b) *Recorte pela câmera*: slider **Near** — tudo mais perto da câmera que isso some |
+| **Na tela** | aba **Recortar**. (a) *Plano de corte*: eixo (comprimento/altura/largura), posição, inverter lado, tampa. O plano aparece em amarelo. (b) *Recorte pela câmera*: slider **Cortar da frente** — quantos cm do tênis, a partir do ponto mais próximo da câmera, o plano *near* corta (0 = nada; o máximo corta tudo). Sem tampa: aparece o oco da malha. Para ver só ele, desmarque "Cortar o modelo" |
 | **Como funciona** | Cada fragmento com `n·p + d < 0` é descartado pela GPU (é o mesmo teste que ela faz com os 6 planos do frustum, depois do *vertex shader*, em coordenadas de recorte). O plano é definido no modelo e levado ao mundo pela matriz do modelo (acompanha mover/girar/aumentar). A **tampa** laranja usa o *stencil buffer*: faces de trás somam 1, da frente subtraem 1; onde sobra ≠ 0 o raio entrou no sólido e não saiu — só funciona porque a malha é **fechada** |
-| **Código** | `lib/corte.ts` (`planoDeCorte`, `ladoDoPlano`), `ModelViewer.tsx` (`materiaisStencil`, `Tampa`, `IndicadorPlano`, `definirNear`) |
-| **Testes** | `lib/geometria3d.test.ts`: lados do plano, ponto sobre o plano, mesma convenção do `THREE.Plane` |
+| **Código** | `lib/corte.ts` (`planoDeCorte`, `ladoDoPlano`), `ModelViewer.tsx` (`materiaisStencil`, `Tampa`, `IndicadorPlano`, `definirNear`), `lib/visualizador.ts` (`nearDaProfundidade`) |
+| **Testes** | `lib/geometria3d.test.ts`: lados do plano, ponto sobre o plano, mesma convenção do `THREE.Plane`; `lib/visualizador.test.ts`: near a partir da profundidade |
 
 ## 3. Selecionar e mover (janela de seleção → recortar → mover) — modelo 3D
 

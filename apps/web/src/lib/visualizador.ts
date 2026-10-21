@@ -20,7 +20,24 @@ export type Comando =
 
 export type InfoSeparacao = { triangulosParte: number; triangulosResto: number; cortados: number; ms: number }
 
-export type InfoCamera = { distancia: number; fov: number; near: number }
+/**
+ * Leitura da câmera para o painel. `frente`/`fundo`: distância (cm), ao longo do eixo de visão, do
+ * ponto mais próximo/mais distante da esfera que envolve o modelo — é onde o plano near começa e
+ * termina de cortar o tênis.
+ */
+export type InfoCamera = { distancia: number; fov: number; near: number; frente: number; fundo: number }
+
+/** O near nunca chega a 0: a matriz de perspectiva divide por ele (e o z-buffer perde precisão). */
+export const NEAR_MINIMO = 0.1
+
+/**
+ * Plano near a partir de "quanto do tênis cortar" (cm a partir da frente do modelo).
+ * Profundidade 0 = nada cortado (near no mínimo); profundidade = fundo − frente = tudo cortado.
+ */
+export function nearDaProfundidade(profundidade: number, frente: number): number {
+  if (profundidade <= 0) return NEAR_MINIMO
+  return Math.max(NEAR_MINIMO, frente + profundidade)
+}
 
 /** Tudo que o rastreamento de raios precisa, já no espaço do MUNDO. */
 export type DadosRaios = {

@@ -348,7 +348,18 @@ function ControleCamera({
     ultima.current = clock.elapsedTime
     const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 0
     const alvo = orbita?.target ?? new THREE.Vector3()
-    onCamera({ distancia: camera.position.distanceTo(alvo), fov, near: (camera as THREE.PerspectiveCamera).near })
+    // Onde o modelo começa/termina no eixo de visão: centro da esfera envolvente projetado na
+    // direção da câmera, ± raio. O plano near é perpendicular a esse eixo.
+    let frente = 0
+    let fundo = 0
+    if (grupo.current) {
+      const esfera = new THREE.Box3().setFromObject(grupo.current).getBoundingSphere(new THREE.Sphere())
+      const frenteCam = camera.getWorldDirection(new THREE.Vector3())
+      const centro = esfera.center.sub(camera.position).dot(frenteCam)
+      frente = centro - esfera.radius
+      fundo = centro + esfera.radius
+    }
+    onCamera({ distancia: camera.position.distanceTo(alvo), fov, near: (camera as THREE.PerspectiveCamera).near, frente, fundo })
   })
   return null
 }

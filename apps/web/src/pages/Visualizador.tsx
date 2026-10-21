@@ -19,6 +19,7 @@ import {
   type InfoSeparacao,
   type Transformacao,
   type Zoom,
+  nearDaProfundidade,
 } from '../lib/visualizador'
 
 type Ferramenta = 'ampliar' | 'recortar' | 'separar' | 'transformar' | 'raios'
@@ -64,9 +65,12 @@ export default function Visualizador() {
   const [ferramenta, setFerramenta] = useState<Ferramenta>('ampliar')
   const [caixa, setCaixa] = useState<Caixa | null>(null)
   const [corte, setCorte] = useState<Corte>({ ativo: false, eixo: 'x', posicao: 0, inverter: false, tampa: true })
-  const [near, setNear] = useState(0.1)
+  // Quanto do tênis o plano near corta, em cm a partir da frente do modelo (0 = nada)
+  const [profundidade, setProfundidade] = useState(0)
   const [zoom, setZoom] = useState<Zoom>({ tipo: 'dolly', noPonto: true })
   const [infoCamera, setInfoCamera] = useState<InfoCamera | null>(null)
+  const near = nearDaProfundidade(profundidade, infoCamera?.frente ?? 0)
+  const espessura = infoCamera ? Math.max(1, Math.ceil(infoCamera.fundo - infoCamera.frente)) : 30
   const [comando, setComando] = useState<Comando | undefined>()
   const [cursor, setCursor] = useState<Cursor>(null)
   const [gizmo, setGizmo] = useState<{ ativo: boolean; modo: ModoGizmo }>({ ativo: false, modo: 'translate' })
@@ -327,14 +331,22 @@ export default function Visualizador() {
 
               <h3>Recorte pela câmera (plano near)</h3>
               <label className="campo largo">
-                Near: {fmt(near)} cm
-                <input type="range" min={0.1} max={infoCamera ? Math.max(1, Math.round(infoCamera.distancia)) : 40} step={0.1} value={near} onChange={(e) => setNear(Number(e.target.value))} />
+                Cortar da frente: {fmt(profundidade)} cm {profundidade > 0 && `(near a ${fmt(near)} cm da câmera)`}
+                <input type="range" min={0} max={espessura} step={0.1} value={Math.min(profundidade, espessura)} onChange={(e) => setProfundidade(Number(e.target.value))} />
               </label>
+              {profundidade > 0 && (
+                <button onClick={() => setProfundidade(0)}>Tirar o recorte da câmera</button>
+              )}
+              <p className="conceito">
+                Gire o modelo e arraste: a parte mais perto de você some e dá para ver o <strong>oco</strong> do tênis (aqui não
+                há tampa). Para ver só este efeito, desmarque “Cortar o modelo” acima.
+              </p>
               <ComoFunciona>
                 <p>
                   <strong>Recorte (clipping)</strong> é descartar o que fica fora de uma região. A GPU faz isso em todo quadro com o
-                  <em> volume de visão</em> (frustum) da câmera: o que está mais perto que o plano <em>near</em> é cortado — arraste o
-                  slider “Near” e veja a frente do tênis sumir.
+                  <em> volume de visão</em> (frustum) da câmera: o que está mais perto que o plano <em>near</em> é cortado. O slider
+                  começa na frente do tênis (o ponto dele mais próximo da câmera): 0 cm não corta nada, o máximo corta o tênis
+                  inteiro. O recorte é perpendicular ao olhar, então girar a câmera muda o que é cortado.
                 </p>
                 <p>
                   O <strong>plano de corte</strong> (amarelo) é um plano a mais: cada fragmento com <code>n·p + d &lt; 0</code> é

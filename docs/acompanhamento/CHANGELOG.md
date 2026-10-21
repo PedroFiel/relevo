@@ -14,6 +14,11 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 - **Fotos**: "Aplicar e gerar o 3D" (API de desenvolvimento `POST /amostras/{tenis}/gerar`).
 - Guia `docs/09-funcionalidades-cg.md`.
 
+### Corrigido (20/10/2026)
+- **Recorte pela câmera (near)**: o slider ia de 0 até a distância da câmera e só cortava o tênis no último terço —
+  parecia não funcionar. Agora é "Cortar da frente" (0 = nada, máximo = o tênis inteiro), medido a partir do ponto do
+  modelo mais próximo da câmera, e continua certo depois de girar ou dar zoom.
+
 ### Corrigido (02/10/2026)
 - tenis-03 pior que 01/02: sombra suave do catálogo inchava a silhueta e manchava o bico de branco; ondas na lateral.
 - Ligar o corte derrubava o visualizador; comentário de código aparecia na tela; erro ao terminar de carregar o modelo.
