@@ -14,6 +14,11 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 - **Fotos**: "Aplicar e gerar o 3D" (API de desenvolvimento `POST /amostras/{tenis}/gerar`).
 - Guia `docs/09-funcionalidades-cg.md`.
 
+### Removido (27/10/2026)
+- **Ampliar → "Lente (FOV)"**: o zoom de lente funcionava, mas no uso não dava para perceber a diferença para o
+  "Aproximar a câmera" (nem com um slider de FOV). A aba Ampliar ficou só com o zoom que anda com a câmera, no ponto sob
+  o cursor. O FOV continua no rodapé do visor. [F2-T12]
+
 ### Corrigido (20/10/2026)
 - **Recorte pela câmera (near)**: o slider ia de 0 até a distância da câmera e só cortava o tênis no último terço —
   parecia não funcionar. Agora é "Cortar da frente" (0 = nada, máximo = o tênis inteiro), medido a partir do ponto do

@@ -25,11 +25,11 @@ O RELEVO tem os dois: as **fotos** (2D, a entrada) e o **modelo** (3D, a saída)
 
 | | |
 |---|---|
-| **Conceito** | câmera virtual; *dolly* (mover a câmera) × lente (campo de visão, FOV); raycasting |
-| **Na tela** | aba **Ampliar**: ＋/－, **Enquadrar**, "Aproximar a câmera" ou "Lente (FOV)", roda do mouse amplia no ponto sob o cursor. O rodapé do visor mostra distância da câmera, FOV e *near* |
-| **Como funciona** | *Aproximar*: a câmera anda; a perspectiva muda. *Lente*: a câmera fica parada e o FOV diminui (como recortar e ampliar a foto). *No ponto*: um raio sai da câmera pelo pixel do mouse, acha o ponto do modelo e câmera e alvo sofrem a homotetia `c' = p + (c − p)·k` — o ponto fica parado na tela. *Enquadrar*: distância = raio da esfera envolvente / sen(FOV/2) |
-| **Código** | `apps/web/src/lib/camera.ts` (`pontoDeZoom`, `zoomLente`), `components/ModelViewer.tsx` (`ControleCamera`) |
-| **Testes** | `lib/geometria3d.test.ts`: o ponto continua na reta câmera→ponto; distância mínima; limites do FOV |
+| **Conceito** | câmera virtual; *dolly* (mover a câmera); raycasting |
+| **Na tela** | aba **Ampliar**: ＋/－, **Enquadrar**, roda do mouse amplia no ponto sob o cursor (checkbox). O rodapé do visor mostra distância da câmera, FOV e *near* |
+| **Como funciona** | *Aproximar*: a câmera anda; a perspectiva muda (o modo "Lente (FOV)" foi tirado em 27/10: não se percebia a diferença). *No ponto*: um raio sai da câmera pelo pixel do mouse, acha o ponto do modelo e câmera e alvo sofrem a homotetia `c' = p + (c − p)·k` — o ponto fica parado na tela. *Enquadrar*: distância = raio da esfera envolvente / sen(FOV/2) |
+| **Código** | `apps/web/src/lib/camera.ts` (`pontoDeZoom`, `fatorDaRoda`), `components/ModelViewer.tsx` (`ControleCamera`) |
+| **Testes** | `lib/geometria3d.test.ts`: o ponto continua na reta câmera→ponto; distância mínima; sentido da roda. `pages/Visualizador.test.tsx`: sem modo Lente; o checkbox "no ponto" e o ＋ Ampliar chegam ao canvas |
 
 ## 2. Recortar (clipping) — modelo 3D
 

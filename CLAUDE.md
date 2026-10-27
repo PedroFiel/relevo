@@ -41,7 +41,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 |---|---|
 | Processamento de imagem e **segmentação** (distância de cor em Lab, morfologia matemática) | pipeline — segmentação; front — máscara/contorno sobre a foto (F3-T14) |
 | **Recorte 2D (cortar / clipping)**: janela→viewport, Cohen–Sutherland, Sutherland–Hodgman | pipeline (recorte da foto, F1-T11) e front (visor 2D, F2-T10; editor de foto, F3-T13) |
-| **Ampliar / zoom e pan** (zoom em torno de um ponto, *dolly* × FOV) | front (visor 2D, F2-T10; zoom no ponto 3D, F2-T12) |
+| **Ampliar / zoom e pan** (zoom em torno de um ponto, *dolly*) | front (visor 2D, F2-T10; zoom no ponto 3D, F2-T12) |
 | **Rastreamento de contorno** (Suzuki–Abe / Moore) + Douglas–Peucker | pipeline (F1-T12) |
 | **Recorte 3D** (plano de corte, *frustum*, *stencil*) | front (F2-T11) |
 | Projeção ortográfica e perspectiva | pipeline (visual hull) e front (câmeras) |

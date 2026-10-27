@@ -153,12 +153,13 @@ Diferença do plano: o plano de corte é definido nas coordenadas do modelo e ac
      da face; marcador pequeno no ponto.
   2. Zoom no ponto: roda do mouse aproxima a câmera **em direção ao ponto atingido** (`dolly` ao longo do raio), em vez
      do centro; sem interseção, comportamento normal do `OrbitControls`.
-  3. Seletor "tipo de zoom": aproximar (*dolly*) × lente (muda o FOV) × ortográfico (`camera.zoom`) — com a frase do
-     conceito: *dolly* muda a perspectiva, FOV não.
+  3. ~~Seletor "tipo de zoom": aproximar (*dolly*) × lente (muda o FOV) × ortográfico (`camera.zoom`).~~ **Tirado em
+     27/10/2026:** o zoom de lente foi feito, mas no uso não dava para perceber a diferença para o *dolly* (nem com
+     slider de FOV); ficou só o *dolly* no ponto. O FOV continua visível no rodapé do visor.
   4. `src/lib/camera.ts`: `pontoDeZoom(origem, alvo, ponto, fator)` (puro, testável).
 - **Testes:** `pontoDeZoom` mantém a câmera na reta câmera→ponto e respeita `minDistance`; fator 1 não move.
 - **Aceite:** passar o mouse sobre o bico mostra x ≈ metade do comprimento (convenção: modelo centrado em x).
-- **Conceito de CG:** raycasting (interseção raio–triângulo), espaço do mundo × do objeto, *dolly* × FOV.
+- **Conceito de CG:** raycasting (interseção raio–triângulo), espaço do mundo × do objeto, *dolly* (homotetia no ponto).
 
 ### F2-T13 — Transformações interativas: mover, girar e aumentar (base)
 - **Frente:** front

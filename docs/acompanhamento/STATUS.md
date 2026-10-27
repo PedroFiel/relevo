@@ -4,7 +4,7 @@
 
 **Fase atual:** 0 — Setup e prova de conceito
 **Próxima tarefa:** F0-T10 (fotos tiradas pelo grupo + fita métrica) e F0-T08 (repo + CI); pipeline F1-T01 → F1-T03 (decimação: 190–260 mil faces, 5–6,6 MB por .glb, ~5 s para abrir → ~20 mil) e F1-T04 → F1-T07
-**Data de entrega:** _a definir_ · **Última atualização:** 01/10/2026
+**Data de entrega:** _a definir_ · **Última atualização:** 27/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
 
@@ -66,7 +66,7 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F2-T09 | Testes visuais (Playwright) | | a fazer |
 | F2-T10 | Visor 2D: janela→viewport, zoom, pan, clipping | Pedro + Claude | feito |
 | F2-T11 | Plano de corte 3D (clipping + stencil) | Pedro + Claude | feito |
-| F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | feito |
+| F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | feito (27/10: modo Lente (FOV) tirado) |
 | F2-T13 | Mover, girar, aumentar (matriz 4×4) | Pedro + Claude | feito |
 | F2-T14 | Selecionar área, separar e mover | Pedro + Claude | feito |
 | F2-T15 | Rastreamento de raios × rasterização | Pedro + Claude | feito |
