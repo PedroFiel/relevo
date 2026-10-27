@@ -67,7 +67,7 @@ export default function Visualizador() {
   const [corte, setCorte] = useState<Corte>({ ativo: false, eixo: 'x', posicao: 0, inverter: false, tampa: true })
   // Quanto do tênis o plano near corta, em cm a partir da frente do modelo (0 = nada)
   const [profundidade, setProfundidade] = useState(0)
-  const [zoom, setZoom] = useState<Zoom>({ tipo: 'dolly', noPonto: true })
+  const [zoom, setZoom] = useState<Zoom>({ noPonto: true })
   const [infoCamera, setInfoCamera] = useState<InfoCamera | null>(null)
   const near = nearDaProfundidade(profundidade, infoCamera?.frente ?? 0)
   const espessura = infoCamera ? Math.max(1, Math.ceil(infoCamera.fundo - infoCamera.frente)) : 30
@@ -281,19 +281,14 @@ export default function Visualizador() {
                 <button onClick={() => pedir({ tipo: 'ampliar', fator: 1 / 0.7 })}>－ Reduzir</button>
                 <button onClick={() => pedir({ tipo: 'enquadrar' })}>Enquadrar</button>
               </div>
-              <div className="toolbar" role="group" aria-label="Tipo de zoom">
-                <button aria-pressed={zoom.tipo === 'dolly'} onClick={() => setZoom({ ...zoom, tipo: 'dolly' })}>Aproximar a câmera</button>
-                <button aria-pressed={zoom.tipo === 'lente'} onClick={() => setZoom({ ...zoom, tipo: 'lente' })}>Lente (FOV)</button>
-              </div>
               <label>
-                <input type="checkbox" checked={zoom.noPonto} disabled={zoom.tipo === 'lente'} onChange={(e) => setZoom({ ...zoom, noPonto: e.target.checked })} />{' '}
+                <input type="checkbox" checked={zoom.noPonto} onChange={(e) => setZoom({ ...zoom, noPonto: e.target.checked })} />{' '}
                 Roda do mouse amplia no ponto sob o cursor
               </label>
               <ComoFunciona>
                 <p>
-                  Ampliar é mudar o que a câmera enxerga. <strong>Aproximar</strong> anda com a câmera (a perspectiva muda:
-                  o que está perto cresce mais). <strong>Lente</strong> deixa a câmera parada e fecha o ângulo de visão (FOV) —
-                  é como recortar e ampliar a foto. No 2D, o mesmo conceito é encolher a <em>janela</em> do mundo mostrada no visor.
+                  Ampliar é mudar o que a câmera enxerga: aqui a câmera <strong>anda</strong> (dolly) e a perspectiva muda — o
+                  que está perto cresce mais. No 2D, o mesmo conceito é encolher a <em>janela</em> do mundo mostrada no visor.
                 </p>
                 <p>
                   Para ampliar <em>no ponto</em>, um raio sai da câmera pelo pixel do mouse (raycasting) e a câmera anda na direção

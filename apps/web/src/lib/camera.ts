@@ -1,8 +1,7 @@
 /**
- * Zoom 3D (F2-T12). Dois jeitos de "ampliar" com câmera perspectiva:
- * - **Aproximar (dolly)**: a câmera ANDA. Muda a perspectiva (o que está perto cresce mais).
- * - **Lente (FOV)**: a câmera fica parada e o ângulo de visão diminui. Não muda a perspectiva —
- *   é como recortar e ampliar a imagem.
+ * Zoom 3D (F2-T12): **aproximar (dolly)** — a câmera ANDA em direção ao ponto. Muda a perspectiva
+ * (o que está perto cresce mais). O zoom de lente (FOV) foi tirado em 27/10/2026: no uso, não dava
+ * para perceber a diferença.
  */
 import type { Vec3 } from './corte'
 
@@ -27,11 +26,6 @@ export function pontoDeZoom(
   const d = distancia(camera, ponto)
   const f = d * fator < distanciaMinima ? distanciaMinima / d : fator
   return { camera: soma(ponto, mult(sub(camera, ponto), f)), alvo: soma(ponto, mult(sub(alvo, ponto), f)) }
-}
-
-/** Zoom de lente: FOV menor = mais ampliado. Limitado para não virar teleobjetiva/olho de peixe. */
-export function zoomLente(fovGraus: number, fator: number, min = 8, max = 75): number {
-  return Math.min(max, Math.max(min, fovGraus * fator))
 }
 
 /** Fator por "clique" da roda do mouse (deltaY > 0 afasta). */
