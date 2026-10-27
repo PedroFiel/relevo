@@ -2,7 +2,7 @@
 import type { Eixo, Vec3 } from './corte'
 
 export type Corte = { ativo: boolean; eixo: Eixo; posicao: number; inverter: boolean; tampa: boolean }
-export type Zoom = { tipo: 'dolly' | 'lente'; noPonto: boolean }
+export type Zoom = { noPonto: boolean }
 export type Transformacao = { posicao: Vec3; rotacao: Vec3; escala: number }
 export type Cursor = { modelo: Vec3; normal: Vec3 } | null
 export type Caixa = { min: Vec3; max: Vec3 }

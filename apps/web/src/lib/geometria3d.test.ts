@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
-import { distancia, fatorDaRoda, pontoDeZoom, zoomLente } from './camera'
+import { distancia, fatorDaRoda, pontoDeZoom } from './camera'
 import { ladoDoPlano, planoDeCorte, pontoNoPlano, type Vec3 } from './corte'
 import { aplicar4, compor, linhasDaMatriz, paraColunas } from './matrizes'
 
@@ -51,9 +51,7 @@ describe('zoom 3D (F2-T12)', () => {
     expect(distancia(pontoDeZoom(camera, alvo, ponto, 0.0001, 3).camera, ponto)).toBeCloseTo(3)
   })
 
-  it('lente limitada e roda do mouse', () => {
-    expect(zoomLente(40, 0.1)).toBe(8)
-    expect(zoomLente(40, 10)).toBe(75)
+  it('roda do mouse: para baixo afasta, para cima aproxima', () => {
     expect(fatorDaRoda(100)).toBeGreaterThan(1)
     expect(fatorDaRoda(-100)).toBeLessThan(1)
   })

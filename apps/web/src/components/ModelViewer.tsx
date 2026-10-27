@@ -2,7 +2,7 @@ import { OrbitControls, TransformControls, useGLTF, useProgress } from '@react-t
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import * as THREE from 'three'
-import { fatorDaRoda, pontoDeZoom, zoomLente } from '../lib/camera'
+import { fatorDaRoda, pontoDeZoom } from '../lib/camera'
 import { ladoDoPlano, planoDeCorte, pontoNoPlano, type Vec3 } from '../lib/corte'
 import { planosDaSelecao, separar, type Malha } from '../lib/selecao'
 import type { ModoRender } from '../lib/modosRender'
@@ -245,13 +245,8 @@ function Marcador({ cursorRef }: { cursorRef: MutableRefObject<THREE.Vector3 | n
 
 type Orbita = { target: THREE.Vector3; update: () => void }
 
-/** Aplica um fator de zoom: lente (muda o FOV) ou dolly (anda até o ponto sob o cursor/alvo). */
+/** Aplica um fator de zoom: dolly (a câmera anda até o ponto sob o cursor ou até o alvo da órbita). */
 function ampliar(camera: THREE.Camera, orbita: Orbita | null, zoom: Zoom, fator: number, ponto: THREE.Vector3 | null) {
-  if (zoom.tipo === 'lente' && camera instanceof THREE.PerspectiveCamera) {
-    camera.fov = zoomLente(camera.fov, fator)
-    camera.updateProjectionMatrix()
-    return
-  }
   if (!orbita) return
   const alvo = orbita.target
   const p = zoom.noPonto && ponto ? ponto : alvo
@@ -624,7 +619,7 @@ function Cena(props: Props) {
         />
       )}
       <ControleCamera
-        zoom={zoom ?? { tipo: 'dolly', noPonto: false }}
+        zoom={zoom ?? { noPonto: false }}
         near={props.near ?? 0.1}
         comando={props.comando}
         cursorRef={cursorRef}
@@ -670,7 +665,7 @@ export default function ModelViewer(props: Props) {
       </Suspense>
       {/* Grade de 2 cm por célula (o modelo está em centímetros) */}
       <gridHelper args={[60, 30, '#3a4150', '#262b35']} raycast={() => {}} />
-      {/* A roda do mouse é tratada pelo ControleCamera (dolly no ponto ou lente) */}
+      {/* A roda do mouse é tratada pelo ControleCamera (dolly no ponto sob o cursor) */}
       <OrbitControls makeDefault target={[0, 4, 0]} enableZoom={false} />
     </Canvas>
     </>
