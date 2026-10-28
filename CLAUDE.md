@@ -218,13 +218,14 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
 
 ## 12. Onde estamos
 
-- **Fase atual:** 0 — Setup e prova de conceito, com boa parte das Fases 1 e 2 adiantada: pipeline com até 6 vistas,
-  recorte/rotação da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção
-  transversal, cor por vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting e transformações 4×4;
-  página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte. API só com health checks; banco (Neon) com as 6 tabelas do MVP e o usuário demo (F3-T01).
-  3 tênis de catálogo (`samples/reais/`) geram modelos reconhecíveis (`make reais`).
-- **Pendente na Fase 0:** F0-T08 (repo + CI), F0-T09 (setup de cada integrante), **F0-T10 (fotos tiradas pelo grupo +
-  fita métrica — falta o erro dimensional)**.
+- **Fase atual:** 3 — Integração (MVP), em duas trilhas paralelas: **A** (back, banco, pipeline) e **B** (front bonito
+  e responsivo) — ordem no **Plano de finalização** do STATUS. Já prontos: pipeline com até 6 vistas, recorte/rotação
+  da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção transversal, cor por
+  vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting, transformações 4×4, seleção e ray
+  tracing; página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte; banco (Neon) com as 6 tabelas do MVP
+  e o usuário demo (F3-T01). API ainda só com health checks e a rota de dev `/amostras`.
+- **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
+  tiradas pelo grupo + fita métrica — falta o erro dimensional)**, F1-T03 (decimação), F2-T01 (base visual + home).
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
 
 ## 13. Limites conhecidos (comunicar, não esconder)
