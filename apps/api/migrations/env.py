@@ -62,6 +62,14 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Os testes passam a conexão do banco de teste (relevo_test) em config.attributes
+    conexao = config.attributes.get("connection")
+    if conexao is not None:
+        context.configure(connection=conexao, target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
+        return
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

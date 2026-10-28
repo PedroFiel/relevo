@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=RAIZ_REPO / ".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://relevo:relevo@localhost:5432/relevo"
+    # Banco dos testes. Vazio = o mesmo servidor do DATABASE_URL, na base `relevo_test`.
+    test_database_url: str | None = None
     storage_dir: Path = RAIZ_REPO / "storage"
     cors_origins: list[str] = ["http://localhost:5173"]
 
