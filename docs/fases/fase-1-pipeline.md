@@ -110,6 +110,8 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   da T04) — o IoU em voxels deu 1,00 nos 3 tênis, pouco sensível.
 
 ### F1-T08 — Intermediários para o Raio-X e progresso
+- **No MVP (27/10):** só o item 1 (callback de progresso), que a F3-T05 usa. O item 2 (intermediários) fica para quando
+  a F5-T01 (Raio-X) começar.
 - **Frente:** pipeline
 - **Como fazer:**
   1. `processar(..., ao_progredir: Callable[[str, int], None] | None)` — chamado a cada etapa com

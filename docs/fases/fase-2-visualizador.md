@@ -17,8 +17,13 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
   3. Layout `AppLayout` com cabeçalho (logo RELEVO, links Início / Novo modelo / Meus modelos) e `<Outlet/>`.
   4. Rotas finais já declaradas (mesmo vazias): `/`, `/novo`, `/modelos`, `/modelos/:id`, `/visualizador`.
   5. Página do visualizador: canvas à esquerda (70 %), painel de controles à direita (30 %); em celular, painel abaixo.
-- **Testes:** Vitest renderiza cada rota sem erro; `Slider` chama `onChange`.
-- **Aceite:** navegação entre páginas funciona; layout ok em 375 px de largura.
+  6. **Home de produto** (incluída em 27/10, plano de finalização no STATUS): hoje são dois links soltos. Passa a ter
+     a frase da missão, "como funciona" em 3 passos (fotos → processamento → modelo 3D), botão principal
+     **"Criar modelo"** → `/novo`, link secundário "Ver um exemplo" → `/visualizador`, e um bloco curto de
+     transparência (sem IA; o que o algoritmo não consegue — `CLAUDE.md` §13) com link para o guia de fotos.
+- **Testes:** Vitest renderiza cada rota sem erro; `Slider` chama `onChange`; a home tem o botão "Criar modelo"
+  apontando para `/novo`.
+- **Aceite:** navegação entre páginas funciona; layout ok em 375 px de largura (home incluída).
 
 ### F2-T02 — Câmera e controles de órbita
 - **Frente:** front
