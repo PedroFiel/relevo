@@ -2,8 +2,8 @@
 
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
-**Fase atual:** 0 — Setup e prova de conceito
-**Próxima tarefa:** Fase 3 no back — F3-T02 (storage) → F1-T08 (progresso) → F3-T03/T05/T06; F0-T10 (fotos tiradas pelo grupo + fita métrica); pipeline F1-T01 → F1-T03 (decimação: 190–260 mil faces, 5–6,6 MB por .glb, ~5 s para abrir → ~20 mil) e F1-T04 → F1-T07
+**Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
+**Próxima tarefa:** trilha A → **F3-T02** · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 27/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -16,8 +16,52 @@ Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
 | _integrante 2_ | | |
 | _integrante 3_ | | |
 
-Sugestão de divisão: 1–2 pessoas no **pipeline** (Fase 1), 1–2 no **front** (Fase 2), 1 no **back + banco** (prepara a Fase 3
-enquanto as outras andam). Na Fase 3 todos convergem.
+Divisão sugerida: 1 pessoa na **trilha A** (back + banco + pipeline), 1–2 na **trilha B** (front); no fechamento todos
+convergem.
+
+## Plano de finalização
+
+Definido em 27/10/2026. Meta: o fluxo ideal de ponta a ponta — subir as fotos (ajustando recorte/rotação) →
+acompanhar as etapas → ver o tênis 3D com as ferramentas de CG → baixar → achar em "Meus modelos" —, com o front
+bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encontram no passo 4 da trilha B.
+
+**Trilha A — back, banco e pipeline**
+
+| # | Tarefa | Por quê / observação |
+|---|---|---|
+| 1 | F3-T01 — tabelas e migração | **feito** (PR #4) |
+| 2 | F3-T02 — Storage local | onde ficam fotos e `.glb`; base do upload |
+| 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | precisa existir antes do primeiro endpoint |
+| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
+| 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | valida pelos bytes; 202 com `modelo_id`/`job_id` |
+| 6 | F3-T05 — execução do job | etapa e progresso no banco; erro amigável |
+| 7 | F3-T06 — leitura, download e delete | a partir daqui o front sai do *mock* |
+| 8 | F1-T03 — decimação (~20 mil faces) | hoje o `.glb` tem 5–6,6 MB e leva ~5 s para abrir |
+
+**Trilha B — front (bonito, responsivo e funcional)**
+
+| # | Tarefa | Por quê / observação |
+|---|---|---|
+| 1 | F2-T01 — base visual **+ nova home** | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
+| 2 | F3-T07 — cliente da API | começa com *mock* do contrato (`docs/05-api.md`) |
+| 3 | F3-T08 + F3-T13 — `/novo` | upload guiado com gabarito, editor de foto (reaproveita o `VisorFoto` de `/fotos`), cm, preset |
+| 4 | F3-T09 — status por etapa | **encontro**: troca o *mock* pela API quando a trilha A chegar no 7 |
+| 5 | F3-T10 + F3-T14 — `/modelos/:id` | visualizador com as abas de CG, aba Fotos (contorno/avisos), baixar `.glb` |
+| 6 | F3-T11 — `/modelos` | "Meus modelos" |
+
+`/visualizador` e `/fotos` continuam como **estúdio** (demonstração para a banca) até o detalhe do modelo absorvê-los.
+
+**Fechamento do MVP (todos)**
+1. F3-T12 — E2E com Playwright (e F2-T09 junto, mesma ferramenta).
+2. F0-T10 — foto tirada pelo grupo + fita métrica → erro dimensional (< 5 %).
+3. `docs/revisoes/fase-3.md`, tag `v0.1.0-mvp` e vídeo curto da demo.
+
+**Depois do MVP (conforme a data de entrega)**
+- F4-T05 — exportar `.obj`/`.stl` (barato com trimesh).
+- F4-T01/T02 — login e créditos **só se** a professora exigir conta de usuário.
+- F5-T07 — apresentação; F5-T01 — Raio-X (usa a parte de intermediários da F1-T08) se sobrar tempo.
+
+**Pendências sem dono:** data de entrega · responsáveis de cada trilha (tabela Equipe) · proteção da `main` (F0-T08).
 
 ## Fase 0 — Setup e prova de conceito
 
@@ -45,7 +89,7 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F1-T05 | Cor por vértice | Pedro + Claude | feito |
 | F1-T06 | Segmentação robusta | Pedro + Claude | feito |
 | F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | em andamento |
-| F1-T08 | Intermediários + progresso | | a fazer |
+| F1-T08 | Intermediários + progresso | | a fazer (MVP: só o callback — trilha A, passo 4) |
 | F1-T09 | Desempenho | | a fazer |
 | F1-T10 | Notebook didático | | a fazer |
 | F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | feito |
@@ -55,7 +99,7 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F2-T01 | Base visual e layout | | a fazer |
+| F2-T01 | Base visual e layout (+ home) | | a fazer (trilha B, passo 1) |
 | F2-T02 | Câmera e controles | | a fazer |
 | F2-T03 | Modos de renderização | | a fazer |
 | F2-T04 | Iluminação controlável | | a fazer |

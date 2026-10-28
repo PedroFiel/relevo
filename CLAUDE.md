@@ -107,8 +107,11 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
    ferramentas de assistência de código / IA — nem na mensagem, nem na descrição do PR, nem em comentários de código.
    (As configurações do ambiente de desenvolvimento do repositório já desligam isso; mesmo assim, conferir antes de cada commit.)
 3. **Nada entra na `main` sem teste.** Toda tarefa traz seus testes; `make test` e `make lint` verdes; PR revisado.
-4. **Documentação anda junto com o código.** Toda tarefa atualiza `docs/acompanhamento/STATUS.md` e o diário; mudanças
-   visíveis vão para o `CHANGELOG.md`; mudança de algoritmo/API/banco atualiza o doc correspondente.
+4. **Documentar tudo, sempre — não só código.** Toda sessão deixa registro, inclusive as que só investigam, planejam,
+   decidem ou abrem/mergeiam PR: o diário do dia conta o que foi feito, decidido e descoberto; o STATUS reflete o estado
+   real (fase, próxima tarefa, plano). Mudanças visíveis vão para o `CHANGELOG.md`; mudança de algoritmo/API/banco
+   atualiza o doc correspondente. Doc defasado ou contraditório encontrado no caminho é corrigido **na hora**, no mesmo
+   PR. Nada importante fica só na conversa: se não está em `docs/`, para a próxima pessoa não aconteceu.
 5. **Banco só muda por migração Alembic**, revisada à mão, com `downgrade` funcionando.
 6. **Nunca commitar** `.env`, `storage/`, `out/`, `node_modules/`, `.venv/`, segredos ou fotos > 1 MB.
 7. **Convenção de eixos e unidades é lei** (seção 8). Quebrar isso quebra o pipeline inteiro.
@@ -184,8 +187,8 @@ shaders em `src/shaders`; materiais/geometrias em `useMemo` e liberados com `dis
 3. Criar branch: `fase-<n>/<id>-<descricao-curta>` — ex.: `fase-1/f1-t02-suavizacao-taubin`.
 4. Implementar seguindo o "Como fazer". Se precisar desviar, registrar o motivo.
 5. Escrever/rodar os testes da tarefa; `make test` e `make lint` verdes.
-6. Atualizar docs: STATUS (status + responsável), diário do dia (`docs/acompanhamento/diario/AAAA-MM-DD.md`,
-   a partir do `TEMPLATE.md`), CHANGELOG se visível, ADR se houve decisão.
+6. Atualizar docs (regra 4 — vale também para sessão sem código): STATUS (status + responsável), diário do dia
+   (`docs/acompanhamento/diario/AAAA-MM-DD.md`, a partir do `TEMPLATE.md`), CHANGELOG se visível, ADR se houve decisão.
 7. Commit(s) no padrão abaixo e PR com o template; revisão com `docs/revisoes/checklist-revisao.md`.
 8. Fim de fase → `docs/revisoes/fase-N.md` (a partir do `TEMPLATE-fase.md`) + tag.
 
@@ -218,13 +221,14 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
 
 ## 12. Onde estamos
 
-- **Fase atual:** 0 — Setup e prova de conceito, com boa parte das Fases 1 e 2 adiantada: pipeline com até 6 vistas,
-  recorte/rotação da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção
-  transversal, cor por vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting e transformações 4×4;
-  página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte. API só com health checks; banco (Neon) com as 6 tabelas do MVP e o usuário demo (F3-T01).
-  3 tênis de catálogo (`samples/reais/`) geram modelos reconhecíveis (`make reais`).
-- **Pendente na Fase 0:** F0-T08 (repo + CI), F0-T09 (setup de cada integrante), **F0-T10 (fotos tiradas pelo grupo +
-  fita métrica — falta o erro dimensional)**.
+- **Fase atual:** 3 — Integração (MVP), em duas trilhas paralelas: **A** (back, banco, pipeline) e **B** (front bonito
+  e responsivo) — ordem no **Plano de finalização** do STATUS. Já prontos: pipeline com até 6 vistas, recorte/rotação
+  da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção transversal, cor por
+  vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting, transformações 4×4, seleção e ray
+  tracing; página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte; banco (Neon) com as 6 tabelas do MVP
+  e o usuário demo (F3-T01). API ainda só com health checks e a rota de dev `/amostras`.
+- **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
+  tiradas pelo grupo + fita métrica — falta o erro dimensional)**, F1-T03 (decimação), F2-T01 (base visual + home).
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
 
 ## 13. Limites conhecidos (comunicar, não esconder)
