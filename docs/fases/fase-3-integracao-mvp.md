@@ -59,6 +59,9 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
 - **Como fazer:** `tests/conftest.py`: cria a base `relevo_test` se não existir, roda `alembic upgrade head` nela uma vez
   por sessão, e cada teste roda dentro de uma transação revertida no fim (*rollback*). Sobrescrever `get_db` e o
   Storage (`tmp_path`) via `app.dependency_overrides`. No CI, adicionar `services: postgres:16` ao job Python.
+- **Como ficou (28/10):** em `apps/api/tests/conftest.py`, a fixture `storage` (`LocalStorage(tmp_path)`) e a
+  `cliente` (`TestClient` com `get_db` → sessão `db` do teste e `get_storage` → `storage`; as trocas são desfeitas
+  no fim). O `commit` da rota vira *savepoint* e o teste enxerga o que ela gravou. Teste de rota = pedir `cliente`.
 - **Aceite:** `make test-py` roda isolado e repetível; CI verde.
 
 ### F3-T05 — Execução do job
@@ -73,6 +76,9 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   3. Erro: captura a exceção, `job.status = erro`, `job.erro = mensagem amigável` (ex.: "Não encontramos o tênis na
      foto de topo — o fundo tem contraste suficiente?"), `modelo.status = erro`. Log com *traceback*.
   4. No *startup* da API (`lifespan`): jobs `processando` viram `erro` ("interrompido").
+  - **Atenção nos testes:** a sessão própria do job e o `lifespan` não passam por `get_db`, então a fixture
+    `cliente` não os troca. Receber a fábrica de sessões por parâmetro (padrão `SessionLocal`) e, nos testes,
+    passar uma ligada à conexão do `db`; senão o job grava no banco de verdade.
 - **Testes:** executar job com fotos sintéticas → versão 1 com `.glb` existente e métricas; foto toda branca → status
   `erro` com mensagem; callback grava etapas em ordem.
 
