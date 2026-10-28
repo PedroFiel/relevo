@@ -297,6 +297,14 @@ atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma re
 | Faces | `len(malha.faces)` | conforme preset |
 | Tempo total | soma dos `tempos_s` | < 10 s (resolução 128) |
 
+### Progresso (F1-T08)
+
+`processar(..., ao_progredir=cb)` chama `cb(etapa, percentual)` no **começo** de cada etapa, com o % já feito, e
+termina com `("concluido", 100)`. Etapas, na ordem: `segmentacao` (inclui ajuste, orientação e contorno),
+`alinhamento`, `visual_hull`, `marching_cubes`, `cor` (some com `colorir=False`). O % vem dos pesos em
+`PESOS_ETAPAS` (≈ fatia do tempo medido nos tenis-01..03: 35/5/10/15/35), não de cronômetro. Se uma etapa
+levanta erro, não há a chamada final. `suavizacao` e `decimacao` entram na lista quando F1-T02/F1-T03 existirem.
+
 ## Referências
 
 - Laurentini, A. *The Visual Hull Concept for Silhouette-Based Image Understanding*. IEEE PAMI, 1994.
