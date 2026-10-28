@@ -32,6 +32,11 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
 - **Como fazer:** `storage.py` com `class Storage(Protocol)`: `salvar(chave, bytes) -> str`, `abrir(chave) -> bytes`,
   `caminho_local(chave) -> Path`, `apagar_prefixo(prefixo)`. Implementação `LocalStorage(settings.storage_dir)`.
   Chaves: `modelos/{modelo_id}/fotos/{vista}.{ext}`, `modelos/{modelo_id}/v{n}/modelo.glb`, `.../etapas/...`.
+- **Como ficou (28/10):** `apps/api/src/relevo_api/storage.py`. A chave é validada pedaço a pedaço (só
+  `[A-Za-z0-9_.-]`, sem começar com `.`, sem pedaço vazio) e o caminho final precisa ficar dentro da raiz mesmo com
+  link simbólico — senão `ChaveInvalida`. `salvar` grava num temporário e troca com `os.replace` (nunca arquivo pela
+  metade). Funções `chave_foto`, `chave_glb`, `prefixo_modelo` montam as chaves; `get_storage()` é a dependência do
+  FastAPI que a F3-T04 troca por `LocalStorage(tmp_path)`.
 - **Testes:** salvar/abrir/apagar em `tmp_path`; chave com `..` é rejeitada (segurança contra *path traversal*).
 
 ## Back-end
