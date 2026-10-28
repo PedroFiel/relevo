@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 0 — Setup e prova de conceito
-**Próxima tarefa:** F0-T10 (fotos tiradas pelo grupo + fita métrica) e F0-T08 (repo + CI); pipeline F1-T01 → F1-T03 (decimação: 190–260 mil faces, 5–6,6 MB por .glb, ~5 s para abrir → ~20 mil) e F1-T04 → F1-T07
+**Próxima tarefa:** Fase 3 no back — F3-T02 (storage) → F1-T08 (progresso) → F3-T03/T05/T06; F0-T10 (fotos tiradas pelo grupo + fita métrica); pipeline F1-T01 → F1-T03 (decimação: 190–260 mil faces, 5–6,6 MB por .glb, ~5 s para abrir → ~20 mil) e F1-T04 → F1-T07
 **Data de entrega:** _a definir_ · **Última atualização:** 27/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -30,7 +30,7 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 | F0-T05 | API FastAPI esqueleto | Claude | feito | `/health/db` ok |
 | F0-T06 | PostgreSQL via Docker | Claude | feito | testado com Postgres 16 nativo; compose não testado no ambiente do Claude |
 | F0-T07 | Front React + Three.js esqueleto | Claude | feito | prints em `docs/revisoes/assets/` |
-| F0-T08 | Subir para o repo e CI | | a fazer | |
+| F0-T08 | Subir para o repo e CI | Pedro | em andamento | repo `PedroFiel/relevo` e CI (ruff, pytest com Postgres 16, oxlint, vitest, build) existem; falta conferir a proteção da `main` |
 | F0-T09 | Cada integrante roda o setup | todos | em andamento | Pedro: ok (testes, banco Neon, visualizador). Faltam os demais |
 | F0-T10 | Prova com fotos reais | Pedro + Claude | em andamento | 3 tênis de catálogo reconhecíveis, coloridos, fechados, escala exata; tenis-03 com 5 vistas, recorte e seção. Falta foto própria + fita métrica. Relatórios: `docs/testes/relatorios/2026-10-01-*.md` |
 
@@ -75,10 +75,10 @@ enquanto as outras andam). Na Fase 3 todos convergem.
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F3-T01 | Modelos ORM e migração | | a fazer |
+| F3-T01 | Modelos ORM e migração | Pedro + Claude | feito (27/10: 6 tabelas + usuário demo, aplicado no Neon) |
 | F3-T02 | Storage local | | a fazer |
 | F3-T03 | Schemas + POST /modelos | | a fazer |
-| F3-T04 | Banco de teste e fixtures | | a fazer |
+| F3-T04 | Banco de teste e fixtures | Pedro + Claude | em andamento (`relevo_test` + rollback por teste + Postgres no CI; falta sobrescrever `get_db`/Storage nas rotas) |
 | F3-T05 | Execução do job | | a fazer |
 | F3-T06 | Endpoints de leitura | | a fazer |
 | F3-T07 | Cliente da API | | a fazer |

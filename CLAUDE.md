@@ -221,7 +221,7 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
 - **Fase atual:** 0 — Setup e prova de conceito, com boa parte das Fases 1 e 2 adiantada: pipeline com até 6 vistas,
   recorte/rotação da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção
   transversal, cor por vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting e transformações 4×4;
-  página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte. API só com health checks; banco com baseline.
+  página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte. API só com health checks; banco (Neon) com as 6 tabelas do MVP e o usuário demo (F3-T01).
   3 tênis de catálogo (`samples/reais/`) geram modelos reconhecíveis (`make reais`).
 - **Pendente na Fase 0:** F0-T08 (repo + CI), F0-T09 (setup de cada integrante), **F0-T10 (fotos tiradas pelo grupo +
   fita métrica — falta o erro dimensional)**.

@@ -11,7 +11,7 @@ Fase em que cada tabela nasce: **F3** = MVP, **F4** = produto.
 erDiagram
     usuarios ||--o{ modelos : possui
     usuarios ||--o{ movimentos_credito : tem
-    modelos ||--|{ imagens : "tem 2 ou 3"
+    modelos ||--|{ imagens : "tem 2 a 6"
     modelos ||--o{ jobs : gera
     modelos ||--o{ versoes : tem
     jobs ||--o| versoes : produz
@@ -38,7 +38,7 @@ erDiagram
     imagens {
         uuid id PK
         uuid modelo_id FK
-        text vista "lateral|topo|frente"
+        text vista "lateral|topo|frente|outro_lado|sola|tras"
         text caminho
         int largura_px
         int altura_px
@@ -64,6 +64,7 @@ erDiagram
         uuid job_id FK
         int numero
         jsonb parametros
+        jsonb metricas "resultado exibido"
         jsonb transformacao "matriz 4x4 (F4)"
         timestamptz criado_em
     }
@@ -89,26 +90,39 @@ erDiagram
 ## Tabelas
 
 ### `usuarios` (F3; autenticação em F4)
-No MVP existe um usuário **demo** criado por *seed* na migração; todas as requisições usam ele.
+No MVP existe um usuário **demo** criado por *seed* na migração; todas as requisições usam ele:
+id fixo `00000000-0000-0000-0000-000000000001`, e-mail `demo@relevo.local` (constante `USUARIO_DEMO_ID` em
+`relevo_api/models.py`). `creditos` começa em 0 e só passa a valer na F4.
 Na F4 entram `senha_hash` (Argon2) e login JWT. `email` único.
 
 ### `modelos` (F3)
 O "projeto" do usuário: um calçado. `comprimento_cm` é o tamanho real informado (escala do modelo).
-`versao_atual` aponta o número da versão exibida.
+`versao_atual` aponta o número da versão exibida (nulo até a primeira versão ficar pronta).
+`status` começa em `rascunho`; `CHECK comprimento_cm BETWEEN 5 AND 60` (mesma faixa da API).
+`atualizado_em` é renovado pelo SQLAlchemy a cada `UPDATE` (ordena "Meus modelos").
 
 ### `imagens` (F3)
-Uma linha por foto enviada. **Restrição:** `UNIQUE (modelo_id, vista)`; `CHECK vista IN ('lateral','topo','frente')`.
+Uma linha por foto enviada (2 a 6 por modelo: `lateral` e `topo` obrigatórias, as outras opcionais — ADR 0007).
+**Restrição:** `UNIQUE (modelo_id, vista)`;
+`CHECK vista IN ('lateral','topo','frente','outro_lado','sola','tras')` — a mesma lista de
+`packages/pipeline/src/relevo_pipeline/vistas.py` (um teste garante que as duas não se separem).
+A obrigatoriedade de `lateral`/`topo` é validada na API (F3-T03), não no banco.
 O arquivo fica no Storage; aqui só o caminho e metadados.
 
 ### `jobs` (F3)
 Cada execução do pipeline. O worker atualiza `etapa_atual` e `progresso` a cada etapa (o front faz *polling*).
 - `parametros` (JSONB): `{"resolucao": 128, "suavizacao": 10, "faces_alvo": 20000, "preset": "ecommerce"}`
-- `metricas` (JSONB): saída de `ResultadoPipeline.metricas` (faces, tempos, dimensões, fechada, IoU).
+- `metricas` (JSONB): registro da **execução** (tempo de cada etapa, resolução usada) — gravado também quando
+  o job dá erro, para depurar.
+- `progresso` com `CHECK progresso BETWEEN 0 AND 100`.
 Índice em `(status)` para achar jobs travados no *startup*.
 
 ### `versoes` (F3)
 Cada resultado aceito. `UNIQUE (modelo_id, numero)`. Na F4, editar escala/rotação/pivô cria nova versão com a
 **matriz de transformação homogênea 4×4** em `transformacao` (lista de 16 números, ordem *column-major* como no Three.js).
+- `metricas` (JSONB): o **resultado** exibido — `ResultadoPipeline.metricas` (faces, dimensões, fechada, IoU, avisos,
+  contornos, ajustes). É o que `GET /modelos/{id}` devolve em `versao.metricas` (ADR 0006, F3-T14).
+- `job_id` é opcional: a versão criada por edição (F4) não roda o pipeline. Apagar o job deixa `job_id` nulo.
 
 ### `arquivos` (F3)
 Arquivos de uma versão: `.glb` principal, exportações `.obj/.stl` (F4), textura (F4), máscaras e malhas
@@ -120,6 +134,7 @@ Extrato de créditos. Saldo = `usuarios.creditos` (atualizado na mesma transaç�
 ## Regras de integridade
 
 - `ON DELETE CASCADE` de `modelos` para `imagens`, `jobs`, `versoes`; de `versoes` para `arquivos`.
+- `versoes.job_id` usa `ON DELETE SET NULL` (a versão sobrevive ao job que a gerou).
 - Apagar um modelo **também apaga os arquivos no Storage** (feito pela aplicação, não pelo banco).
 - Status sempre via `CHECK` (ou `Enum` do SQLAlchemy com `native_enum=False`).
 
