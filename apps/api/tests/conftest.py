@@ -4,6 +4,9 @@ Uma vez por sessão a base é criada (se faltar) e recebe `alembic upgrade head`
 dentro de uma transação desfeita no fim, então nada sobra entre um teste e outro.
 Sem servidor alcançável os testes de banco são pulados — a não ser que TEST_DATABASE_URL tenha sido
 definida (o CI define), aí a falha de conexão é erro.
+
+Testes de rota usam a fixture `cliente`: o `TestClient` da API com `get_db` trocado pela sessão `db`
+(mesma transação desfeita) e `get_storage` por um `LocalStorage` em `tmp_path` [F3-T04].
 """
 
 from __future__ import annotations
@@ -14,7 +17,11 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from relevo_api.config import settings
+from relevo_api.db import get_db
+from relevo_api.main import app
+from relevo_api.storage import LocalStorage, get_storage
 from sqlalchemy import Engine, create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -82,3 +89,21 @@ def db(engine_teste: Engine) -> Iterator[Session]:
         finally:
             sessao.close()
             transacao.rollback()
+
+
+@pytest.fixture
+def storage(tmp_path: Path) -> LocalStorage:
+    """Storage numa pasta temporária: nada vai para o `storage/` de verdade."""
+    return LocalStorage(tmp_path / "storage")
+
+
+@pytest.fixture
+def cliente(db: Session, storage: LocalStorage) -> Iterator[TestClient]:
+    """API com o banco de teste e o storage temporário; o teste vê o que a rota gravou."""
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_storage] = lambda: storage
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        app.dependency_overrides.clear()
