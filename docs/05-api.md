@@ -56,10 +56,13 @@ Erros: 400 (arquivo inválido), 413 (muito grande), 422 (`ajustes` inválido), 4
 ### `GET /jobs/{id}`
 **200**:
 ```json
-{"id": "…", "status": "processando", "etapa_atual": "visual_hull", "progresso": 50,
- "etapas": ["segmentacao", "alinhamento", "visual_hull", "marching_cubes", "suavizacao", "decimacao", "cor", "exportacao"],
+{"id": "…", "status": "processando", "etapa_atual": "visual_hull", "progresso": 40,
+ "etapas": ["segmentacao", "alinhamento", "visual_hull", "marching_cubes", "cor", "exportacao"],
  "erro": null}
 ```
+`etapas` = `relevo_pipeline.ETAPAS` + `exportacao` (feita pela API). `etapa_atual`/`progresso` vêm do callback
+`ao_progredir` do pipeline (F1-T08; ver `docs/03-pipeline-cg.md`). `suavizacao` e `decimacao` entram quando as
+F1-T02/F1-T03 existirem.
 
 ## Arquivos (F3)
 

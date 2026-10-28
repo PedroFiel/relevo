@@ -119,6 +119,9 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   2. `ResultadoPipeline.salvar_intermediarios(pasta)` grava: máscaras PNG, `voxels.glb` (cubos dos voxels de superfície
      — usar só os voxels com vizinho vazio, para não explodir o arquivo), `malha_bruta.glb`, `malha_suave.glb`, `final.glb`.
 - **Testes:** callback recebe as etapas na ordem certa e termina em 100; arquivos criados.
+- **Como ficou (28/10, item 1):** `ao_progredir(etapa, %)` em `processar` e `cli.processar_fotos`, avisado no
+  começo de cada etapa (`ETAPAS`) com o % já feito e no fim com `("concluido", 100)`; % por pesos fixos
+  (`PESOS_ETAPAS`). Detalhes em `docs/03-pipeline-cg.md` (Progresso). O item 2 continua a fazer.
 
 ### F1-T09 — Desempenho
 - **Frente:** pipeline

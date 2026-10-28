@@ -11,6 +11,7 @@ para o front desenhar o contorno sobre as fotos.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -33,6 +34,20 @@ SENTIDO = {90: "90° no sentido horário", 180: "180°", 270: "90° no sentido a
 # Largura/comprimento no topo: tênis reais ficam entre 0,35 e 0,42; acima disso há algo a mais
 PROPORCAO_TOPO_MAXIMA = 0.55
 ORIENTADORES = {"lateral": orientar_lateral, "topo": orientar_topo, "sola": orientar_topo}
+
+# Etapas avisadas a `ao_progredir`, na ordem, com o peso de cada uma no percentual (≈ % do tempo
+# medido nos tenis-01..03 em resolução 256). Ajuste, orientação e contorno contam na segmentação.
+PESOS_ETAPAS = {
+    "segmentacao": 35,
+    "alinhamento": 5,
+    "visual_hull": 10,
+    "marching_cubes": 15,
+    "cor": 35,
+}
+ETAPAS = tuple(PESOS_ETAPAS)
+ETAPA_FINAL = "concluido"
+# Recebe (etapa que começa, % já feito); a última chamada é (ETAPA_FINAL, 100)
+AoProgredir = Callable[[str, int], None]
 
 
 @dataclass
@@ -85,13 +100,17 @@ def processar(
     extras: dict[str, np.ndarray] | None = None,
     ajustes: dict[str, AjusteFoto] | None = None,
     secao: bool = True,
+    ao_progredir: AoProgredir | None = None,
 ) -> ResultadoPipeline:
     """Gera o modelo 3D.
 
     `extras`: fotos opcionais além das 3 principais — "outro_lado", "sola", "tras".
     `ajustes`: recorte/rotação escolhidos pelo usuário, por vista (ver ajuste.py).
     `secao`: aplica a hipótese de seção transversal comum (voxel.campo_secao).
+    `ao_progredir`: chamado no começo de cada etapa com (nome, % já feito) e no fim com
+    ("concluido", 100) — a API grava isso no job (F3-T05).
     """
+    avisar = _progresso([e for e in ETAPAS if colorir or e != "cor"], ao_progredir)
     tempos: dict[str, float] = {}
     avisos: list[str] = []
     fotos = {"lateral": lateral_bgr, "topo": topo_bgr}
@@ -105,6 +124,7 @@ def processar(
     if sem_foto:
         raise ValueError(f"Há ajuste para vista sem foto: {', '.join(sem_foto)}.")
 
+    avisar("segmentacao")
     # [0] Ajuste do usuário. `matrizes[v]` leva um ponto da foto processada à foto ORIGINAL.
     matrizes: dict[str, np.ndarray] = {}
     for vista in fotos:
@@ -135,6 +155,7 @@ def processar(
         poligono = aplicar_matriz(matrizes[vista], simplificar(rastrear_contorno(m)))
         contornos[vista] = {"pontos": np.round(poligono, 1).tolist(), **medidas(poligono)}
 
+    avisar("alinhamento")
     t = time.perf_counter()
     vistas = alinhar_vistas(
         mascaras["lateral"],
@@ -157,6 +178,7 @@ def processar(
             "espelhamos para encaixar com as outras."
         )
 
+    avisar("visual_hull")
     t = time.perf_counter()
     voxels = esculpir(vistas)  # versão binária: métricas e Raio-X
     campo = campo_implicito(vistas)  # versão contínua: gera a malha sem degraus
@@ -173,6 +195,7 @@ def processar(
         campo = final
     tempos["visual_hull"] = time.perf_counter() - t
 
+    avisar("marching_cubes")
     t = time.perf_counter()
     malha = campo_para_malha(campo, comprimento_cm=comprimento_cm)
     tempos["marching_cubes"] = time.perf_counter() - t
@@ -181,10 +204,12 @@ def processar(
     avisos += avisos_consistencia(cons)
 
     if colorir:
+        avisar("cor")
         t = time.perf_counter()
         colorir_malha(malha, vistas, mascaras, fotos)
         tempos["cor"] = time.perf_counter() - t
 
+    avisar(ETAPA_FINAL)
     return ResultadoPipeline(
         malha=malha,
         mascaras=mascaras,
@@ -234,3 +259,19 @@ def _avisos_orientacao(orientacoes: dict[str, Orientacao]) -> list[str]:
             "à esquerda e o bico à direita."
         )
     return avisos
+
+
+def _progresso(etapas: list[str], ao_progredir: AoProgredir | None) -> Callable[[str], None]:
+    """Converte o nome da etapa no % acumulado das etapas anteriores (pesos de PESOS_ETAPAS)."""
+    total = sum(PESOS_ETAPAS[e] for e in etapas)
+    inicio = {
+        e: round(100 * sum(PESOS_ETAPAS[a] for a in etapas[:i]) / total)
+        for i, e in enumerate(etapas)
+    }
+    inicio[ETAPA_FINAL] = 100
+
+    def avisar(etapa: str) -> None:
+        if ao_progredir is not None:
+            ao_progredir(etapa, inicio[etapa])
+
+    return avisar

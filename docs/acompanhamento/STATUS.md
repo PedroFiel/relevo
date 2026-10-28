@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** trilha A → **F3-T04** (terminar) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** trilha A → **F3-T03** (`POST /modelos`) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -31,8 +31,8 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 |---|---|---|
 | 1 | F3-T01 — tabelas e migração | **feito** (PR #4) |
 | 2 | F3-T02 — Storage local | **feito** (28/10, PR #6) — onde ficam fotos e `.glb`; base do upload |
-| 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | precisa existir antes do primeiro endpoint |
-| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
+| 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | **feito** (28/10, PR #7) — fixture `cliente` |
+| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10, PR #7) — é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
 | 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | valida pelos bytes; 202 com `modelo_id`/`job_id` |
 | 6 | F3-T05 — execução do job | etapa e progresso no banco; erro amigável |
 | 7 | F3-T06 — leitura, download e delete | a partir daqui o front sai do *mock* |
@@ -89,7 +89,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | F1-T05 | Cor por vértice | Pedro + Claude | feito |
 | F1-T06 | Segmentação robusta | Pedro + Claude | feito |
 | F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | em andamento |
-| F1-T08 | Intermediários + progresso | | a fazer (MVP: só o callback — trilha A, passo 4) |
+| F1-T08 | Intermediários + progresso | Pedro + Claude | em andamento (28/10: callback feito; intermediários ficam para a F5-T01) |
 | F1-T09 | Desempenho | | a fazer |
 | F1-T10 | Notebook didático | | a fazer |
 | F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | feito |
@@ -122,7 +122,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | F3-T01 | Modelos ORM e migração | Pedro + Claude | feito (27/10: 6 tabelas + usuário demo, aplicado no Neon) |
 | F3-T02 | Storage local | Pedro + Claude | feito (28/10: `LocalStorage` + `get_storage`; chave com `..` recusada) |
 | F3-T03 | Schemas + POST /modelos | | a fazer |
-| F3-T04 | Banco de teste e fixtures | Pedro + Claude | em andamento (`relevo_test` + rollback por teste + Postgres no CI; falta sobrescrever `get_db`/Storage nas rotas) |
+| F3-T04 | Banco de teste e fixtures | Pedro + Claude | feito (28/10: fixture `cliente` com `get_db` e `get_storage` trocados) |
 | F3-T05 | Execução do job | | a fazer |
 | F3-T06 | Endpoints de leitura | | a fazer |
 | F3-T07 | Cliente da API | | a fazer |
