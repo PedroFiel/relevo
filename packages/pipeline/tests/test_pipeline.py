@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from relevo_pipeline import processar
 from relevo_pipeline.alinhamento import alinhar_vistas, recortar
+from relevo_pipeline.pipeline import ETAPA_FINAL, ETAPAS
 from relevo_pipeline.segmentacao import gerar_mascara
 from relevo_pipeline.sintetico import gerar_fotos, tenis_implicito
 from relevo_pipeline.voxel import esculpir
@@ -191,3 +192,40 @@ def test_glb_exportado_leva_a_cor(fotos, tmp_path):
     caminho = exportar(r.malha, tmp_path / "t.glb")
     lido = trimesh.load(caminho, force="mesh")
     assert lido.visual.kind == "vertex"
+
+
+# ---------- Progresso (F1-T08) ----------
+def test_progresso_avisa_cada_etapa_em_ordem_e_termina_em_100(fotos):
+    chamadas = []
+    processar(
+        fotos["lateral"],
+        fotos["topo"],
+        fotos["frente"],
+        resolucao=48,
+        ao_progredir=lambda *a: chamadas.append(a),
+    )
+    assert [e for e, _ in chamadas] == [*ETAPAS, ETAPA_FINAL]
+    percentuais = [p for _, p in chamadas]
+    assert percentuais[0] == 0 and percentuais[-1] == 100
+    assert percentuais == sorted(set(percentuais)), "o percentual só sobe"
+
+
+def test_progresso_sem_cor_pula_a_etapa_e_termina_em_100(fotos):
+    chamadas = []
+    processar(
+        fotos["lateral"],
+        fotos["topo"],
+        resolucao=48,
+        colorir=False,
+        ao_progredir=lambda *a: chamadas.append(a),
+    )
+    assert "cor" not in [e for e, _ in chamadas]
+    assert chamadas[-1] == (ETAPA_FINAL, 100)
+
+
+def test_progresso_nao_avisa_conclusao_quando_da_erro():
+    chamadas = []
+    branca = np.full((200, 300, 3), 255, np.uint8)
+    with pytest.raises(ValueError):
+        processar(branca, branca, ao_progredir=lambda *a: chamadas.append(a))
+    assert chamadas and chamadas[-1][0] != ETAPA_FINAL

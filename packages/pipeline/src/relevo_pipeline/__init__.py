@@ -9,7 +9,7 @@ Convenção de eixos (ver docs/03-pipeline-cg.md):
     z = largura (lado externo -> lado interno)
 """
 
-from relevo_pipeline.pipeline import ResultadoPipeline, processar
+from relevo_pipeline.pipeline import ETAPAS, AoProgredir, ResultadoPipeline, processar
 
-__all__ = ["processar", "ResultadoPipeline"]
+__all__ = ["processar", "ResultadoPipeline", "AoProgredir", "ETAPAS"]
 __version__ = "0.1.0"

@@ -19,7 +19,7 @@ import numpy as np
 
 from relevo_pipeline.ajuste import ler_ajustes
 from relevo_pipeline.exportar import exportar
-from relevo_pipeline.pipeline import processar
+from relevo_pipeline.pipeline import AoProgredir, processar
 from relevo_pipeline.segmentacao import carregar_imagem
 from relevo_pipeline.sintetico import salvar_fotos
 from relevo_pipeline.vistas import VISTAS
@@ -65,6 +65,7 @@ def processar_fotos(
     comprimento_cm: float = 28.0,
     resolucao: int = 128,
     secao: bool = True,
+    ao_progredir: AoProgredir | None = None,
 ):
     """Roda o pipeline a partir de caminhos de fotos (por vista) e do dicionário de ajustes.
     Usado pela CLI e pela API (estúdio do front)."""
@@ -81,6 +82,7 @@ def processar_fotos(
         extras=imagens,
         ajustes=ler_ajustes(ajustes),
         secao=secao,
+        ao_progredir=ao_progredir,
     )
 
 
