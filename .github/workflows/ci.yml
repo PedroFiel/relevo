@@ -7,6 +7,19 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: relevo
+          POSTGRES_PASSWORD: relevo
+          POSTGRES_DB: relevo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U relevo" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Definida = os testes de banco são obrigatórios (sem ela, sem servidor, eles são pulados)
+      TEST_DATABASE_URL: postgresql+psycopg://relevo:relevo@localhost:5432/relevo_test
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

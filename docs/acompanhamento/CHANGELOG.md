@@ -4,6 +4,11 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (27/10/2026 — banco do MVP)
+- **Banco**: tabelas `usuarios`, `modelos`, `imagens` (as 6 vistas), `jobs`, `versoes` e `arquivos`, com o usuário
+  demo, por migração Alembic (`59787083ad48`, com `downgrade`). Testes num banco `relevo_test` isolado; o CI sobe um
+  PostgreSQL 16. [F3-T01]
+
 ### Adicionado (02/10/2026 — revisão das funcionalidades)
 - **Estúdio**: ferramentas ao lado do modelo em abas, cada uma com "Como funciona (CG)"; abas Modelo 3D | Fotos 2D.
 - **Rastrear raios**: imagem por rastreamento de raios lado a lado com a da GPU (sombra no chão), modo passo a passo e

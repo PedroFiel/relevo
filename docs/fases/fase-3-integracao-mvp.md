@@ -12,6 +12,7 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
 ## Banco
 
 ### F3-T01 — Modelos ORM e migração
+- **Status (27/10):** feito — migração `59787083ad48`, aplicada no Neon; `tests/test_models.py` (16 testes).
 - **Frente:** banco
 - **Como fazer:**
   1. Em `apps/api/src/relevo_api/models.py`, criar as classes SQLAlchemy 2 (`Mapped[...]`, `mapped_column`) para
@@ -22,7 +23,7 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   2. `uv run alembic revision --autogenerate -m "tabelas do mvp"`; **revisar o arquivo gerado** (o autogenerate erra
      CHECKs e defaults); adicionar *seed* do usuário demo (`op.bulk_insert`) com id fixo `00000000-0000-0000-0000-000000000001`.
   3. `make migrate` e conferir no Adminer.
-- **Testes:** `tests/test_models.py` (usa banco de teste `relevo_test`, ver T04): criar modelo com 3 imagens; segunda imagem
+- **Testes:** `tests/test_models.py` (usa banco de teste `relevo_test`, ver T04): criar modelo com as 6 vistas do pipeline (ADR 0007); segunda imagem
   com a mesma vista → `IntegrityError`; apagar modelo apaga imagens/jobs (cascade).
 - **Aceite:** `alembic downgrade base && alembic upgrade head` funciona ida e volta.
 
