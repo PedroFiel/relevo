@@ -31,8 +31,8 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 |---|---|---|
 | 1 | F3-T01 — tabelas e migração | **feito** (PR #4) |
 | 2 | F3-T02 — Storage local | **feito** (28/10, PR #6) — onde ficam fotos e `.glb`; base do upload |
-| 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | **feito** (28/10) — fixture `cliente` |
-| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10) — é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
+| 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | **feito** (28/10, PR #7) — fixture `cliente` |
+| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10, PR #7) — é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
 | 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | valida pelos bytes; 202 com `modelo_id`/`job_id` |
 | 6 | F3-T05 — execução do job | etapa e progresso no banco; erro amigável |
 | 7 | F3-T06 — leitura, download e delete | a partir daqui o front sai do *mock* |
