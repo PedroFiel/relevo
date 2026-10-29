@@ -81,6 +81,11 @@ vira `erro` no *startup*. `suavizacao` entra na lista quando a F1-T02 existir.
 
 ## Arquivos (F3)
 
+Cada versão traz em `arquivos`: o `modelo.glb` (`tipo: glb`) e, desde a F5-T01, os intermediários do **Raio-X** —
+`mascara-<vista>.png` (`tipo: mascara`), `voxels.glb` e `malha-bruta.glb` (`tipo: etapa`). Por isso a rota
+`GET /versoes/{id}/etapas` planejada não foi necessária.
+
+
 ### `GET /arquivos/{id}/download` → o binário com `Content-Type` correto
 (`model/gltf-binary`, `model/obj`, `model/stl`, `image/png`), com `Content-Disposition` e o nome do arquivo.
 
@@ -101,7 +106,6 @@ Para miniaturas e para desenhar o contorno sobre a foto original (F3-T14).
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/versoes/{id}/etapas` | URLs dos intermediários para o Raio-X |
 | POST | `/modelos/{id}/regerar` | regerar com as máscaras corrigidas pelo pincel (`{mascaras_corrigidas}`; F5-T05) |
 | GET | `/publico/{id}` | dados para o visualizador incorporável (sem login) |
 

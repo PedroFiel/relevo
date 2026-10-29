@@ -55,6 +55,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | Raycasting (o ponto sob o cursor) | front (zoom no ponto e cursor, F2-T12; pivô; régua 3D) |
 | **Rastreamento de raios** (ray tracing): BVH, Möller–Trumbore, raio de sombra × rasterização | front (aba Rastrear raios, F2-T15) |
 | **Selecionar área → recortar → mover** (janela de seleção, Sutherland–Hodgman 3D, nó com matriz própria) | front (aba Selecionar e mover, F2-T14) |
+| *Instancing* (milhares de voxels numa chamada de desenho) | front (Raio-X do pipeline, F5-T01) |
 | LOD (níveis de detalhe) | pipeline + front |
 
 ### 3.2 Objetivo de produto
@@ -236,8 +237,9 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
   progresso → versão com `.glb` decimado (~20 mil faces), leitura/download/delete — tudo gravando no Neon. Falta o
   front usar a API (trilha B). **Trilha B concluída (28/10):** home, `/novo` (upload guiado + editor), página do modelo
   (etapas ao vivo, estúdio 3D, fotos com contorno, download) e "Meus modelos" — o fluxo do MVP funciona ponta a ponta.
-  Fechamento (28/10): E2E com Playwright (`make e2e`) e revisão `docs/revisoes/fase-3.md`. Falta F0-T10, vídeo e a
-  tag `v0.1.0-mvp`.
+  Fechamento (28/10): E2E com Playwright (`make e2e`) e revisão `docs/revisoes/fase-3.md`. Depois: configuração única
+  (ADR 0009) e **Raio-X do pipeline** (F5-T01) na página do modelo; roteiro da apresentação em `docs/apresentacao/`.
+  Falta (grupo): F0-T10, slides/ensaio/vídeo e a tag `v0.1.0-mvp`.
 - **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
   tiradas pelo grupo + fita métrica — falta o erro dimensional)**.
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
@@ -273,5 +275,6 @@ calibração de câmera (só como extensão opcional) · app mobile nativo · pa
 | Fases e tarefas | `docs/fases/` |
 | Status, changelog, diário | `docs/acompanhamento/` |
 | Plano e relatórios de testes | `docs/testes/` |
+| Roteiro da apresentação, imagens e perguntas da banca | `docs/apresentacao/` |
 | Checklist e revisões de fase | `docs/revisoes/` |
 | Decisões (ADRs) | `docs/decisoes/` |

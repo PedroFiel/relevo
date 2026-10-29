@@ -132,6 +132,10 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   começo de cada etapa (`ETAPAS`) com o % já feito e no fim com `("concluido", 100)`; % por pesos fixos
   (`PESOS_ETAPAS`). Detalhes em `docs/03-pipeline-cg.md` (Progresso). O item 2 continua a fazer.
   Com a F1-T03, `decimacao` virou uma etapa da lista.
+- **Como ficou (28/10, item 2):** em vez de `salvar_intermediarios(pasta)` (I/O no resultado), `exportar.intermediarios(
+  resultado) -> dict[nome, bytes]` — a API grava no Storage. Saem `mascara-<vista>.png`, `voxels.glb` (só os voxels de
+  superfície, como nuvem de pontos em cm) e `malha-bruta.glb` (`ResultadoPipeline.malha_bruta`, antes da decimação e
+  da cor). `malha_suave.glb` fica para quando a F1-T02 existir; a decimada é a própria `modelo.glb` (vista em arame).
 
 ### F1-T09 — Desempenho
 - **Frente:** pipeline

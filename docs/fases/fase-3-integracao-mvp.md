@@ -198,7 +198,7 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   canvas aparece, que a aba "Fotos" mostra o contorno e que o download responde 200.
 - **Aceite:** passa localmente; roteiro manual de demo escrito em `docs/revisoes/fase-3.md`.
 - **Como ficou (28/10):** `apps/web/playwright.config.ts` sobe uma API **só do teste** (porta 8001, banco
-  `relevo_test`, Storage em `out/e2e/storage`) e um front na 5174 com o proxy apontando para ela — nada encosta no
+  `relevo_test`, Storage em `out/e2e/storage`) e um front na 5180 com o proxy apontando para ela — nada encosta no
   banco nem nos servidores de dev. `e2e/mvp.spec.ts`: fotos do tenis-01, recorte da lateral no editor (conferido
   depois em `versao.metricas.ajustes`), etapas → pronto → canvas → aba Fotos com 3 contornos → download (`glTF`) →
   apagar em "Meus modelos"; e um caso de foto que não é imagem. Antes de tudo apaga sobras `E2E …` de execuções

@@ -306,6 +306,13 @@ atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma re
 | Faces | `len(malha.faces)` | ≈ 20 mil (configuração única, ADR 0009) |
 | Tempo total | soma dos `tempos_s` | < 10 s (resolução 128) |
 
+### Intermediários do Raio-X (F1-T08 item 2, F5-T01)
+
+`exportar.intermediarios(resultado)` devolve os arquivos que a página do modelo mostra etapa por etapa: as máscaras
+(PNG), os **voxels de superfície** (`ocupado − erosão(ocupado)` com 6 vizinhos — a morfologia matemática em 3D; o
+centro de cada um em cm usa o mesmo mapeamento da cor por vértice: `(i + PAD) · tamanho_voxel + deslocamento`) e a
+**malha bruta** (`ResultadoPipeline.malha_bruta`, saída do Marching Cubes antes da decimação e da cor).
+
 ### Progresso (F1-T08)
 
 `processar(..., ao_progredir=cb)` chama `cb(etapa, percentual)` no **começo** de cada etapa, com o % já feito, e

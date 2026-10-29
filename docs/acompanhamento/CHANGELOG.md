@@ -4,6 +4,13 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (28/10/2026 — Raio-X do pipeline)
+- **Raio-X do pipeline** na página do modelo: um slider passa pelas 6 etapas do modelo que você acabou de gerar —
+  fotos, silhuetas, voxels, malha bruta, decimada e final — com a explicação de cada algoritmo e os números daquele
+  tênis. **▶ Apresentação** avança sozinho a cada 4 s. [F5-T01, F1-T08]
+- **Roteiro da apresentação** com imagens reais de cada etapa e respostas para as perguntas da banca
+  (`docs/apresentacao/roteiro.md`). [F5-T07]
+
 ### Removido (28/10/2026 — menos escolhas, mais simples)
 - **Escolha de "Qualidade"** no Novo modelo: o site gera sempre com a mesma configuração (~20 mil faces, colorido,
   `.glb`, pronto em 1–2 s). O lojista só envia as fotos e o tamanho. Os presets planejados (loja, jogo, impressão 3D)

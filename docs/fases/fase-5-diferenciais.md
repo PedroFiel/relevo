@@ -20,6 +20,12 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
   3. Transição: *crossfade* de opacidade entre etapas; câmera mantida.
   4. Modo "apresentação": avança sozinho a cada 4 s.
 - **Aceite:** do slider 1 ao 7 em menos de 1 minuto, explicando cada passo — é o roteiro da demo.
+- **Como ficou (28/10):** aba **Raio-X do pipeline** em `/modelos/:id` (não uma rota separada), com **6** etapas:
+  Fotos · Silhuetas · Voxels (`InstancedMesh`) · Malha bruta (arame) · Decimada (arame) · Final (cor). A "Suavizada"
+  entra quando a F1-T02 existir. Sem rota `GET /versoes/{id}/etapas`: os intermediários já vêm em `versao.arquivos`
+  do `GET /modelos/{id}` (tipos `mascara` e `etapa`). Crossfade: camadas 2D por CSS, objetos 3D pela opacidade no
+  `useFrame`, câmera única. Modelos antigos (sem intermediários) mostram só Fotos e Final. Detalhes em
+  `docs/09-funcionalidades-cg.md` (§9).
 - **Conceito de CG:** todos; destaque para *instancing*.
 
 ### F5-T02 — LOD (níveis de detalhe)
@@ -66,6 +72,9 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
   4. Ensaio cronometrado; perguntas prováveis da banca com respostas (ex.: "por que não pega a abertura do tênis?",
      "por que Taubin e não Laplaciano?", "como a matriz do pivô é composta?").
 - **Aceite:** ensaio completo dentro do tempo, com demo funcionando a partir de fotos tiradas na hora.
+- **Andamento (28/10):** roteiro pronto em `docs/apresentacao/roteiro.md` — 9 slides com tempo, as 6 imagens reais do
+  Raio-X (`docs/apresentacao/imagens/`), passo a passo da demo ao vivo com plano B e 13 perguntas prováveis com
+  resposta. **Falta (grupo):** montar os slides, dividir quem apresenta o quê, ensaiar e gravar o vídeo de backup.
 
 ## Encerramento do projeto
 

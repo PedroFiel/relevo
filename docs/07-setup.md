@@ -67,7 +67,7 @@ Teste de ponta a ponta (opcional; baixa o Chromium do Playwright uma vez, ~100 M
 ```bash
 cd apps/web && npx playwright install chromium && cd ../..
 make test-py   # cria o banco relevo_test na primeira vez
-make e2e       # sobe API (:8001, banco de teste) + front (:5174) e roda o fluxo inteiro (~35 s)
+make e2e       # sobe API (:8001, banco de teste) + front (:5180) e roda o fluxo inteiro (~35 s)
 ```
 
 Para ver o tênis **colorido** gerado a partir das fotos reais de `samples/reais/tenis-01/`:
