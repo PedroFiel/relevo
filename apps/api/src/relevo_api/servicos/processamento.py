@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 from relevo_pipeline import processar
 from relevo_pipeline.ajuste import ler_ajustes
+from relevo_pipeline.exportar import intermediarios
 from relevo_pipeline.pipeline import ETAPA_FINAL
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -23,7 +24,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
 from relevo_api.models import Arquivo, Job, Modelo, Versao
-from relevo_api.storage import Storage, chave_glb, prefixo_modelo
+from relevo_api.storage import Storage, chave_etapa, chave_glb, prefixo_modelo
 
 log = logging.getLogger(__name__)
 
@@ -106,13 +107,24 @@ def _executar(db: Session, storage: Storage, job_id: uuid.UUID) -> None:
     glb = resultado.malha.export(file_type="glb")
     caminho = storage.salvar(chave_glb(modelo.id, numero), glb)
     metricas = resultado.metricas
+    arquivos = [Arquivo(tipo="glb", nome="modelo.glb", caminho=caminho, tamanho_bytes=len(glb))]
+    # Raio-X (F5-T01): máscaras, voxels de superfície e malha bruta
+    for nome, dados in intermediarios(resultado).items():
+        arquivos.append(
+            Arquivo(
+                tipo="mascara" if nome.startswith("mascara-") else "etapa",
+                nome=nome,
+                caminho=storage.salvar(chave_etapa(modelo.id, numero, nome), dados),
+                tamanho_bytes=len(dados),
+            )
+        )
     versao = Versao(
         modelo_id=modelo.id,
         job_id=job.id,
         numero=numero,
         parametros=parametros,
         metricas=metricas,
-        arquivos=[Arquivo(tipo="glb", nome="modelo.glb", caminho=caminho, tamanho_bytes=len(glb))],
+        arquivos=arquivos,
     )
     db.add(versao)
     job.status, job.progresso, job.erro = "concluido", 100, None

@@ -47,6 +47,11 @@ def chave_glb(modelo_id: UUID, numero_versao: int) -> str:
     return validar_chave(f"modelos/{modelo_id}/v{numero_versao}/modelo.glb")
 
 
+def chave_etapa(modelo_id: UUID, numero_versao: int, nome: str) -> str:
+    """Intermediário do Raio-X (máscara, voxels, malha bruta) de uma versão."""
+    return validar_chave(f"modelos/{modelo_id}/v{numero_versao}/etapas/{nome}")
+
+
 def prefixo_modelo(modelo_id: UUID) -> str:
     return validar_chave(f"modelos/{modelo_id}")
 
