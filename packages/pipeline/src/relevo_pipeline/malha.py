@@ -17,6 +17,7 @@ from __future__ import annotations
 import numpy as np
 import trimesh
 from scipy.ndimage import gaussian_filter
+from scipy.spatial import cKDTree
 from skimage import measure
 
 PAD = 2  # voxels vazios nas bordas da grade (garantem malha fechada)
@@ -70,3 +71,50 @@ def _malha_do_campo(campo: np.ndarray, nivel: float, comprimento_cm: float) -> t
     malha.metadata["tamanho_voxel"] = float(tamanho_voxel)
     malha.metadata["deslocamento"] = [float(d) for d in deslocamento]
     return malha
+
+
+# ---------- [6] Decimação por erro quádrico (F1-T03) ----------
+AMOSTRAS_ERRO = 5000
+VIZINHOS_ERRO = 12  # triângulos candidatos por ponto (pelo centro mais próximo)
+
+
+def decimar(malha: trimesh.Trimesh, faces_alvo: int | None) -> tuple[trimesh.Trimesh, dict]:
+    """Reduz a malha a ~`faces_alvo` triângulos (Garland–Heckbert, via fast-simplification).
+
+    Cada vértice guarda uma quádrica Q (soma dos planos das faces vizinhas); o erro de mover o
+    vértice para v é vᵀQv. O algoritmo colapsa sempre a aresta de menor erro até chegar ao alvo.
+    Se o resultado não ficar fechado (alvo baixo demais), devolve a malha original: malha
+    fechada é regra do projeto. Devolve (malha, métricas).
+    """
+    faces_antes = int(len(malha.faces))
+    if faces_alvo is None or faces_antes <= faces_alvo:
+        return malha, {"usada": False, "faces_antes": faces_antes}
+    reduzida = malha.simplify_quadric_decimation(face_count=faces_alvo)
+    reduzida.remove_unreferenced_vertices()
+    reduzida.fix_normals()
+    if not reduzida.is_watertight:
+        return malha, {"usada": False, "faces_antes": faces_antes, "motivo": "abriria a malha"}
+    # Mesmo sistema de coordenadas: a cor por vértice continua achando o voxel de cada vértice
+    reduzida.metadata.update(malha.metadata)
+    medio, maximo = erro_geometrico_cm(malha, reduzida)
+    return reduzida, {
+        "usada": True,
+        "faces_antes": faces_antes,
+        "erro_medio_mm": round(10 * medio, 3),
+        "erro_max_mm": round(10 * maximo, 3),
+    }
+
+
+def erro_geometrico_cm(original: trimesh.Trimesh, reduzida: trimesh.Trimesh) -> tuple[float, float]:
+    """Distância (média, máxima) de pontos da superfície original até a reduzida.
+
+    Pontos amostrados na original; para cada um, os triângulos mais próximos da reduzida (pelo
+    centro, com KD-tree) e a distância exata ponto–triângulo. Sem `rtree` (dependência a menos).
+    """
+    pontos, _ = trimesh.sample.sample_surface(original, AMOSTRAS_ERRO, seed=0)
+    k = min(VIZINHOS_ERRO, len(reduzida.faces))
+    _, idx = cKDTree(reduzida.triangles_center).query(pontos, k=k)
+    repetidos = np.repeat(pontos, k, axis=0)
+    mais_proximo = trimesh.triangles.closest_point(reduzida.triangles[idx.ravel()], repetidos)
+    dist = np.linalg.norm(mais_proximo - repetidos, axis=1).reshape(-1, k).min(axis=1)
+    return float(dist.mean()), float(dist.max())

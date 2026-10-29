@@ -111,7 +111,8 @@ O arquivo fica no Storage; aqui só o caminho e metadados.
 
 ### `jobs` (F3)
 Cada execução do pipeline. O worker atualiza `etapa_atual` e `progresso` a cada etapa (o front faz *polling*).
-- `parametros` (JSONB): `{"resolucao": 128, "suavizacao": 10, "faces_alvo": 20000, "preset": "ecommerce"}`
+- `parametros` (JSONB): `{"resolucao": 128, "faces_alvo": 20000, "ajustes": {"topo": {"rotacao_graus": 90, "recorte": null}}}`
+  (F3-T03). Com os presets da F1-T01 entram `preset` e `suavizacao`.
 - `metricas` (JSONB): registro da **execução** (tempo de cada etapa, resolução usada) — gravado também quando
   o job dá erro, para depurar.
 - `progresso` com `CHECK progresso BETWEEN 0 AND 100`.

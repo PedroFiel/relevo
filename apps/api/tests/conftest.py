@@ -6,7 +6,8 @@ Sem servidor alcançável os testes de banco são pulados — a não ser que TES
 definida (o CI define), aí a falha de conexão é erro.
 
 Testes de rota usam a fixture `cliente`: o `TestClient` da API com `get_db` trocado pela sessão `db`
-(mesma transação desfeita) e `get_storage` por um `LocalStorage` em `tmp_path` [F3-T04].
+(mesma transação desfeita), `get_fabrica_sessao` por sessões nessa mesma transação (o job em segundo
+plano e o *startup*) e `get_storage` por um `LocalStorage` em `tmp_path` [F3-T04].
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
 from relevo_api.config import settings
-from relevo_api.db import get_db
+from relevo_api.db import get_db, get_fabrica_sessao
 from relevo_api.main import app
 from relevo_api.storage import LocalStorage, get_storage
 from sqlalchemy import Engine, create_engine, make_url, text
@@ -101,6 +102,12 @@ def storage(tmp_path: Path) -> LocalStorage:
 def cliente(db: Session, storage: LocalStorage) -> Iterator[TestClient]:
     """API com o banco de teste e o storage temporário; o teste vê o que a rota gravou."""
     app.dependency_overrides[get_db] = lambda: db
+    conexao = db.get_bind()
+    app.dependency_overrides[get_fabrica_sessao] = lambda: (
+        lambda: Session(
+            bind=conexao, join_transaction_mode="create_savepoint", expire_on_commit=False
+        )
+    )
     app.dependency_overrides[get_storage] = lambda: storage
     try:
         with TestClient(app) as c:

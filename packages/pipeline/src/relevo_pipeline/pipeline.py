@@ -21,7 +21,7 @@ from relevo_pipeline.ajuste import AjusteFoto, aplicar_ajuste, aplicar_matriz
 from relevo_pipeline.alinhamento import VistasAlinhadas, alinhar_vistas
 from relevo_pipeline.contorno import medidas, rastrear_contorno, simplificar
 from relevo_pipeline.cor import colorir_malha
-from relevo_pipeline.malha import campo_para_malha
+from relevo_pipeline.malha import campo_para_malha, decimar
 from relevo_pipeline.metricas import avisos_consistencia, consistencia
 from relevo_pipeline.orientacao import Orientacao, orientar_lateral, orientar_topo
 from relevo_pipeline.segmentacao import qualidade_mascara, segmentar
@@ -42,7 +42,8 @@ PESOS_ETAPAS = {
     "alinhamento": 5,
     "visual_hull": 10,
     "marching_cubes": 15,
-    "cor": 35,
+    "decimacao": 2,
+    "cor": 33,
 }
 ETAPAS = tuple(PESOS_ETAPAS)
 ETAPA_FINAL = "concluido"
@@ -66,6 +67,7 @@ class ResultadoPipeline:
     # Ajuste aplicado e matriz 3×3 "foto processada -> foto original" de cada vista
     ajustes: dict[str, dict] = field(default_factory=dict)
     secao: dict = field(default_factory=dict)
+    decimacao: dict = field(default_factory=dict)
 
     @property
     def metricas(self) -> dict:
@@ -81,6 +83,7 @@ class ResultadoPipeline:
             "orientacao": {k: o.descrever() for k, o in self.orientacoes.items()},
             "registro": {"espelhamento_trocado": self.vistas.registradas},
             "secao": self.secao,
+            "decimacao": self.decimacao,
             "consistencia": self.consistencia,
             "avisos": self.avisos,
             "ajustes": self.ajustes,
@@ -100,6 +103,7 @@ def processar(
     extras: dict[str, np.ndarray] | None = None,
     ajustes: dict[str, AjusteFoto] | None = None,
     secao: bool = True,
+    faces_alvo: int | None = None,
     ao_progredir: AoProgredir | None = None,
 ) -> ResultadoPipeline:
     """Gera o modelo 3D.
@@ -107,6 +111,7 @@ def processar(
     `extras`: fotos opcionais além das 3 principais — "outro_lado", "sola", "tras".
     `ajustes`: recorte/rotação escolhidos pelo usuário, por vista (ver ajuste.py).
     `secao`: aplica a hipótese de seção transversal comum (voxel.campo_secao).
+    `faces_alvo`: decimação por erro quádrico até ~esse número de faces (None = não decimar).
     `ao_progredir`: chamado no começo de cada etapa com (nome, % já feito) e no fim com
     ("concluido", 100) — a API grava isso no job (F3-T05).
     """
@@ -200,6 +205,11 @@ def processar(
     malha = campo_para_malha(campo, comprimento_cm=comprimento_cm)
     tempos["marching_cubes"] = time.perf_counter() - t
 
+    avisar("decimacao")
+    t = time.perf_counter()
+    malha, info_decimacao = decimar(malha, faces_alvo)
+    tempos["decimacao"] = time.perf_counter() - t
+
     cons = consistencia(vistas, campo < 0)
     avisos += avisos_consistencia(cons)
 
@@ -228,6 +238,7 @@ def processar(
             for v in fotos
         },  # fmt: skip
         secao=info_secao,
+        decimacao=info_decimacao,
     )
 
 

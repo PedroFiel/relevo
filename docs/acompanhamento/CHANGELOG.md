@@ -4,6 +4,14 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (28/10/2026 — API do MVP)
+- **API de modelos**: `POST /modelos` recebe as fotos (2 a 6), o tamanho em cm e os ajustes de recorte/rotação,
+  valida cada foto pelo conteúdo e responde na hora; o modelo é gerado em segundo plano. `GET /jobs/{id}` mostra a
+  etapa e o percentual; `GET /modelos`, `GET /modelos/{id}`, download do `.glb`, `GET /imagens/{id}` e
+  `DELETE /modelos/{id}` (apaga também os arquivos). Tudo gravado no PostgreSQL. [F3-T02…T06]
+- **Modelos mais leves**: decimação por erro quádrico até ~20 mil faces. O tenis-01 caiu de 6,6 MB para 0,52 MB
+  (erro médio 0,07 mm), continua fechado e com as mesmas medidas. `--faces-alvo 0` na CLI desliga. [F1-T03]
+
 ### Adicionado (27/10/2026 — banco do MVP)
 - **Banco**: tabelas `usuarios`, `modelos`, `imagens` (as 6 vistas), `jobs`, `versoes` e `arquivos`, com o usuário
   demo, por migração Alembic (`59787083ad48`, com `downgrade`). Testes num banco `relevo_test` isolado; o CI sobe um
