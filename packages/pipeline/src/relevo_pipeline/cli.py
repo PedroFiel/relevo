@@ -24,6 +24,8 @@ from relevo_pipeline.segmentacao import carregar_imagem
 from relevo_pipeline.sintetico import salvar_fotos
 from relevo_pipeline.vistas import VISTAS
 
+FACES_ALVO_PADRAO = 20_000  # preset e-commerce (F1-T03)
+
 EXTENSOES = {".jpg", ".jpeg", ".png"}
 
 
@@ -66,6 +68,7 @@ def processar_fotos(
     resolucao: int = 128,
     secao: bool = True,
     ao_progredir: AoProgredir | None = None,
+    faces_alvo: int | None = FACES_ALVO_PADRAO,
 ):
     """Roda o pipeline a partir de caminhos de fotos (por vista) e do dicionário de ajustes.
     Usado pela CLI e pela API (estúdio do front)."""
@@ -82,6 +85,7 @@ def processar_fotos(
         extras=imagens,
         ajustes=ler_ajustes(ajustes),
         secao=secao,
+        faces_alvo=faces_alvo,
         ao_progredir=ao_progredir,
     )
 
@@ -105,6 +109,12 @@ def main(argv: list[str] | None = None) -> None:
     g.add_argument("--comprimento-cm", type=float, default=28.0)
     g.add_argument("--resolucao", type=int, default=128)
     g.add_argument("--sem-secao", action="store_true", help="usa só o visual hull, sem a seção")
+    g.add_argument(
+        "--faces-alvo",
+        type=int,
+        default=FACES_ALVO_PADRAO,
+        help="decimação até ~N faces (0 = sem decimação)",
+    )
     g.add_argument("--saida", required=True, help="arquivo .glb, .obj ou .stl")
     g.add_argument("--debug", help="pasta para salvar as etapas intermediárias")
     g.add_argument("--publicar", help="pasta para o front: fotos/ + metricas.json")
@@ -120,7 +130,14 @@ def main(argv: list[str] | None = None) -> None:
     if a.ajustes:
         ajustes = json.loads(Path(a.ajustes).read_text())
     try:
-        resultado = processar_fotos(fotos, ajustes, a.comprimento_cm, a.resolucao, not a.sem_secao)
+        resultado = processar_fotos(
+            fotos,
+            ajustes,
+            a.comprimento_cm,
+            a.resolucao,
+            not a.sem_secao,
+            faces_alvo=a.faces_alvo or None,
+        )
     except ValueError as e:
         p.error(str(e))
     print(f"modelo salvo em {exportar(resultado.malha, a.saida)}")
