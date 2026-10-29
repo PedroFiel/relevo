@@ -25,6 +25,8 @@ export type Imagem = { vista: Vista; largura_px: number; altura_px: number; url:
 export type Arquivo = { id: string; tipo: string; nome: string; tamanho_bytes: number; url: string }
 
 export type MetricasVersao = Metricas & {
+  dims_voxels?: number[]
+  tamanho_voxel_cm?: number
   tempos_s?: Record<string, number>
   decimacao?: { usada: boolean; faces_antes?: number; erro_medio_mm?: number; erro_max_mm?: number }
 }

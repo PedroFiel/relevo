@@ -271,3 +271,28 @@ a { color: var(--accent); }
   .slot-area { aspect-ratio: 2 / 1; }
   .detalhe-topo .acoes { width: 100%; }
 }
+
+/* ---------- Raio-X do pipeline (F5-T01) ---------- */
+.raio-x { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--esp-4); align-items: start; }
+.raio-x-palco { position: relative; height: min(70vh, 560px); min-height: 320px; border: 1px solid var(--border); border-radius: var(--raio-g); overflow: hidden; background: var(--surface); }
+.raio-x-palco .camada { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
+.raio-x-palco .camada.visivel { opacity: 1; pointer-events: auto; }
+.camada-2d { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--esp-3); padding: var(--esp-4); align-content: center; }
+.camada-2d figure { margin: 0; display: grid; gap: var(--esp-1); }
+.camada-2d img { width: 100%; aspect-ratio: 1; object-fit: contain; background: var(--bg); border-radius: var(--raio); }
+.camada-2d.mascaras img { background: #000; image-rendering: pixelated; }
+.camada-2d figcaption { font-size: 0.8rem; color: var(--muted); text-align: center; }
+.raio-x-controles { display: grid; gap: var(--esp-3); }
+.raio-x-controles input[type='range'] { width: 100%; accent-color: var(--accent); }
+.raio-x-marcas { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.raio-x-marcas button { width: 100%; text-align: left; background: transparent; border: 0; border-radius: var(--raio-p); color: var(--muted); padding: 6px var(--esp-2); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.raio-x-marcas button span { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%; border: 1px solid var(--border); font-size: 0.75rem; margin-right: var(--esp-1); }
+.raio-x-marcas button[aria-current='step'] { color: var(--text); background: var(--surface-2); }
+.raio-x-marcas button[aria-current='step'] span { border-color: var(--accent); color: var(--accent); }
+.raio-x-botoes { display: flex; gap: var(--esp-2); flex-wrap: wrap; }
+.raio-x-legenda { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--raio); padding: var(--esp-3); }
+.raio-x-legenda h3 { margin: 0 0 var(--esp-2); font-size: 1rem; }
+.raio-x-legenda h3 span { color: var(--muted); font-weight: 500; }
+.raio-x-legenda p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+@media (max-width: 900px) { .raio-x { grid-template-columns: 1fr; } .raio-x-palco { height: 55vh; } }
+@media (prefers-reduced-motion: reduce) { .raio-x-palco .camada { transition: none; } }
