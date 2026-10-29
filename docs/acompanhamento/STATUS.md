@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** trilha A **concluída** (falta o PR) → ajuda a trilha B ou o fechamento (F0-T10) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** trilha A **concluída** (PR #8) → ajuda a trilha B ou o fechamento (F0-T10) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
