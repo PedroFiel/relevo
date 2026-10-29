@@ -228,9 +228,9 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
   tracing; página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte; banco (Neon) com as 6 tabelas do MVP
   e o usuário demo (F3-T01). **Trilha A concluída (28/10):** Storage local, `POST /modelos` → job em segundo plano com
   progresso → versão com `.glb` decimado (~20 mil faces), leitura/download/delete — tudo gravando no Neon. Falta o
-  front usar a API (trilha B).
+  front usar a API (trilha B). Base visual, cabeçalho, home de produto e `/guia` prontos (F2-T01).
 - **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
-  tiradas pelo grupo + fita métrica — falta o erro dimensional)**, F2-T01 (base visual + home).
+  tiradas pelo grupo + fita métrica — falta o erro dimensional)**.
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
 
 ## 13. Limites conhecidos (comunicar, não esconder)

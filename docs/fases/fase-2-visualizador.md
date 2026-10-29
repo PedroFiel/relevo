@@ -24,6 +24,15 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
 - **Testes:** Vitest renderiza cada rota sem erro; `Slider` chama `onChange`; a home tem o botão "Criar modelo"
   apontando para `/novo`.
 - **Aceite:** navegação entre páginas funciona; layout ok em 375 px de largura (home incluída).
+- **Como ficou (28/10):** tokens (cores, escala de espaçamento de 4 px, raios, fontes) no topo do `index.css`, com
+  os nomes antigos (`--bg`, `--surface`…) mantidos para o estúdio não quebrar. `components/ui/`: `Botao` (vira `Link`
+  com `para`), `GrupoBotoes` (`aria-pressed`), `Painel`, `Slider` (`label` + `output`), `Etiqueta` (tons). `AppLayout`
+  com cabeçalho fixo, navegação (link ativo marcado) e rodapé (guia de fotos, estúdio). Rotas: `/`, `/novo`,
+  `/modelos`, `/modelos/:id` (as três ainda "em construção", com caminho para o exemplo e o guia), `/guia`,
+  `/visualizador`, `/fotos` e 404. **A mais:** `/guia` — a home precisava de um destino para "guia de fotos"; o
+  texto vem de `src/lib/guiaFotos.ts` (espelho do `docs/06-guia-de-fotos.md`, reaproveitado na ajuda da F3-T08).
+  Item 5: o estúdio já tinha o layout canvas + painel (`.estudio`, painel de 360 px; abaixo em < 900 px) — mantido.
+  Os componentes antigos do estúdio não foram migrados para `components/ui` (refatoração sem ganho agora).
 
 ### F2-T02 — Câmera e controles de órbita
 - **Frente:** front
