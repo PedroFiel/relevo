@@ -68,12 +68,15 @@ class ResultadoPipeline:
     ajustes: dict[str, dict] = field(default_factory=dict)
     secao: dict = field(default_factory=dict)
     decimacao: dict = field(default_factory=dict)
+    # Saída do Marching Cubes antes da decimação e da cor (Raio-X, F5-T01)
+    malha_bruta: trimesh.Trimesh | None = None
 
     @property
     def metricas(self) -> dict:
         return {
             "vistas": list(self.mascaras),
             "dims_voxels": list(self.vistas.dims),
+            "tamanho_voxel_cm": round(float(self.malha.metadata.get("tamanho_voxel", 0)), 4),
             "voxels_ocupados": int(self.voxels.sum()),
             "vertices": int(len(self.malha.vertices)),
             "faces": int(len(self.malha.faces)),
@@ -207,6 +210,7 @@ def processar(
 
     avisar("decimacao")
     t = time.perf_counter()
+    malha_bruta = malha if faces_alvo is None else malha.copy()  # a cor pinta a malha final
     malha, info_decimacao = decimar(malha, faces_alvo)
     tempos["decimacao"] = time.perf_counter() - t
 
@@ -239,6 +243,7 @@ def processar(
         },  # fmt: skip
         secao=info_secao,
         decimacao=info_decimacao,
+        malha_bruta=malha_bruta,
     )
 
 
