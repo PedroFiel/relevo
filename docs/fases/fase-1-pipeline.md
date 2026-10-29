@@ -50,6 +50,10 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 - **Testes:** faces ≤ alvo (+2 % de tolerância); erro médio < 0,5 mm no sintético; dimensões ±1 %.
 - **Aceite:** preset e-commerce gera ~20 mil faces com diferença visual imperceptível.
 - **Conceito de CG:** simplificação de malhas, métrica de erro quádrico (Garland-Heckbert), colapso de arestas.
+- **Como ficou (28/10):** feita **antes** da F1-T02 (Taubin ainda não existe; a decimação não depende dela na
+  prática). `malha.decimar(malha, faces_alvo) -> (malha, metricas)`; se a reduzida abrir, fica a original. O erro
+  usa KD-tree + distância ponto–triângulo em vez de `trimesh.proximity` (que exige `rtree`). Etapa `decimacao` no
+  pipeline, antes da cor; CLI `--faces-alvo` (padrão 20 000). Números em `docs/03-pipeline-cg.md` ([6]).
 
 ### F1-T04 — Transformação inversa: ponto 3D → pixel da foto
 - **Frente:** pipeline
@@ -122,6 +126,7 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 - **Como ficou (28/10, item 1):** `ao_progredir(etapa, %)` em `processar` e `cli.processar_fotos`, avisado no
   começo de cada etapa (`ETAPAS`) com o % já feito e no fim com `("concluido", 100)`; % por pesos fixos
   (`PESOS_ETAPAS`). Detalhes em `docs/03-pipeline-cg.md` (Progresso). O item 2 continua a fazer.
+  Com a F1-T03, `decimacao` virou uma etapa da lista.
 
 ### F1-T09 — Desempenho
 - **Frente:** pipeline

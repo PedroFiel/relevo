@@ -77,7 +77,8 @@ apps/api/src/relevo_api/
 │   ├── jobs.py
 │   └── arquivos.py
 └── servicos/
-    └── processamento.py   # executa o pipeline e atualiza o job
+    ├── modelos.py         # valida o upload, cria/lista/detalha/apaga (F3-T03, F3-T06)
+    └── processamento.py   # executa o pipeline e atualiza o job (F3-T05)
 
 apps/web/src/
 ├── pages/            # Home, NovoModelo, StatusJob, Modelos, ModeloDetalhe

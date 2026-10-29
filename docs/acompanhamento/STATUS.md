@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** trilha A → **F3-T03** (`POST /modelos`) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** trilha A **concluída** (falta o PR) → ajuda a trilha B ou o fechamento (F0-T10) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -33,10 +33,10 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | 2 | F3-T02 — Storage local | **feito** (28/10, PR #6) — onde ficam fotos e `.glb`; base do upload |
 | 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | **feito** (28/10, PR #7) — fixture `cliente` |
 | 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10, PR #7) — é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
-| 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | valida pelos bytes; 202 com `modelo_id`/`job_id` |
-| 6 | F3-T05 — execução do job | etapa e progresso no banco; erro amigável |
-| 7 | F3-T06 — leitura, download e delete | a partir daqui o front sai do *mock* |
-| 8 | F1-T03 — decimação (~20 mil faces) | hoje o `.glb` tem 5–6,6 MB e leva ~5 s para abrir |
+| 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | **feito** (28/10) — valida pelos bytes; 202 com `modelo_id`/`job_id` |
+| 6 | F3-T05 — execução do job | **feito** (28/10) — etapa e progresso no banco; erro amigável |
+| 7 | F3-T06 — leitura, download e delete | **feito** (28/10) — a partir daqui o front sai do *mock* (testado contra o Neon) |
+| 8 | F1-T03 — decimação (~20 mil faces) | **feito** (28/10) — tenis-01: 6,6 MB → 0,52 MB, erro médio 0,07 mm; rode `make reais` para regerar os locais |
 
 **Trilha B — front (bonito, responsivo e funcional)**
 
@@ -84,7 +84,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 |---|---|---|---|
 | F1-T01 | Configuração e presets | | a fazer |
 | F1-T02 | Suavização de Taubin | | a fazer |
-| F1-T03 | Decimação por erro quádrico | | a fazer |
+| F1-T03 | Decimação por erro quádrico | Pedro + Claude | feito (28/10: 20 mil faces, *fallback* se abrir a malha) |
 | F1-T04 | Transformação inversa 3D → pixel | | a fazer |
 | F1-T05 | Cor por vértice | Pedro + Claude | feito |
 | F1-T06 | Segmentação robusta | Pedro + Claude | feito |
@@ -121,17 +121,17 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 |---|---|---|---|
 | F3-T01 | Modelos ORM e migração | Pedro + Claude | feito (27/10: 6 tabelas + usuário demo, aplicado no Neon) |
 | F3-T02 | Storage local | Pedro + Claude | feito (28/10: `LocalStorage` + `get_storage`; chave com `..` recusada) |
-| F3-T03 | Schemas + POST /modelos | | a fazer |
+| F3-T03 | Schemas + POST /modelos | Pedro + Claude | feito (28/10) |
 | F3-T04 | Banco de teste e fixtures | Pedro + Claude | feito (28/10: fixture `cliente` com `get_db` e `get_storage` trocados) |
-| F3-T05 | Execução do job | | a fazer |
-| F3-T06 | Endpoints de leitura | | a fazer |
+| F3-T05 | Execução do job | Pedro + Claude | feito (28/10: progresso, erro amigável, delete no meio, *startup*) |
+| F3-T06 | Endpoints de leitura | Pedro + Claude | feito (28/10: + `GET /imagens/{id}`) |
 | F3-T07 | Cliente da API | | a fazer |
 | F3-T08 | Página Novo modelo | | a fazer |
 | F3-T09 | Status do processamento | | a fazer |
 | F3-T10 | Detalhe + visualizador integrado | | a fazer |
 | F3-T11 | Meus modelos | | a fazer |
 | F3-T12 | E2E do MVP | | a fazer |
-| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | em andamento (editor em `/fotos` + "Aplicar e gerar o 3D" via API de dev; falta o upload real F3-T03/T08) |
+| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | em andamento (editor em `/fotos` + "Aplicar e gerar o 3D" via API de dev; back pronto — `ajustes` no `POST /modelos`; falta o front F3-T08) |
 | F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | em andamento (página `/fotos` com contorno, máscara e avisos; falta ler da API na F3-T10) |
 
 ## Fase 4 — Produto

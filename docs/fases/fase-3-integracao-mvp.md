@@ -53,6 +53,11 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   4. `background_tasks.add_task(executar_job, job_id)`; responder **202**.
 - **Testes:** `httpx`/`TestClient` com as fotos sintéticas → 202 e linhas no banco; sem `topo` → 422; arquivo `.txt`
   renomeado para `.jpg` → 400; 11 MB → 413.
+- **Como ficou (28/10):** regras em `servicos/modelos.py` (`ErroPedido(status, mensagem)` → `{"detail"}` por um
+  *exception handler* no `main.py`). Os `ajustes` são **aplicados de verdade** em cada foto antes de aceitar (recorte
+  pequeno, rotação inválida ou vista sem foto → 422 na hora, não no meio do job). As fotos vão para o Storage antes
+  do `commit`; se o `commit` falhar, o prefixo do modelo é apagado. `job.parametros` = `{resolucao, faces_alvo,
+  ajustes}` (presets da F1-T01 ainda não existem). Usuário pela dependência `get_usuario_id` (demo até a F4-T01).
 
 ### F3-T04 — Banco de teste e fixtures
 - **Frente:** back
@@ -76,11 +81,14 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   3. Erro: captura a exceção, `job.status = erro`, `job.erro = mensagem amigável` (ex.: "Não encontramos o tênis na
      foto de topo — o fundo tem contraste suficiente?"), `modelo.status = erro`. Log com *traceback*.
   4. No *startup* da API (`lifespan`): jobs `processando` viram `erro` ("interrompido").
-  - **Atenção nos testes:** a sessão própria do job e o `lifespan` não passam por `get_db`, então a fixture
-    `cliente` não os troca. Receber a fábrica de sessões por parâmetro (padrão `SessionLocal`) e, nos testes,
-    passar uma ligada à conexão do `db`; senão o job grava no banco de verdade.
 - **Testes:** executar job com fotos sintéticas → versão 1 com `.glb` existente e métricas; foto toda branca → status
   `erro` com mensagem; callback grava etapas em ordem.
+- **Como ficou (28/10):** `executar_job(job_id, fabrica, storage)` — a fábrica vem da dependência
+  `get_fabrica_sessao` (os testes trocam por sessões na transação do teste; o `lifespan` lê a troca à mão). O
+  pipeline vai até 90 % e a exportação fecha em 100. `ValueError` do pipeline vira a mensagem do job; outro erro vira
+  `ERRO_GENERICO` (sem *traceback* para o usuário, só no log). **Modelo apagado durante o job:** o `commit` falha
+  (`StaleDataError`/`IntegrityError`), o job para sem erro e apaga o que salvou no Storage. No *startup*, jobs
+  `pendente` **e** `processando` viram erro (as BackgroundTasks morrem com o processo).
 
 ### F3-T06 — Endpoints de leitura
 - **Frente:** back
@@ -88,6 +96,9 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   (`FileResponse` com `media_type` certo), `DELETE /modelos/{id}` (apaga Storage também). 404 para id inexistente
   ou de outro usuário.
 - **Testes:** cada rota: caso feliz + 404; download devolve bytes que o `trimesh.load` abre.
+- **Como ficou (28/10):** routers `modelos.py`, `jobs.py`, `arquivos.py`. A mais: `GET /imagens/{id}` (a foto
+  enviada — o detalhe e a miniatura apontam para ela) e `job` no detalhe do modelo (o front acompanha por ele).
+  `DELETE` apaga as linhas (cascata) e depois o prefixo no Storage. Outro usuário → 404, como inexistente.
 
 ## Front-end
 

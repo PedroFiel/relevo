@@ -250,6 +250,15 @@ plano, agora como refinamento.
 com a soma das distâncias² aos planos das faces vizinhas; colapsa-se repetidamente a aresta cujo vértice resultante
 tem menor erro `vᵀQv`. Alvos: e-commerce ≈ 20 mil faces, jogo ≈ 5 mil, impressão 3D sem decimação.
 
+**Como ficou (F1-T03, `malha.decimar`):** roda logo depois do Marching Cubes e **antes da cor** (a cor por vértice é
+calculada já na malha reduzida; os metadados que levam o vértice ao voxel são copiados). `processar(faces_alvo=N)`;
+`None` = sem decimação. A CLI e a API usam 20 mil (`--faces-alvo 0` desliga). Se a malha reduzida **não ficar
+fechada** (alvo baixo demais), fica a original — malha fechada é regra. O **erro geométrico** vai para
+`metricas.decimacao` (`erro_medio_mm`, `erro_max_mm`): 5 000 pontos amostrados na original, distância exata até o
+triângulo mais próximo da reduzida (candidatos por KD-tree dos centros — sem a dependência `rtree`).
+Medido no tenis-01 (resolução 256): 255 852 → 20 000 faces, `.glb` de 6,6 MB → 0,52 MB, erro médio 0,07 mm,
+máximo 3,7 mm, fechada, dimensões iguais. A 5 mil faces o tenis-01 abriria — por isso o *fallback*.
+
 ## [7] Cor e textura (Fase 1: cor por vértice · Fase 4: textura UV)
 
 **Cor por vértice (Fase 1 — `cor.py`):** cada vértice é projetado de volta nas fotos (o inverso do visual hull: com
@@ -301,9 +310,9 @@ atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma re
 
 `processar(..., ao_progredir=cb)` chama `cb(etapa, percentual)` no **começo** de cada etapa, com o % já feito, e
 termina com `("concluido", 100)`. Etapas, na ordem: `segmentacao` (inclui ajuste, orientação e contorno),
-`alinhamento`, `visual_hull`, `marching_cubes`, `cor` (some com `colorir=False`). O % vem dos pesos em
-`PESOS_ETAPAS` (≈ fatia do tempo medido nos tenis-01..03: 35/5/10/15/35), não de cronômetro. Se uma etapa
-levanta erro, não há a chamada final. `suavizacao` e `decimacao` entram na lista quando F1-T02/F1-T03 existirem.
+`alinhamento`, `visual_hull`, `marching_cubes`, `decimacao`, `cor` (some com `colorir=False`). O % vem dos pesos
+em `PESOS_ETAPAS` (≈ fatia do tempo medido nos tenis-01..03: 35/5/10/15/2/33), não de cronômetro. Se uma etapa
+levanta erro, não há a chamada final. `suavizacao` entra na lista quando a F1-T02 existir.
 
 ## Referências
 
