@@ -35,7 +35,7 @@ TAMANHO_MAXIMO = 10 * 1024 * 1024  # 10 MB por foto
 ASSINATURAS = {b"\xff\xd8\xff": "jpg", b"\x89PNG\r\n\x1a\n": "png"}
 # Etapas que o front mostra: as do pipeline + a exportação, feita aqui na API (docs/05-api.md)
 ETAPAS_JOB = [*ETAPAS, "exportacao"]
-FACES_ALVO = 20_000  # preset e-commerce (F1-T03)
+FACES_ALVO = 20_000  # configuração única (F1-T03, ADR 0009)
 
 
 class ErroPedido(Exception):

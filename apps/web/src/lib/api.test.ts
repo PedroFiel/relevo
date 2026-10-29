@@ -19,7 +19,7 @@ describe('cliente da API (F3-T07)', () => {
 
   it('erro 400 vira ErroApi com a mensagem do back', async () => {
     fetchFalso({ 'POST /api/modelos': { status: 400, corpo: { detail: 'A foto lateral não é JPEG nem PNG.' } } })
-    const erro = await criarModelo({ nome: 'x', comprimento_cm: 28, resolucao: 128, fotos: {}, ajustes: {} }).catch((e) => e)
+    const erro = await criarModelo({ nome: 'x', comprimento_cm: 28, fotos: {}, ajustes: {} }).catch((e) => e)
     expect(erro).toBeInstanceOf(ErroApi)
     expect(erro).toMatchObject({ status: 400, mensagem: 'A foto lateral não é JPEG nem PNG.' })
   })
@@ -44,7 +44,6 @@ describe('cliente da API (F3-T07)', () => {
     const f = formularioModelo({
       nome: '  Tênis azul ',
       comprimento_cm: 28.5,
-      resolucao: 96,
       fotos: { lateral: foto('l.jpg'), topo: foto('t.jpg') },
       ajustes: {
         lateral: { rotacao_graus: 0, recorte: null },
@@ -54,7 +53,7 @@ describe('cliente da API (F3-T07)', () => {
     })
     expect(f.get('nome')).toBe('Tênis azul')
     expect(f.get('comprimento_cm')).toBe('28.5')
-    expect(f.get('resolucao')).toBe('96')
+    expect(f.get('resolucao')).toBeNull()
     expect(f.get('lateral')).toBeInstanceOf(File)
     expect(f.get('frente')).toBeNull()
     expect(JSON.parse(f.get('ajustes') as string)).toEqual({ topo: { rotacao_graus: 90, recorte: [1, 2, 300, 200] } })

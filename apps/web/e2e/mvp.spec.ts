@@ -41,7 +41,6 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
 
   await page.getByLabel('Nome').fill(NOME)
   await page.getByLabel('Comprimento real (cm)').fill('30')
-  await page.getByRole('button', { name: 'Rápida' }).click()
 
   await page.getByRole('button', { name: 'Gerar modelo 3D' }).click()
 

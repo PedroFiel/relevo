@@ -55,7 +55,8 @@ export type ModeloDetalhe = {
 export type NovoModelo = {
   nome: string
   comprimento_cm: number
-  resolucao: number
+  /** Só para desenvolvimento: o site não escolhe (configuração única, ADR 0009). */
+  resolucao?: number
   fotos: Partial<Record<Vista, File>>
   ajustes: Partial<Record<Vista, AjusteFoto>>
 }
@@ -108,7 +109,7 @@ export function formularioModelo(m: NovoModelo): FormData {
   const f = new FormData()
   f.set('nome', m.nome.trim())
   f.set('comprimento_cm', String(m.comprimento_cm))
-  f.set('resolucao', String(m.resolucao))
+  if (m.resolucao !== undefined) f.set('resolucao', String(m.resolucao))
   for (const [vista, arquivo] of Object.entries(m.fotos)) if (arquivo) f.set(vista, arquivo)
   const ajustes = Object.fromEntries(
     Object.entries(m.ajustes).filter(
