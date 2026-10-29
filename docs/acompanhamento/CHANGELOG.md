@@ -4,6 +4,12 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (28/10/2026 — fechamento do MVP)
+- **Teste de ponta a ponta** (`make e2e`, Playwright): envia as fotos, recorta uma no editor, espera o modelo, confere
+  o 3D, os contornos e o download, e apaga — num banco e numa API só de teste. Também confere que os 3 modos de
+  renderização desenham (WebGL por software). [F3-T12, F2-T09]
+- **Revisão da Fase 3** com o roteiro da demo e as métricas (`docs/revisoes/fase-3.md`).
+
 ### Adicionado (28/10/2026 — o fluxo do MVP no site)
 - **Novo modelo** (`/novo`): fotos com gabarito da posição certa, clique ou arraste, aviso na hora para formato errado
   ou foto > 10 MB, **Ajustar** (girar 90°, recortar, ampliar) com a miniatura já ajustada, comprimento em cm e

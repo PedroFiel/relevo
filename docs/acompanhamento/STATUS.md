@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** trilhas A e B **concluídas** → **fechamento do MVP**: F3-T12 (E2E com Playwright) e F0-T10 (foto própria + fita métrica) (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** MVP pronto no código (revisão em `docs/revisoes/fase-3.md`) → **F0-T10** (foto própria + fita métrica), vídeo da demo e tag `v0.1.0-mvp` depois do merge; depois **F4-T05** (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -53,9 +53,9 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 
 **Fechamento do MVP (todos)**
-1. F3-T12 — E2E com Playwright (e F2-T09 junto, mesma ferramenta).
-2. F0-T10 — foto tirada pelo grupo + fita métrica → erro dimensional (< 5 %).
-3. `docs/revisoes/fase-3.md`, tag `v0.1.0-mvp` e vídeo curto da demo.
+1. F3-T12 — E2E com Playwright (e F2-T09 junto, mesma ferramenta). **feito** (28/10) — `make e2e`; no CI só manual.
+2. F0-T10 — foto tirada pelo grupo + fita métrica → erro dimensional (< 5 %). **falta** (trabalho do grupo).
+3. `docs/revisoes/fase-3.md` **feito** (28/10); tag `v0.1.0-mvp` (depois do merge) e vídeo curto da demo **faltam**.
 
 **Depois do MVP (conforme a data de entrega)**
 - F4-T05 — exportar `.obj`/`.stl` (barato com trimesh).
@@ -108,7 +108,7 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | F2-T06 | Ajudantes visuais | | a fazer |
 | F2-T07 | Estatísticas do modelo | | a fazer |
 | F2-T08 | Abrir arquivo local | Pedro + Claude | feito |
-| F2-T09 | Testes visuais (Playwright) | | a fazer |
+| F2-T09 | Testes visuais (Playwright) | Pedro + Claude | feito (28/10: prints por modo com WebGL por software) |
 | F2-T10 | Visor 2D: janela→viewport, zoom, pan, clipping | Pedro + Claude | feito |
 | F2-T11 | Plano de corte 3D (clipping + stencil) | Pedro + Claude | feito |
 | F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | feito (27/10: modo Lente (FOV) tirado) |
@@ -131,7 +131,7 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | F3-T09 | Status do processamento | Pedro + Claude | feito (28/10) |
 | F3-T10 | Detalhe + visualizador integrado | Pedro + Claude | feito (28/10) |
 | F3-T11 | Meus modelos | Pedro + Claude | feito (28/10) |
-| F3-T12 | E2E do MVP | | a fazer |
+| F3-T12 | E2E do MVP | Pedro + Claude | feito (28/10: `make e2e`, API :8001 no `relevo_test`) |
 | F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | feito (28/10: editor no `/novo`, miniatura já ajustada, `ajustes` no `POST /modelos`) |
 | F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | feito (28/10: aba "Fotos e contornos" do modelo lendo da API) |
 
