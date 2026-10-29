@@ -42,7 +42,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 
 | # | Tarefa | Por quê / observação |
 |---|---|---|
-| 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
+| 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10, PR #9) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
 | 2 | F3-T07 — cliente da API | começa com *mock* do contrato (`docs/05-api.md`) |
 | 3 | F3-T08 + F3-T13 — `/novo` | upload guiado com gabarito, editor de foto (reaproveita o `VisorFoto` de `/fotos`), cm, preset |
 | 4 | F3-T09 — status por etapa | **encontro**: troca o *mock* pela API quando a trilha A chegar no 7 |
