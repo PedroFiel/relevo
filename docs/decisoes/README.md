@@ -15,3 +15,4 @@ Numeração sequencial `NNNN-titulo.md`; nunca apague um ADR — se mudar de ide
 | [0006](0006-recorte-zoom-transformacoes-rastreamento-no-mvp.md) | Recorte, zoom, transformações e rastreamento entram no MVP | aceita |
 | [0007](0007-vistas-extras-e-secao-transversal.md) | Até 6 vistas, registro por IoU e seção transversal comum | aceita |
 | [0008](0008-rastreamento-de-raios-e-selecionar-separar.md) | "Rastrear" = rastreamento de raios; selecionar, separar e mover; estúdio único | aceita |
+| [0009](0009-configuracao-unica-sem-presets.md) | Configuração única de geração, sem presets nem escolhas técnicas | aceita |

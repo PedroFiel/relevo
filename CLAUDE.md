@@ -27,7 +27,7 @@ Os valores **guiam decisões de código e de produto**:
 | Valor | O que significa na prática, aqui no repositório |
 |---|---|
 | **Agilidade** | Pipeline rápido (meta < 10 s). MVP primeiro, refinamento depois. Tarefas pequenas, PRs pequenos. |
-| **Acessibilidade** | O usuário não precisa saber nada de 3D: upload guiado com gabarito, textos simples, mensagens de erro que dizem *o que fazer*. Funciona no celular (375 px). |
+| **Acessibilidade** | O usuário não precisa saber nada de 3D: upload guiado com gabarito, textos simples, mensagens de erro que dizem *o que fazer*, **nenhuma escolha técnica** (resolução, faces, preset). Funciona no celular (375 px). |
 | **Qualidade de entrega** | Malha sempre fechada, escala real correta, testes para toda tarefa, CI verde antes do merge. |
 | **Propriedade do criador** | O modelo é do usuário: download livre nos formatos abertos, sem marca d'água, apagar o modelo apaga os arquivos. |
 | **Transparência sobre os limites** | Dizemos ao usuário o que o algoritmo **não** consegue (abertura do pé fechada, lado oposto espelhado e solado cinza quando faltam essas fotos, seção estimada). Métricas de qualidade visíveis. Nunca vender como "IA". |
@@ -62,7 +62,8 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
   etapa → ver o contorno detectado em cada foto → ver o tênis 3D colorido no navegador (zoom no ponto, plano de corte,
   mover/girar/aumentar) → baixar o .glb → encontrá-lo depois em "Meus modelos". Tudo persistido no PostgreSQL.
 - **Produto (Fase 4):** conta e créditos, editor de escala/rotação/pivô, versões, exportação .obj/.stl, textura UV, S3.
-- **Diferenciais (Fase 5):** Raio-X do pipeline (mostra cada etapa), LOD, régua 3D, presets, correção de máscara, embed.
+- **Diferenciais (Fase 5):** Raio-X do pipeline (mostra cada etapa), LOD, régua 3D, correção de máscara, embed.
+  (Presets de destino foram cancelados — configuração única, ADR 0009.)
 
 ### 3.3 Critérios de sucesso (metas mensuráveis)
 | Métrica | Meta |
@@ -71,7 +72,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | Erro dimensional vs. medida real (fita métrica) | < 5 % |
 | IoU de reprojeção (modelo × silhuetas) | > 0,90 |
 | Tempo do pipeline (resolução 128) | < 10 s |
-| Faces no preset e-commerce | ≈ 20 mil |
+| Faces do modelo (configuração única) | ≈ 20 mil |
 | Testes automatizados | 100 % passando no CI |
 
 ## 4. Decisões tomadas (não reabrir sem motivo forte + ADR)
@@ -95,6 +96,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | D15 | **Recorte (2D e 3D), zoom, transformações, rastreamento e segmentação visíveis entram no MVP** | exigência da professora | ADR 0006 |
 | D16 | **Até 6 vistas + registro por IoU + seção transversal comum (cilindro generalizado)** | cor real de todos os lados e forma sem "caixa" | ADR 0007 |
 | D17 | **"Rastrear" = rastreamento de raios; selecionar/separar/mover; ferramentas ao lado do modelo; API de dev para regerar amostras** | pedido da professora + revisão de uso | ADR 0008 |
+| D18 | **Configuração única de geração (loja virtual: 128, ~20 mil faces, cor, `.glb`); sem presets nem escolha de qualidade** — outros formatos só como opção no download | foco em lojista de tênis + acessibilidade | ADR 0009 |
 
 ## 5. Regras inegociáveis
 
@@ -118,6 +120,9 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 8. **Escopo muda só com registro**: nova funcionalidade fora das fases → discutir e registrar (ADR ou fase).
 9. **Tudo em português** (código, comentários, docs, commits); identificadores sem acento.
 10. **Transparência no produto**: mensagens de erro e limitações sempre explicadas ao usuário em linguagem simples.
+11. **Nenhuma escolha técnica para o usuário.** A interface não pede resolução, número de faces, preset nem parâmetro
+    do pipeline: o lojista envia as fotos, informa o tamanho em cm e recebe o modelo (configuração única, ADR 0009).
+    Opção técnica fica na CLI e na API de desenvolvimento. Formato do arquivo pode ser escolhido **só no download**.
 
 ## 6. Stack
 

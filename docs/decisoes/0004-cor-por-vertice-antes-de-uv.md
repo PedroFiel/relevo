@@ -15,5 +15,5 @@ Na Fase 4 a mesma regra é aplicada por **texel** num atlas UV.
 - **Sem cor no MVP** — modelo cinza; perde muito impacto visual na demo.
 
 ## Consequências
-- A nitidez da cor depende da densidade da malha (decimar demais borra a cor) — preset e-commerce com ~20 mil faces.
+- A nitidez da cor depende da densidade da malha (decimar demais borra a cor) — configuração única com ~20 mil faces (ADR 0009).
 - A função de projeção 3D → pixel (F1-T04) é reaproveitada na textura.
