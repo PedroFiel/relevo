@@ -55,11 +55,16 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
   `versao_atual`. `GET /modelos/{id}/versoes` lista; `POST /modelos/{id}/versoes/{n}/restaurar` aponta `versao_atual`.
 - **Testes:** escala 2× dobra as dimensões; rotação de 90° em y troca comprimento e largura; restaurar volta o arquivo.
 
-### F4-T05 — Exportação multi-formato
+### F4-T05 — Outros formatos no download
 - **Frente:** back, front
-- **Como fazer:** `GET /versoes/{id}/exportar?formato=glb|obj|stl` — gera sob demanda com o `exportar()` do pipeline e
-  guarda em `arquivos` (cache). `.stl` sem cor; `.obj` com `.mtl` e textura num `.zip`. Front: menu "Exportar".
-- **Testes:** cada formato abre de volta com `trimesh.load`; `.stl` é *watertight*.
+- **Revisada (28/10, ADR 0009):** é só uma **opção no botão de download** — o modelo é gerado sempre do mesmo jeito
+  (configuração única); `.glb` continua o padrão. Fazer só se algum lojista/parceiro pedir esses formatos.
+- **Como fazer:** `GET /versoes/{id}/exportar?formato=glb|obj|stl` — converte a malha da versão com o `exportar()` do
+  pipeline e guarda em `arquivos` (cache). `.stl` sem cor; `.obj` com `.mtl` (e a textura, quando houver) num `.zip`.
+  Front: ao lado de **Baixar .glb**, um menu "Outros formatos" com uma linha simples sobre cada um ("`.obj` — abre em
+  programas de 3D", "`.stl` — impressão 3D, sem cor").
+- **Testes:** cada formato abre de volta com `trimesh.load`; `.stl` é *watertight*; a malha convertida tem as mesmas
+  dimensões da `.glb`.
 
 ## Textura e storage
 
@@ -72,7 +77,7 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
      Vetorizar: gerar a lista de texels cobertos de uma vez com NumPy.
   3. *Dilatação* da textura (2–4 px) nas bordas das ilhas UV para evitar costuras.
   4. Material `trimesh.visual.material.PBRMaterial(baseColorTexture=imagem, roughnessFactor=0.8)`; exportar `.glb`.
-  5. Preset e-commerce passa a usar textura em vez de cor por vértice.
+  5. A configuração única passa a usar textura em vez de cor por vértice.
 - **Testes:** UVs dentro de [0,1]; nenhuma face com área UV zero; textura sem pixels "pretos" dentro das ilhas.
 - **Conceito de CG:** parametrização de superfícies, atlas UV, coordenadas baricêntricas, *texture baking*, PBR.
 

@@ -4,6 +4,11 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Removido (28/10/2026 — menos escolhas, mais simples)
+- **Escolha de "Qualidade"** no Novo modelo: o site gera sempre com a mesma configuração (~20 mil faces, colorido,
+  `.glb`, pronto em 1–2 s). O lojista só envia as fotos e o tamanho. Os presets planejados (loja, jogo, impressão 3D)
+  foram cancelados. [ADR 0009]
+
 ### Adicionado (28/10/2026 — fechamento do MVP)
 - **Teste de ponta a ponta** (`make e2e`, Playwright): envia as fotos, recorta uma no editor, espera o modelo, confere
   o 3D, os contornos e o download, e apaga — num banco e numa API só de teste. Também confere que os 3 modos de

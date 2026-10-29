@@ -49,7 +49,7 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   2. `routers/modelos.py` → `POST /modelos` conforme [05-api.md](../05-api.md): validar tipo (ler os primeiros bytes:
      assinatura JPEG `FF D8` / PNG `89 50 4E 47`), tamanho ≤ 10 MB, `comprimento_cm` 5–60; decodificar com
      `cv2.imdecode` para garantir que é imagem válida e obter largura/altura.
-  3. Em uma transação: criar `modelo` (status `processando`), `imagens`, `job` (status `pendente`, `parametros` do preset).
+  3. Em uma transação: criar `modelo` (status `processando`), `imagens`, `job` (status `pendente`, `parametros` da configuração única).
   4. `background_tasks.add_task(executar_job, job_id)`; responder **202**.
 - **Testes:** `httpx`/`TestClient` com as fotos sintéticas → 202 e linhas no banco; sem `topo` → 422; arquivo `.txt`
   renomeado para `.jpg` → 400; 11 MB → 413.
@@ -57,7 +57,7 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   *exception handler* no `main.py`). Os `ajustes` são **aplicados de verdade** em cada foto antes de aceitar (recorte
   pequeno, rotação inválida ou vista sem foto → 422 na hora, não no meio do job). As fotos vão para o Storage antes
   do `commit`; se o `commit` falhar, o prefixo do modelo é apagado. `job.parametros` = `{resolucao, faces_alvo,
-  ajustes}` (presets da F1-T01 ainda não existem). Usuário pela dependência `get_usuario_id` (demo até a F4-T01).
+  ajustes}` (configuração única, ADR 0009). Usuário pela dependência `get_usuario_id` (demo até a F4-T01).
 
 ### F3-T04 — Banco de teste e fixtures
 - **Frente:** back
@@ -118,7 +118,7 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
 - **Como fazer:**
   1. Três `UploadSlot` (Lateral*, De cima*, Frontal) — cada um com **gabarito SVG** da silhueta esperada e a dica da vista
      (textos do [guia de fotos](../06-guia-de-fotos.md)); aceita clique ou arrastar; mostra miniatura; valida tipo/tamanho no cliente.
-  2. Campos: nome, tamanho real (cm) com dica "meça com fita métrica do calcanhar ao bico"; seletor de preset (padrão e-commerce).
+  2. Campos: nome, tamanho real (cm) com dica "meça com fita métrica do calcanhar ao bico". ~~seletor de preset~~ (cancelado, ADR 0009).
   3. **Prévia da silhueta no navegador** (opcional, recomendado): limiarização simples em `<canvas>` para o usuário ver
      se o fundo está sendo separado antes de enviar.
   4. Em cada foto, botão **"Ajustar"** abre o editor da F3-T13 (cortar, girar, ampliar).
@@ -127,8 +127,8 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
 - **Conceito de CG:** limiarização em tempo real no cliente (pixel a pixel no `ImageData`).
 - **Como ficou (28/10):** 6 `UploadSlot` (3 principais + "Mais fotos" recolhível) com `Gabarito` SVG, dica da vista,
   clique/arrastar e validação no cliente (`lib/upload.ts`). A miniatura (`MiniaturaAjustada`) já sai girada e
-  recortada — a mesma transformação do `ajuste.py`, feita com a matriz do canvas. "Qualidade" (Rápida 96 / Padrão
-  128 / Alta 192) no lugar do preset, que só existe com a F1-T01. **Ficou de fora:** a prévia da silhueta (item 3,
+  recortada — a mesma transformação do `ajuste.py`, feita com a matriz do canvas. A escolha provisória de
+  "Qualidade" saiu em 28/10 (ADR 0009): o site usa a configuração única. **Ficou de fora:** a prévia da silhueta (item 3,
   opcional) — os contornos de verdade aparecem na aba Fotos do modelo, já com o resultado do pipeline.
 
 ### F3-T09 — Status do processamento

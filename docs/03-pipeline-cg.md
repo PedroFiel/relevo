@@ -303,7 +303,7 @@ atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma re
 | `consistencia.razao_frente` | proporção altura/largura da frontal ÷ a que lateral e topo implicam | 1 ± 0,15 (fora disso: aviso) |
 | `orientacao` | o que foi girado/espelhado em cada foto e se a pista era confiável | — |
 | `avisos` | mensagens para o usuário: correções feitas e problemas de foto | lista vazia |
-| Faces | `len(malha.faces)` | conforme preset |
+| Faces | `len(malha.faces)` | ≈ 20 mil (configuração única, ADR 0009) |
 | Tempo total | soma dos `tempos_s` | < 10 s (resolução 128) |
 
 ### Progresso (F1-T08)

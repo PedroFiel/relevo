@@ -37,7 +37,8 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
 - **Testes:** função `distanciaCm(p1, p2, escala)` no Vitest.
 - **Conceito de CG:** raycasting (interseção raio-triângulo), espaço do mundo × espaço do objeto.
 
-### F5-T04 — Presets de destino na interface
+### F5-T04 — Presets de destino na interface — **CANCELADA (28/10, ADR 0009)**
+- **Por quê:** configuração única; nenhuma escolha técnica na interface (regra 11). Registro do que estava planejado:
 - **Frente:** front, back
 - **Como fazer:** cartões "Loja online (leve, colorido)", "Jogo (low poly)", "Impressão 3D (fechado, sem cor, .stl)" no
   upload e em "Regerar"; `POST /modelos/{id}/regerar {preset}` cria novo job reaproveitando as fotos (custa 1 crédito).

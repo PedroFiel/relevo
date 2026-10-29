@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** MVP pronto no código (revisão em `docs/revisoes/fase-3.md`) → **F0-T10** (foto própria + fita métrica), vídeo da demo e tag `v0.1.0-mvp` depois do merge; depois **F4-T05** (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** MVP pronto e na `main` (PR #10; revisão em `docs/revisoes/fase-3.md`) → **F0-T10** (foto própria + fita métrica), vídeo da demo e tag `v0.1.0-mvp`; depois **F5-T07** (apresentação) e **F5-T01** (Raio-X) (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -44,7 +44,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 |---|---|---|
 | 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10, PR #9) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
 | 2 | F3-T07 — cliente da API | **feito** (28/10) — direto na API real (sem *mock*: a trilha A já tinha terminado) |
-| 3 | F3-T08 + F3-T13 — `/novo` | **feito** (28/10) — gabarito, editor (girar/recortar/ampliar), cm, qualidade |
+| 3 | F3-T08 + F3-T13 — `/novo` | **feito** (28/10, PR #10) — gabarito, editor (girar/recortar/ampliar), cm; sem escolha de qualidade (ADR 0009) |
 | 4 | F3-T09 — status por etapa | **feito** (28/10) — *polling* de 1 s até concluir/erro |
 | 5 | F3-T10 + F3-T14 — `/modelos/:id` | **feito** (28/10) — estúdio 3D completo embutido, aba Fotos com contorno, baixar `.glb` |
 | 6 | F3-T11 — `/modelos` | **feito** (28/10) — cartões, apagar com confirmação |
@@ -58,7 +58,8 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 3. `docs/revisoes/fase-3.md` **feito** (28/10); tag `v0.1.0-mvp` (depois do merge) e vídeo curto da demo **faltam**.
 
 **Depois do MVP (conforme a data de entrega)**
-- F4-T05 — exportar `.obj`/`.stl` (barato com trimesh).
+- ~~Presets (F1-T01, F5-T04)~~ — **cancelados** em 28/10: configuração única, sem escolha técnica (ADR 0009, regra 11).
+- F4-T05 — `.obj`/`.stl` só como opção no download, **se alguém pedir** (o modelo é sempre o mesmo).
 - F4-T01/T02 — login e créditos **só se** a professora exigir conta de usuário.
 - F5-T07 — apresentação; F5-T01 — Raio-X (usa a parte de intermediários da F1-T08) se sobrar tempo.
 
@@ -83,7 +84,7 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F1-T01 | Configuração e presets | | a fazer |
+| F1-T01 | Configuração e presets | — | **cancelada** (28/10, ADR 0009: configuração única) |
 | F1-T02 | Suavização de Taubin | | a fazer |
 | F1-T03 | Decimação por erro quádrico | Pedro + Claude | feito (28/10: 20 mil faces, *fallback* se abrir a malha) |
 | F1-T04 | Transformação inversa 3D → pixel | | a fazer |
@@ -143,7 +144,7 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | F4-T02 | Créditos | | a fazer |
 | F4-T03 | Editor de transformações | | a fazer |
 | F4-T04 | Versões no back | | a fazer |
-| F4-T05 | Exportação multi-formato | | a fazer |
+| F4-T05 | Outros formatos no download | | a fazer (só se pedirem; ADR 0009) |
 | F4-T06 | Mapeamento UV e textura | | a fazer |
 | F4-T07 | Modo UV no visualizador | | a fazer |
 | F4-T08 | Storage S3 (MinIO) | | a fazer |
@@ -155,7 +156,7 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | F5-T01 | Raio-X do pipeline | | a fazer |
 | F5-T02 | LOD | | a fazer |
 | F5-T03 | Régua 3D | | a fazer |
-| F5-T04 | Presets na interface | | a fazer |
+| F5-T04 | Presets na interface | — | **cancelada** (28/10, ADR 0009) |
 | F5-T05 | Pincel de correção | | a fazer |
 | F5-T06 | Visualizador incorporável | | a fazer |
 | F5-T07 | Apresentação | todos | a fazer |
