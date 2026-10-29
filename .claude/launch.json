@@ -12,6 +12,14 @@
       ],
       "port": 5173,
       "autoPort": true
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "make",
+      "runtimeArgs": [
+        "api"
+      ],
+      "port": 8000
     }
   ]
 }

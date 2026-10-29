@@ -108,6 +108,10 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   `buscarJob(id)`, `listarModelos()`, `buscarModelo(id)`, `apagarModelo(id)`; erros viram `ErroApi { status, mensagem }`.
   Hooks TanStack Query em `src/lib/consultas.ts`.
 - **Testes:** Vitest com `fetch` *mockado*: monta a URL certa, converte erro 400 em `ErroApi`.
+- **Como ficou (28/10):** sem *mock* do contrato — a API já existia. `urlApi()` põe o `/api` nas URLs que a API devolve
+  (`/arquivos/…`, `/imagens/…`); erro de rede vira `ErroApi(0, …)` e o 422 do FastAPI (lista de campos) vira uma frase.
+  `formularioModelo` manda só as vistas com foto e só os ajustes que mudam algo. Hooks: `useModelos`, `useModelo`,
+  `useJob` (consulta a cada 1 s enquanto o job está aberto), `useCriarModelo`, `useApagarModelo`.
 
 ### F3-T08 — Página "Novo modelo" (upload guiado)
 - **Frente:** front
@@ -121,6 +125,11 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   5. Enviar → `useMutation(criarModelo)` → navegar para `/modelos/:id`.
 - **Testes:** botão "Gerar" desabilitado sem lateral e topo; arquivo > 10 MB mostra erro.
 - **Conceito de CG:** limiarização em tempo real no cliente (pixel a pixel no `ImageData`).
+- **Como ficou (28/10):** 6 `UploadSlot` (3 principais + "Mais fotos" recolhível) com `Gabarito` SVG, dica da vista,
+  clique/arrastar e validação no cliente (`lib/upload.ts`). A miniatura (`MiniaturaAjustada`) já sai girada e
+  recortada — a mesma transformação do `ajuste.py`, feita com a matriz do canvas. "Qualidade" (Rápida 96 / Padrão
+  128 / Alta 192) no lugar do preset, que só existe com a F1-T01. **Ficou de fora:** a prévia da silhueta (item 3,
+  opcional) — os contornos de verdade aparecem na aba Fotos do modelo, já com o resultado do pipeline.
 
 ### F3-T09 — Status do processamento
 - **Frente:** front
@@ -128,16 +137,23 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   (✓ concluída, ● atual com animação, ○ pendente) + barra de progresso; `useQuery(buscarJob, { refetchInterval: 1000 })`
   parando quando `concluido`/`erro`. Em erro: mensagem do back + botão "Tentar com outras fotos".
 - **Testes:** `EtapasJob` marca corretamente as etapas dado `etapa_atual`.
+- **Como ficou (28/10):** `estadoDasEtapas` (puro) → ✓ feita, ● atual (pulsa; parada com `prefers-reduced-motion`),
+  ○ pendente, ✕ falhou; barra com `role=progressbar`. Ao terminar o job, a página busca o modelo de novo sozinha.
 
 ### F3-T10 — Detalhe do modelo + visualizador integrado
 - **Frente:** front
 - **Como fazer:** quando pronto, `/modelos/:id` mostra o `ModelViewer` (Fase 2) com a URL do `.glb` da API, as 3 fotos
   originais em miniatura, métricas (faces, dimensões, tempo) e botão **Baixar .glb**.
+- **Como ficou (28/10):** o estúdio inteiro (`Visualizador` com `urlFixa`: Ampliar, Recortar, Selecionar e mover,
+  Transformar, Rastrear raios) abre o `.glb` da API — sem duplicar código. Etiquetas de status, cm e versão; faces,
+  dimensões, tempo, malha fechada e nº de avisos; **Baixar .glb** com o nome do modelo; apagar com confirmação.
 
 ### F3-T11 — "Meus modelos"
 - **Frente:** front
 - **Como fazer:** `/modelos`: grade de cartões (nome, status, data); miniatura = primeira foto (a captura 3D vira F5);
   ação apagar com confirmação.
+- **Como ficou (28/10):** cartões com a foto lateral (`GET /imagens/{id}`), nome, data e status; estado vazio com
+  "Criar o primeiro modelo"; apagar pede confirmação no próprio cartão.
 
 ### F3-T13 — Editor da foto no upload: cortar, girar e ampliar
 - **Status (01/10):** front pronto na página `/fotos` (gera o `ajustes.json` lido pelo pipeline); falta plugar no
@@ -181,9 +197,15 @@ abrir o modelo colorido no visualizador → baixar o `.glb` → recarregar a pá
   fotos sintéticas (uma delas com recorte e rotação pelo editor da T13), espera "pronto" (timeout 60 s), confere que o
   canvas aparece, que a aba "Fotos" mostra o contorno e que o download responde 200.
 - **Aceite:** passa localmente; roteiro manual de demo escrito em `docs/revisoes/fase-3.md`.
+- **Como ficou (28/10):** `apps/web/playwright.config.ts` sobe uma API **só do teste** (porta 8001, banco
+  `relevo_test`, Storage em `out/e2e/storage`) e um front na 5174 com o proxy apontando para ela — nada encosta no
+  banco nem nos servidores de dev. `e2e/mvp.spec.ts`: fotos do tenis-01, recorte da lateral no editor (conferido
+  depois em `versao.metricas.ajustes`), etapas → pronto → canvas → aba Fotos com 3 contornos → download (`glTF`) →
+  apagar em "Meus modelos"; e um caso de foto que não é imagem. Antes de tudo apaga sobras `E2E …` de execuções
+  interrompidas. `make e2e` (~35 s). No CI: `.github/workflows/e2e.yml`, **só manual** (`workflow_dispatch`).
 
 ## Encerramento da Fase 3 = MVP
 
 - [ ] Demo gravada em vídeo curto (backup para a apresentação)
 - [ ] Relatório de testes com os tênis reais via site
-- [ ] Revisão de fase `docs/revisoes/fase-3.md` + tag git `v0.1.0-mvp`
+- [x] Revisão de fase `docs/revisoes/fase-3.md` (28/10) — falta a tag git `v0.1.0-mvp` depois do merge

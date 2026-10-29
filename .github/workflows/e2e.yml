@@ -1,0 +1,44 @@
+name: E2E
+# Só manual (Actions → E2E → Run workflow): sobe Postgres + API + front e roda o Playwright.
+# Fica fora do CI de cada push para não gastar ~3 min por execução (F3-T12, F2-T09).
+on:
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: relevo
+          POSTGRES_PASSWORD: relevo
+          POSTGRES_DB: relevo_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U relevo" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://relevo:relevo@localhost:5432/relevo_test
+      DATABASE_URL: postgresql+psycopg://relevo:relevo@localhost:5432/relevo_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: uv sync --all-packages
+      - run: npm ci
+        working-directory: apps/web
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: npx playwright test
+        working-directory: apps/web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e
+          path: out/e2e
+          retention-days: 7

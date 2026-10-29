@@ -213,6 +213,7 @@ make poc        # fotos sintéticas -> pipeline -> apps/web/public/samples/tenis
 make api        # http://localhost:8000  (docs em /docs)
 make web        # http://localhost:5173  (/visualizador)
 make test       # pytest + vitest
+make e2e        # Playwright: fluxo do MVP + modos de render (API :8001 no banco de teste)
 make lint       # ruff + oxlint
 
 uv run relevo-pipeline gerar --lateral L.jpg --topo T.jpg --frente F.jpg --comprimento-cm 28 --saida out/x.glb --debug out/x
@@ -228,7 +229,10 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
   tracing; página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte; banco (Neon) com as 6 tabelas do MVP
   e o usuário demo (F3-T01). **Trilha A concluída (28/10):** Storage local, `POST /modelos` → job em segundo plano com
   progresso → versão com `.glb` decimado (~20 mil faces), leitura/download/delete — tudo gravando no Neon. Falta o
-  front usar a API (trilha B). Base visual, cabeçalho, home de produto e `/guia` prontos (F2-T01).
+  front usar a API (trilha B). **Trilha B concluída (28/10):** home, `/novo` (upload guiado + editor), página do modelo
+  (etapas ao vivo, estúdio 3D, fotos com contorno, download) e "Meus modelos" — o fluxo do MVP funciona ponta a ponta.
+  Fechamento (28/10): E2E com Playwright (`make e2e`) e revisão `docs/revisoes/fase-3.md`. Falta F0-T10, vídeo e a
+  tag `v0.1.0-mvp`.
 - **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
   tiradas pelo grupo + fita métrica — falta o erro dimensional)**.
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.

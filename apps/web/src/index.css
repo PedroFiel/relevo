@@ -198,3 +198,76 @@ a { color: var(--accent); }
   .viewer { height: 55vh; min-height: 300px; }
   .abas button { font-size: 0.72rem; padding: 6px 2px; }
 }
+
+/* ---------- Novo modelo (F3-T08) ---------- */
+.novo h1 { margin-bottom: var(--esp-2); }
+.subtitulo { color: var(--muted); margin: 0 0 var(--esp-5); }
+.novo h2 { font-size: 1.1rem; margin: var(--esp-5) 0 var(--esp-3); }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--esp-3); }
+.slot { background: var(--surface); border: 1px solid var(--border); border-radius: var(--raio-g); padding: var(--esp-3); display: flex; flex-direction: column; gap: var(--esp-2); }
+.slot.cheio { border-color: var(--sucesso); }
+.slot.com-erro { border-color: var(--erro); }
+.slot-topo { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-2); flex-wrap: wrap; }
+.slot-area { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--esp-2); aspect-ratio: 3 / 2; border: 1.5px dashed var(--border); border-radius: var(--raio); cursor: pointer; color: var(--muted); background: var(--bg); overflow: hidden; padding: var(--esp-2); text-align: center; }
+.slot-area:hover, .slot-area.arrastando { border-color: var(--accent); color: var(--text); }
+.slot:has(input:focus-visible) .slot-area { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slot-convite { font-size: var(--texto-p); }
+.gabarito { width: min(75%, 200px); height: auto; flex: none; }
+.miniatura { max-width: 100%; max-height: 100%; display: block; border-radius: var(--raio-p); }
+.slot-dica { margin: 0; font-size: 0.8rem; color: var(--muted); overflow-wrap: anywhere; }
+.slot-erro { margin: 0; font-size: 0.8rem; color: var(--erro); }
+.slot-acoes { display: flex; gap: var(--esp-2); flex-wrap: wrap; }
+.slot-acoes .botao { min-height: 34px; padding: 4px var(--esp-3); font-size: 0.85rem; }
+.mais-fotos { margin-top: var(--esp-4); }
+.mais-fotos summary { cursor: pointer; color: var(--text); font-weight: 600; margin-bottom: var(--esp-2); }
+.editor-foto { margin-top: var(--esp-4); }
+.editor-topo { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-3); flex-wrap: wrap; }
+.editor-topo h2 { margin: 0; }
+.editor-ferramentas { display: flex; gap: var(--esp-2); flex-wrap: wrap; align-items: center; margin: var(--esp-3) 0; }
+.editor-visor .visor { height: min(60vh, 460px); }
+.campos-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--esp-4); margin-bottom: var(--esp-4); }
+.campo-form { display: grid; gap: var(--esp-1); }
+.campo-form > label, .campo-form > .rotulo-campo { font-weight: 600; font-size: 0.92rem; }
+.campo-form input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--raio); padding: 10px var(--esp-3); font: inherit; min-height: 44px; }
+.campo-form input:focus { border-color: var(--accent); outline: none; }
+.campo-form small { color: var(--muted); font-size: 0.8rem; }
+.enviar { margin-top: var(--esp-5); display: grid; gap: var(--esp-3); justify-items: start; }
+.erro-envio { color: var(--erro); margin: 0; }
+
+/* ---------- Página do modelo (F3-T09, F3-T10, F3-T14) e Meus modelos (F3-T11) ---------- */
+.detalhe-topo { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--esp-4); flex-wrap: wrap; margin-bottom: var(--esp-4); }
+.detalhe-topo h1 { margin: var(--esp-1) 0 var(--esp-2); }
+.detalhe-topo .selos { margin-top: 0; }
+.andamento, .falha { max-width: 640px; margin-bottom: var(--esp-4); }
+.falha [role='alert'] { color: var(--text); }
+.barra { height: 10px; background: var(--bg); border-radius: var(--raio-pilula); overflow: hidden; border: 1px solid var(--border); }
+.barra-preenchida { height: 100%; background: var(--accent); transition: width 0.4s ease; }
+.etapas { list-style: none; padding: 0; margin: var(--esp-3) 0 0; display: grid; gap: var(--esp-2); }
+.etapa { display: flex; gap: var(--esp-2); align-items: center; color: var(--muted); }
+.etapa-marca { width: 1.2em; text-align: center; }
+.etapa-feita { color: var(--text); }
+.etapa-feita .etapa-marca { color: var(--sucesso); }
+.etapa-atual { color: var(--text); font-weight: 600; }
+.etapa-atual .etapa-marca { color: var(--accent); animation: pulsar 1s ease-in-out infinite; }
+.etapa-falhou, .etapa-falhou .etapa-marca { color: var(--erro); }
+@keyframes pulsar { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .etapa-atual .etapa-marca { animation: none; } .barra-preenchida { transition: none; } }
+.metricas-resumo { display: flex; gap: var(--esp-3); flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 0.9rem; margin-bottom: var(--esp-3); }
+.aba-conteudo { margin-top: var(--esp-3); }
+.estudio-embutido .abas-estudio { display: none; }
+.cartoes { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--esp-4); }
+.cartao { background: var(--surface); border: 1px solid var(--border); border-radius: var(--raio-g); overflow: hidden; display: flex; flex-direction: column; }
+.cartao:hover { border-color: var(--muted); }
+.cartao-link { color: inherit; text-decoration: none; display: block; }
+.cartao-imagem { aspect-ratio: 3 / 2; background: var(--bg); display: grid; place-items: center; overflow: hidden; }
+.cartao-imagem img { width: 100%; height: 100%; object-fit: cover; }
+.cartao-corpo { padding: var(--esp-3) var(--esp-3) 0; display: grid; gap: 2px; }
+.cartao-rodape { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-2); padding: var(--esp-2) var(--esp-3) var(--esp-3); margin-top: auto; flex-wrap: wrap; }
+.cartao-rodape .botao { min-height: 32px; padding: 4px var(--esp-3); font-size: 0.85rem; }
+.cartao-confirmar { display: inline-flex; gap: var(--esp-1); }
+.cartao .erro-envio { padding: 0 var(--esp-3) var(--esp-3); font-size: 0.85rem; }
+@media (max-width: 480px) {
+  .slots { grid-template-columns: 1fr; }
+  .slot-area { aspect-ratio: 2 / 1; }
+  .detalhe-topo .acoes { width: 100%; }
+}

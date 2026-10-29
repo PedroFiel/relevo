@@ -63,6 +63,13 @@ cd apps/web && npm run dev                      # abra http://localhost:5173/vis
 
 Você deve ver um "tênis" cinza girando com o mouse, e os botões Sólido / Wireframe / Normais funcionando.
 
+Teste de ponta a ponta (opcional; baixa o Chromium do Playwright uma vez, ~100 MB):
+```bash
+cd apps/web && npx playwright install chromium && cd ../..
+make test-py   # cria o banco relevo_test na primeira vez
+make e2e       # sobe API (:8001, banco de teste) + front (:5174) e roda o fluxo inteiro (~35 s)
+```
+
 Para ver o tênis **colorido** gerado a partir das fotos reais de `samples/reais/tenis-01/`:
 ```bash
 make real      # gera apps/web/public/samples/tenis-01.glb (~1,5 s); use CM=28.5 com a medida real

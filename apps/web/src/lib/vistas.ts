@@ -11,6 +11,7 @@ export const ROTULOS: Record<Vista, string> = {
 }
 
 export type AjusteFoto = { rotacao_graus: number; recorte: [number, number, number, number] | null }
+export const SEM_AJUSTE: AjusteFoto = { rotacao_graus: 0, recorte: null }
 
 /** Métricas publicadas pelo pipeline (`metricas.json`) — só o que a página de fotos usa. */
 export type Metricas = {

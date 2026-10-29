@@ -114,6 +114,9 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
   salvar screenshot em `e2e/__screenshots__/`. Chromium com `--use-angle=swiftshader` para WebGL sem GPU no CI.
   Script `npm run e2e`.
 - **Aceite:** roda local e no CI (job separado, pode ser `continue-on-error` no começo).
+- **Como ficou (28/10):** `e2e/visualizador.spec.ts` abre o tênis de exemplo, clica Sólido/Wireframe/Normais e salva
+  `out/e2e/prints/visualizador-<modo>.png` (falha se o canvas sair vazio ou a página der erro). Não compara pixel a
+  pixel (GPU/fonte mudam entre máquinas). Roda com o E2E (`make e2e`); no CI, no workflow manual `e2e.yml`.
 
 ## Conceitos pedidos pela professora (recorte, zoom, transformações, rastreamento)
 

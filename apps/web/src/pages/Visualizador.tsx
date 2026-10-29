@@ -50,17 +50,23 @@ function ComoFunciona({ children }: { children: ReactNode }) {
   )
 }
 
-export default function Visualizador() {
+/**
+ * Estúdio 3D. Com `urlFixa` fica embutido na página de um modelo (F3-T10): abre só aquele `.glb`,
+ * sem o seletor de amostras nem as abas do estúdio.
+ */
+export default function Visualizador({ urlFixa }: { urlFixa?: string } = {}) {
   const [modo, setModo] = useState<ModoRender>('solido')
   // ?modelo=tenis-03&v=123 abre aquele modelo (v força recarregar depois de regerar)
   const [busca] = useSearchParams()
   const [url, setUrl] = useState(() => {
+    if (urlFixa) return urlFixa
     const a = AMOSTRAS.find((m) => m.id === busca.get('modelo'))
     return a ? `${a.url}${busca.get('v') ? `?v=${busca.get('v')}` : ''}` : AMOSTRAS[0].url
   })
   const [local, setLocal] = useState<{ nome: string; url: string } | null>(null)
   const [erro, setErro] = useState('')
   const atual = MODOS.find((m) => m.id === modo)!
+  const Raiz = urlFixa ? 'div' : 'main'
 
   const [ferramenta, setFerramenta] = useState<Ferramenta>('ampliar')
   const [caixa, setCaixa] = useState<Caixa | null>(null)
@@ -183,9 +189,10 @@ export default function Visualizador() {
     : 'passe o mouse sobre o modelo'
 
   return (
-    <main className="container largo">
-      <AbasEstudio />
+    <Raiz className={urlFixa ? 'estudio-embutido' : 'container largo'}>
+      {!urlFixa && <AbasEstudio />}
 
+      {!urlFixa && (
       <div className="toolbar" role="group" aria-label="Modelo">
         {AMOSTRAS.map((a) => (
           <button key={a.id} aria-pressed={url.split('?')[0] === a.url} onClick={() => trocarModelo(a.url)}>
@@ -202,6 +209,7 @@ export default function Visualizador() {
           <input type="file" accept=".glb,.gltf" onChange={abrirArquivo} hidden />
         </label>
       </div>
+      )}
       {erro && <p role="alert" style={{ color: 'var(--accent)' }}>{erro}</p>}
 
       <div className="estudio">
@@ -449,6 +457,6 @@ export default function Visualizador() {
           )}
         </aside>
       </div>
-    </main>
+    </Raiz>
   )
 }

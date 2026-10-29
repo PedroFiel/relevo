@@ -7,8 +7,8 @@
 | Unitário — pipeline | cada etapa de CG isolada (máscara, alinhamento, hull, malha, cor) | pytest | `packages/pipeline/tests/` | todo commit (CI) |
 | Unitário — front | funções puras (câmera, matrizes, estatísticas) e componentes | Vitest + Testing Library | `apps/web/src/**/*.test.ts(x)` | todo commit (CI) |
 | Integração — API | rotas + banco real de teste + storage temporário (fixture `cliente`) | pytest + TestClient + PostgreSQL `relevo_test` | `apps/api/tests/` | todo commit (CI, F3+) |
-| Ponta a ponta | upload → processamento → visualizador → download | Playwright | `apps/web/e2e/` | antes de cada fim de fase |
-| Visual | screenshots dos modos de render | Playwright | `apps/web/e2e/__screenshots__/` | fim de fase |
+| Ponta a ponta | upload → processamento → visualizador → download | Playwright (`make e2e`; API :8001 no `relevo_test`) | `apps/web/e2e/` | antes de cada fim de fase; CI manual (`e2e.yml`) |
+| Visual | screenshots dos modos de render | Playwright | `apps/web/e2e/visualizador.spec.ts` → `out/e2e/prints/` | junto com o E2E |
 | Qualidade da reconstrução | fotos reais com medidas conhecidas | CLI + métricas | `samples/reais/` + `docs/testes/relatorios/` | fim das fases 0, 1, 3, 4 |
 
 ## Testes de propriedade (a parte "científica")

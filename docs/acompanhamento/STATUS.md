@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** trilha A **concluída** (PR #8) → ajuda a trilha B ou o fechamento (F0-T10) · trilha B → **F3-T07** (cliente da API — a API já existe, sem *mock*) (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** MVP pronto no código (revisão em `docs/revisoes/fase-3.md`) → **F0-T10** (foto própria + fita métrica), vídeo da demo e tag `v0.1.0-mvp` depois do merge; depois **F4-T05** (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -43,18 +43,19 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | # | Tarefa | Por quê / observação |
 |---|---|---|
 | 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10, PR #9) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
-| 2 | F3-T07 — cliente da API | começa com *mock* do contrato (`docs/05-api.md`) |
-| 3 | F3-T08 + F3-T13 — `/novo` | upload guiado com gabarito, editor de foto (reaproveita o `VisorFoto` de `/fotos`), cm, preset |
-| 4 | F3-T09 — status por etapa | **encontro**: troca o *mock* pela API quando a trilha A chegar no 7 |
-| 5 | F3-T10 + F3-T14 — `/modelos/:id` | visualizador com as abas de CG, aba Fotos (contorno/avisos), baixar `.glb` |
-| 6 | F3-T11 — `/modelos` | "Meus modelos" |
+| 2 | F3-T07 — cliente da API | **feito** (28/10) — direto na API real (sem *mock*: a trilha A já tinha terminado) |
+| 3 | F3-T08 + F3-T13 — `/novo` | **feito** (28/10) — gabarito, editor (girar/recortar/ampliar), cm, qualidade |
+| 4 | F3-T09 — status por etapa | **feito** (28/10) — *polling* de 1 s até concluir/erro |
+| 5 | F3-T10 + F3-T14 — `/modelos/:id` | **feito** (28/10) — estúdio 3D completo embutido, aba Fotos com contorno, baixar `.glb` |
+| 6 | F3-T11 — `/modelos` | **feito** (28/10) — cartões, apagar com confirmação |
 
-`/visualizador` e `/fotos` continuam como **estúdio** (demonstração para a banca) até o detalhe do modelo absorvê-los.
+`/visualizador` e `/fotos` continuam como **estúdio** (demonstração para a banca, com os tênis de exemplo); o detalhe do
+modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 
 **Fechamento do MVP (todos)**
-1. F3-T12 — E2E com Playwright (e F2-T09 junto, mesma ferramenta).
-2. F0-T10 — foto tirada pelo grupo + fita métrica → erro dimensional (< 5 %).
-3. `docs/revisoes/fase-3.md`, tag `v0.1.0-mvp` e vídeo curto da demo.
+1. F3-T12 — E2E com Playwright (e F2-T09 junto, mesma ferramenta). **feito** (28/10) — `make e2e`; no CI só manual.
+2. F0-T10 — foto tirada pelo grupo + fita métrica → erro dimensional (< 5 %). **falta** (trabalho do grupo).
+3. `docs/revisoes/fase-3.md` **feito** (28/10); tag `v0.1.0-mvp` (depois do merge) e vídeo curto da demo **faltam**.
 
 **Depois do MVP (conforme a data de entrega)**
 - F4-T05 — exportar `.obj`/`.stl` (barato com trimesh).
@@ -107,7 +108,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | F2-T06 | Ajudantes visuais | | a fazer |
 | F2-T07 | Estatísticas do modelo | | a fazer |
 | F2-T08 | Abrir arquivo local | Pedro + Claude | feito |
-| F2-T09 | Testes visuais (Playwright) | | a fazer |
+| F2-T09 | Testes visuais (Playwright) | Pedro + Claude | feito (28/10: prints por modo com WebGL por software) |
 | F2-T10 | Visor 2D: janela→viewport, zoom, pan, clipping | Pedro + Claude | feito |
 | F2-T11 | Plano de corte 3D (clipping + stencil) | Pedro + Claude | feito |
 | F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | feito (27/10: modo Lente (FOV) tirado) |
@@ -125,14 +126,14 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | F3-T04 | Banco de teste e fixtures | Pedro + Claude | feito (28/10: fixture `cliente` com `get_db` e `get_storage` trocados) |
 | F3-T05 | Execução do job | Pedro + Claude | feito (28/10: progresso, erro amigável, delete no meio, *startup*) |
 | F3-T06 | Endpoints de leitura | Pedro + Claude | feito (28/10: + `GET /imagens/{id}`) |
-| F3-T07 | Cliente da API | | a fazer |
-| F3-T08 | Página Novo modelo | | a fazer |
-| F3-T09 | Status do processamento | | a fazer |
-| F3-T10 | Detalhe + visualizador integrado | | a fazer |
-| F3-T11 | Meus modelos | | a fazer |
-| F3-T12 | E2E do MVP | | a fazer |
-| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | em andamento (editor em `/fotos` + "Aplicar e gerar o 3D" via API de dev; back pronto — `ajustes` no `POST /modelos`; falta o front F3-T08) |
-| F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | em andamento (página `/fotos` com contorno, máscara e avisos; falta ler da API na F3-T10) |
+| F3-T07 | Cliente da API | Pedro + Claude | feito (28/10) |
+| F3-T08 | Página Novo modelo | Pedro + Claude | feito (28/10; prévia da silhueta no navegador ficou de fora) |
+| F3-T09 | Status do processamento | Pedro + Claude | feito (28/10) |
+| F3-T10 | Detalhe + visualizador integrado | Pedro + Claude | feito (28/10) |
+| F3-T11 | Meus modelos | Pedro + Claude | feito (28/10) |
+| F3-T12 | E2E do MVP | Pedro + Claude | feito (28/10: `make e2e`, API :8001 no `relevo_test`) |
+| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | feito (28/10: editor no `/novo`, miniatura já ajustada, `ajustes` no `POST /modelos`) |
+| F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | feito (28/10: aba "Fotos e contornos" do modelo lendo da API) |
 
 ## Fase 4 — Produto
 
