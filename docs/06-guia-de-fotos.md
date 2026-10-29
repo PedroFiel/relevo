@@ -1,6 +1,7 @@
 # 06 — Guia de fotos
 
 Este texto vira a **tela de ajuda** do upload. A qualidade do modelo depende quase só das fotos.
+No site ele está em `/guia`, a partir de `apps/web/src/lib/guiaFotos.ts` — mudou aqui, mude lá também.
 
 ## Regras de ouro
 

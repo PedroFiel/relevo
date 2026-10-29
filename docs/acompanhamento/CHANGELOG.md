@@ -4,6 +4,13 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (28/10/2026 — cara de produto)
+- **Nova home**: a frase da missão, "como funciona" em 3 passos, botão **Criar modelo** e um bloco de
+  transparência (sem IA; o que o algoritmo não consegue). Funciona em 375 px. [F2-T01]
+- **Cabeçalho** em todas as páginas (Início / Novo modelo / Meus modelos) e rodapé com o guia e o estúdio.
+- **Guia de fotos** no site (`/guia`): regras de ouro, como posicionar cada vista e o que esperar.
+- Páginas de **Novo modelo**, **Meus modelos** e do modelo já existem (ainda sem conteúdo) e há uma página 404.
+
 ### Adicionado (28/10/2026 — API do MVP)
 - **API de modelos**: `POST /modelos` recebe as fotos (2 a 6), o tamanho em cm e os ajustes de recorte/rotação,
   valida cada foto pelo conteúdo e responde na hora; o modelo é gerado em segundo plano. `GET /jobs/{id}` mostra a

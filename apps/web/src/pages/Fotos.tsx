@@ -111,7 +111,6 @@ export default function Fotos() {
 
   return (
     <main className="container largo">
-      <p><Link to="/">← Início</Link></p>
       <AbasEstudio />
       <p className="conceito">
         Estas são as fotos que <strong>entram</strong> no pipeline. O contorno laranja é a borda que a segmentação

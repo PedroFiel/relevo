@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type PointerEvent as PE, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import AbasEstudio from '../components/AbasEstudio'
 import ErroModelo from '../components/ErroModelo'
 import ModelViewer from '../components/ModelViewer'
@@ -184,7 +184,6 @@ export default function Visualizador() {
 
   return (
     <main className="container largo">
-      <p><Link to="/">← Início</Link></p>
       <AbasEstudio />
 
       <div className="toolbar" role="group" aria-label="Modelo">

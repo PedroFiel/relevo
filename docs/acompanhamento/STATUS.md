@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** trilha A **concluída** (PR #8) → ajuda a trilha B ou o fechamento (F0-T10) · trilha B → **F2-T01** (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** trilha A **concluída** (PR #8) → ajuda a trilha B ou o fechamento (F0-T10) · trilha B → **F3-T07** (cliente da API — a API já existe, sem *mock*) (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -42,7 +42,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 
 | # | Tarefa | Por quê / observação |
 |---|---|---|
-| 1 | F2-T01 — base visual **+ nova home** | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
+| 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10, PR #9) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
 | 2 | F3-T07 — cliente da API | começa com *mock* do contrato (`docs/05-api.md`) |
 | 3 | F3-T08 + F3-T13 — `/novo` | upload guiado com gabarito, editor de foto (reaproveita o `VisorFoto` de `/fotos`), cm, preset |
 | 4 | F3-T09 — status por etapa | **encontro**: troca o *mock* pela API quando a trilha A chegar no 7 |
@@ -99,7 +99,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F2-T01 | Base visual e layout (+ home) | | a fazer (trilha B, passo 1) |
+| F2-T01 | Base visual e layout (+ home) | Pedro + Claude | feito (28/10: tokens, `components/ui`, `AppLayout`, home, `/guia`) |
 | F2-T02 | Câmera e controles | | a fazer |
 | F2-T03 | Modos de renderização | | a fazer |
 | F2-T04 | Iluminação controlável | | a fazer |
