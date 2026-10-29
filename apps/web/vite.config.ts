@@ -7,11 +7,12 @@ export default defineConfig({
   server: {
     // Porta padrão 5173; PORT no ambiente permite rodar uma segunda cópia (ex.: preview do editor)
     port: Number(process.env.PORT) || 5173,
-    // Em dev, chamadas para /api vão para o FastAPI (porta 8000)
-    proxy: { '/api': { target: 'http://localhost:8000', rewrite: (p) => p.replace(/^\/api/, '') } },
+    // Em dev, chamadas para /api vão para o FastAPI (porta 8000; o E2E usa outra via API_URL)
+    proxy: { '/api': { target: process.env.API_URL || 'http://localhost:8000', rewrite: (p) => p.replace(/^\/api/, '') } },
   },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
+    include: ['src/**/*.test.{ts,tsx}'], // e2e/*.spec.ts é do Playwright
   },
 })

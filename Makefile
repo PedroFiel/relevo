@@ -1,5 +1,5 @@
 # Atalhos do RELEVO. Rode `make help` para ver tudo.
-.PHONY: help setup db-up db-down migrate api web test test-py test-web lint poc real reais
+.PHONY: help setup db-up db-down migrate api web test test-py test-web e2e lint poc real reais
 
 help:  ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
@@ -31,6 +31,9 @@ test-py:  ## testes do pipeline e da API
 
 test-web:  ## testes do front
 	cd apps/web && npm test
+
+e2e:  ## ponta a ponta com Playwright (sobe API :8001 no banco relevo_test + front :5174)
+	cd apps/web && npx playwright test
 
 lint:  ## lint Python (ruff) e front (oxlint)
 	uv run ruff check .
