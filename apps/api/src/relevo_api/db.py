@@ -1,6 +1,6 @@
 """Conexão com o PostgreSQL (SQLAlchemy 2)."""
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 from sqlalchemy import MetaData, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -30,6 +30,12 @@ class Base(DeclarativeBase):
 def get_db() -> Iterator[Session]:
     with SessionLocal() as sessao:
         yield sessao
+
+
+def get_fabrica_sessao() -> Callable[[], Session]:
+    """Fábrica de sessões para o que roda fora da requisição (o job em segundo plano e o
+    *startup*). Nos testes vira uma fábrica presa à transação desfeita do teste [F3-T04]."""
+    return SessionLocal
 
 
 def banco_disponivel() -> bool:
