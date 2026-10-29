@@ -4,6 +4,15 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (28/10/2026 — o fluxo do MVP no site)
+- **Novo modelo** (`/novo`): fotos com gabarito da posição certa, clique ou arraste, aviso na hora para formato errado
+  ou foto > 10 MB, **Ajustar** (girar 90°, recortar, ampliar) com a miniatura já ajustada, comprimento em cm e
+  qualidade. [F3-T08, F3-T13]
+- **Página do modelo**: as etapas avançando ao vivo; quando fica pronto, o tênis 3D com todas as ferramentas do
+  estúdio, a aba **Fotos e contornos** com os avisos, **Baixar .glb** e apagar. Em erro, a mensagem do que houve e
+  "Tentar com outras fotos". [F3-T09, F3-T10, F3-T14]
+- **Meus modelos**: cartões com a foto, status e data; apagar com confirmação. [F3-T11]
+
 ### Adicionado (28/10/2026 — cara de produto)
 - **Nova home**: a frase da missão, "como funciona" em 3 passos, botão **Criar modelo** e um bloco de
   transparência (sem IA; o que o algoritmo não consegue). Funciona em 375 px. [F2-T01]

@@ -81,8 +81,9 @@ apps/api/src/relevo_api/
     └── processamento.py   # executa o pipeline e atualiza o job (F3-T05)
 
 apps/web/src/
-├── pages/            # Home, NovoModelo, StatusJob, Modelos, ModeloDetalhe
-├── components/       # ModelViewer, UploadSlot, EtapasJob, ...
-├── lib/              # api.ts (cliente), modosRender.ts, geometria.ts (funções puras)
+├── pages/            # Home, NovoModelo, Modelos, ModeloDetalhe (status + 3D + fotos), Guia; estúdio: Visualizador, Fotos
+├── components/       # ui/ (base), AppLayout, ModelViewer, VisorFoto, UploadSlot, EditorFoto, EtapasJob, FotosDoModelo…
+├── lib/              # api.ts (cliente), consultas.ts (TanStack Query), upload.ts, visualizacao2d.ts… (funções puras)
+├── testes/           # auxiliares dos testes (provedores, fetch falso)
 └── shaders/          # GLSL customizados (Fase 2)
 ```
