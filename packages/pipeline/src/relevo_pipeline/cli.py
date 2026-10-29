@@ -24,7 +24,7 @@ from relevo_pipeline.segmentacao import carregar_imagem
 from relevo_pipeline.sintetico import salvar_fotos
 from relevo_pipeline.vistas import VISTAS
 
-FACES_ALVO_PADRAO = 20_000  # preset e-commerce (F1-T03)
+FACES_ALVO_PADRAO = 20_000  # configuração única (F1-T03, ADR 0009)
 
 EXTENSOES = {".jpg", ".jpeg", ".png"}
 

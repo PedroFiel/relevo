@@ -107,6 +107,17 @@ O RELEVO tem os dois: as **fotos** (2D, a entrada) e o **modelo** (3D, a saída)
 
 ---
 
+## 9. Raio-X do pipeline — página do modelo
+
+| | |
+|---|---|
+| **Conceito** | o pipeline inteiro, etapa por etapa; destaque para **instancing** (milhares de cubos numa chamada de desenho) e para o *crossfade* entre etapas |
+| **Na tela** | `/modelos/:id` → aba **Raio-X do pipeline**: slider com 6 etapas (Fotos · Silhuetas · Voxels · Malha bruta · Decimada · Final), setas ◀ ▶ e **▶ Apresentação** (avança a cada 4 s). Cada etapa tem a legenda com os números daquele modelo |
+| **Como funciona** | O job guarda os intermediários (F1-T08): as máscaras em PNG, `voxels.glb` (centro de cada voxel de **superfície** — ocupado − erosão com 6 vizinhos — em cm, no mesmo sistema da malha) e `malha-bruta.glb` (Marching Cubes antes da decimação e da cor). No front, um canvas fica montado o tempo todo (a câmera não muda); cada objeto só sobe/desce a opacidade. Os voxels são **um** `InstancedMesh`: a mesma caixa com uma matriz de translação por instância |
+| **Exemplo medido** | tenis-01, resolução 128: grade 128 × 64 × 48, ~26 mil voxels de casca (`voxels.glb` 311 KB), malha bruta 61 084 faces (1,1 MB), decimada 20 000, máscaras ~9 KB cada |
+| **Código** | `exportar.intermediarios`, `exportar.voxels_de_superficie` (pipeline); `servicos/processamento.py` (salva como `arquivos` tipo `mascara`/`etapa`); `lib/raioX.ts`, `components/RaioX.tsx`, `components/CenaRaioX.tsx` (front) |
+| **Testes** | `test_intermediarios.py` (casca de um cubo; voxels na mesma caixa da malha; malha bruta antes da decimação); `test_modelos.py` (versão com as 5 etapas); `lib/raioX.test.ts`, `components/RaioX.test.tsx` (slider, setas, apresentação); E2E vai até os voxels |
+
 ## Fontes
 
 - Janela, visor, zoom, pan e recorte 2D/3D: [UBI — Janelas, Visores & Recorte](https://www.di.ubi.pt/~agomes/cg/teoricas/04-janelas.pdf),

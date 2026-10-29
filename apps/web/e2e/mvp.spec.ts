@@ -41,7 +41,6 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
 
   await page.getByLabel('Nome').fill(NOME)
   await page.getByLabel('Comprimento real (cm)').fill('30')
-  await page.getByRole('button', { name: 'Rápida' }).click()
 
   await page.getByRole('button', { name: 'Gerar modelo 3D' }).click()
 
@@ -61,6 +60,15 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
   await page.getByRole('button', { name: /Fotos e contornos/ }).click()
   await expect(page.getByText(/contorno com \d+ vértices/)).toHaveCount(3)
   await expect(page.getByText(/recorte \d+ × \d+ px/)).toHaveCount(1)
+
+  // Raio-X (F5-T01): fotos → silhuetas → voxels, com a explicação de cada etapa
+  await page.getByRole('button', { name: 'Raio-X do pipeline' }).click()
+  await expect(page.getByRole('heading', { level: 3, name: /1\. Fotos/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Próxima etapa' }).click()
+  await expect(page.getByRole('img', { name: 'Silhueta Lateral' })).toBeVisible()
+  await page.getByRole('button', { name: 'Próxima etapa' }).click()
+  await expect(page.getByRole('heading', { level: 3, name: /3\. Voxels/ })).toBeVisible()
+  await expect(page.locator('.raio-x-palco canvas')).toBeVisible()
 
   // Download
   const href = (await baixar.getAttribute('href'))!

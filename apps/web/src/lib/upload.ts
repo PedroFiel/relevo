@@ -32,13 +32,6 @@ export function validarFoto(arquivo: Pick<File, 'type' | 'size' | 'name'>): stri
   return null
 }
 
-export type Qualidade = { id: string; rotulo: string; resolucao: number; dica: string }
-export const QUALIDADES: Qualidade[] = [
-  { id: 'rapida', rotulo: 'Rápida', resolucao: 96, dica: 'Pronto em poucos segundos; menos detalhe.' },
-  { id: 'padrao', rotulo: 'Padrão', resolucao: 128, dica: 'Equilíbrio entre detalhe e tempo (recomendado).' },
-  { id: 'alta', rotulo: 'Alta', resolucao: 192, dica: 'Mais detalhe nas bordas; demora um pouco mais.' },
-]
-
 export type CamposModelo = { nome: string; comprimento_cm: number | ''; fotos: Partial<Record<Vista, File>> }
 
 /** O que falta para poder gerar (vazio = pode). */

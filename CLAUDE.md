@@ -27,7 +27,7 @@ Os valores **guiam decisões de código e de produto**:
 | Valor | O que significa na prática, aqui no repositório |
 |---|---|
 | **Agilidade** | Pipeline rápido (meta < 10 s). MVP primeiro, refinamento depois. Tarefas pequenas, PRs pequenos. |
-| **Acessibilidade** | O usuário não precisa saber nada de 3D: upload guiado com gabarito, textos simples, mensagens de erro que dizem *o que fazer*. Funciona no celular (375 px). |
+| **Acessibilidade** | O usuário não precisa saber nada de 3D: upload guiado com gabarito, textos simples, mensagens de erro que dizem *o que fazer*, **nenhuma escolha técnica** (resolução, faces, preset). Funciona no celular (375 px). |
 | **Qualidade de entrega** | Malha sempre fechada, escala real correta, testes para toda tarefa, CI verde antes do merge. |
 | **Propriedade do criador** | O modelo é do usuário: download livre nos formatos abertos, sem marca d'água, apagar o modelo apaga os arquivos. |
 | **Transparência sobre os limites** | Dizemos ao usuário o que o algoritmo **não** consegue (abertura do pé fechada, lado oposto espelhado e solado cinza quando faltam essas fotos, seção estimada). Métricas de qualidade visíveis. Nunca vender como "IA". |
@@ -55,6 +55,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | Raycasting (o ponto sob o cursor) | front (zoom no ponto e cursor, F2-T12; pivô; régua 3D) |
 | **Rastreamento de raios** (ray tracing): BVH, Möller–Trumbore, raio de sombra × rasterização | front (aba Rastrear raios, F2-T15) |
 | **Selecionar área → recortar → mover** (janela de seleção, Sutherland–Hodgman 3D, nó com matriz própria) | front (aba Selecionar e mover, F2-T14) |
+| *Instancing* (milhares de voxels numa chamada de desenho) | front (Raio-X do pipeline, F5-T01) |
 | LOD (níveis de detalhe) | pipeline + front |
 
 ### 3.2 Objetivo de produto
@@ -62,7 +63,8 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
   etapa → ver o contorno detectado em cada foto → ver o tênis 3D colorido no navegador (zoom no ponto, plano de corte,
   mover/girar/aumentar) → baixar o .glb → encontrá-lo depois em "Meus modelos". Tudo persistido no PostgreSQL.
 - **Produto (Fase 4):** conta e créditos, editor de escala/rotação/pivô, versões, exportação .obj/.stl, textura UV, S3.
-- **Diferenciais (Fase 5):** Raio-X do pipeline (mostra cada etapa), LOD, régua 3D, presets, correção de máscara, embed.
+- **Diferenciais (Fase 5):** Raio-X do pipeline (mostra cada etapa), LOD, régua 3D, correção de máscara, embed.
+  (Presets de destino foram cancelados — configuração única, ADR 0009.)
 
 ### 3.3 Critérios de sucesso (metas mensuráveis)
 | Métrica | Meta |
@@ -71,7 +73,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | Erro dimensional vs. medida real (fita métrica) | < 5 % |
 | IoU de reprojeção (modelo × silhuetas) | > 0,90 |
 | Tempo do pipeline (resolução 128) | < 10 s |
-| Faces no preset e-commerce | ≈ 20 mil |
+| Faces do modelo (configuração única) | ≈ 20 mil |
 | Testes automatizados | 100 % passando no CI |
 
 ## 4. Decisões tomadas (não reabrir sem motivo forte + ADR)
@@ -95,6 +97,7 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 | D15 | **Recorte (2D e 3D), zoom, transformações, rastreamento e segmentação visíveis entram no MVP** | exigência da professora | ADR 0006 |
 | D16 | **Até 6 vistas + registro por IoU + seção transversal comum (cilindro generalizado)** | cor real de todos os lados e forma sem "caixa" | ADR 0007 |
 | D17 | **"Rastrear" = rastreamento de raios; selecionar/separar/mover; ferramentas ao lado do modelo; API de dev para regerar amostras** | pedido da professora + revisão de uso | ADR 0008 |
+| D18 | **Configuração única de geração (loja virtual: 128, ~20 mil faces, cor, `.glb`); sem presets nem escolha de qualidade** — outros formatos só como opção no download | foco em lojista de tênis + acessibilidade | ADR 0009 |
 
 ## 5. Regras inegociáveis
 
@@ -118,6 +121,9 @@ Demonstrar, **implementados e explicáveis**, os conceitos de Computação Gráf
 8. **Escopo muda só com registro**: nova funcionalidade fora das fases → discutir e registrar (ADR ou fase).
 9. **Tudo em português** (código, comentários, docs, commits); identificadores sem acento.
 10. **Transparência no produto**: mensagens de erro e limitações sempre explicadas ao usuário em linguagem simples.
+11. **Nenhuma escolha técnica para o usuário.** A interface não pede resolução, número de faces, preset nem parâmetro
+    do pipeline: o lojista envia as fotos, informa o tamanho em cm e recebe o modelo (configuração única, ADR 0009).
+    Opção técnica fica na CLI e na API de desenvolvimento. Formato do arquivo pode ser escolhido **só no download**.
 
 ## 6. Stack
 
@@ -231,8 +237,9 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
   progresso → versão com `.glb` decimado (~20 mil faces), leitura/download/delete — tudo gravando no Neon. Falta o
   front usar a API (trilha B). **Trilha B concluída (28/10):** home, `/novo` (upload guiado + editor), página do modelo
   (etapas ao vivo, estúdio 3D, fotos com contorno, download) e "Meus modelos" — o fluxo do MVP funciona ponta a ponta.
-  Fechamento (28/10): E2E com Playwright (`make e2e`) e revisão `docs/revisoes/fase-3.md`. Falta F0-T10, vídeo e a
-  tag `v0.1.0-mvp`.
+  Fechamento (28/10): E2E com Playwright (`make e2e`) e revisão `docs/revisoes/fase-3.md`. Depois: configuração única
+  (ADR 0009) e **Raio-X do pipeline** (F5-T01) na página do modelo; roteiro da apresentação em `docs/apresentacao/`.
+  Falta (grupo): F0-T10, slides/ensaio/vídeo e a tag `v0.1.0-mvp`.
 - **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
   tiradas pelo grupo + fita métrica — falta o erro dimensional)**.
 - **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
@@ -268,5 +275,6 @@ calibração de câmera (só como extensão opcional) · app mobile nativo · pa
 | Fases e tarefas | `docs/fases/` |
 | Status, changelog, diário | `docs/acompanhamento/` |
 | Plano e relatórios de testes | `docs/testes/` |
+| Roteiro da apresentação, imagens e perguntas da banca | `docs/apresentacao/` |
 | Checklist e revisões de fase | `docs/revisoes/` |
 | Decisões (ADRs) | `docs/decisoes/` |

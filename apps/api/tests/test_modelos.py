@@ -119,10 +119,20 @@ def test_job_gera_versao_com_glb_e_metricas(criado, db, storage):
     versao = modelo.versoes[0]
     assert versao.numero == 1 and versao.job_id == job.id
     assert versao.metricas["fechada"] is True and versao.metricas["faces"] > 0
-    (arquivo,) = versao.arquivos
+    (arquivo,) = [a for a in versao.arquivos if a.tipo == "glb"]
     malha = trimesh.load(io.BytesIO(storage.abrir(arquivo.caminho)), file_type="glb", force="mesh")
     assert malha.extents[0] == pytest.approx(28, abs=0.5)
     assert arquivo.tamanho_bytes == len(storage.abrir(arquivo.caminho))
+    # Raio-X: uma máscara por foto + voxels + malha bruta, no Storage
+    etapas = {a.nome: a.tipo for a in versao.arquivos if a.tipo != "glb"}
+    assert etapas == {
+        "mascara-lateral.png": "mascara",
+        "mascara-topo.png": "mascara",
+        "mascara-frente.png": "mascara",
+        "voxels.glb": "etapa",
+        "malha-bruta.glb": "etapa",
+    }
+    assert all("/v1/etapas/" in a.caminho for a in versao.arquivos if a.tipo != "glb")
 
 
 def test_job_grava_as_etapas_em_ordem(cliente, fotos_png, db, monkeypatch):
@@ -253,7 +263,10 @@ def test_detalhe_e_downloads(cliente, criado):
     assert corpo["job"]["id"] == criado["job_id"]
     versao = corpo["versao"]
     assert versao["numero"] == 1 and versao["metricas"]["fechada"] is True
-    (arquivo,) = versao["arquivos"]
+    arquivo = next(a for a in versao["arquivos"] if a["tipo"] == "glb")
+    mascara = next(a for a in versao["arquivos"] if a["tipo"] == "mascara")
+    r = cliente.get(mascara["url"])
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
 
     r = cliente.get(arquivo["url"])
     assert r.status_code == 200 and r.headers["content-type"] == "model/gltf-binary"

@@ -52,12 +52,11 @@ describe('página Novo modelo (F3-T08)', () => {
     escolher('Foto De cima', jpeg('topo.jpg'))
     fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Tênis azul' } })
     fireEvent.change(screen.getByLabelText('Comprimento real (cm)'), { target: { value: '28.5' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Alta' }))
     fireEvent.click(gerar())
     expect(await screen.findByText('página do modelo')).toBeInTheDocument()
     const corpo = f.mock.calls[0][1]!.body as FormData
     expect(corpo.get('comprimento_cm')).toBe('28.5')
-    expect(corpo.get('resolucao')).toBe('192')
+    expect(corpo.get('resolucao')).toBeNull() // configuração única: o site não escolhe (ADR 0009)
     expect(corpo.get('topo')).toBeInstanceOf(File)
   })
 

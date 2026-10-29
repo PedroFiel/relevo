@@ -25,7 +25,7 @@ Formato de erro padrão: `{"detail": "mensagem legível"}` com status HTTP adequ
 | `topo` | arquivo | sim | JPEG/PNG, ≤ 10 MB |
 | `frente` | arquivo | não | JPEG/PNG, ≤ 10 MB |
 | `outro_lado`, `sola`, `tras` | arquivo | não | JPEG/PNG, ≤ 10 MB — vistas extras (ADR 0007) |
-| `resolucao` | inteiro | não | 64–192 (padrão 128) |
+| `resolucao` | inteiro | não | 64–192 (padrão 128) — uso de desenvolvimento/testes; o site **não envia** (configuração única, ADR 0009) |
 | `ajustes` | texto (JSON) | não | por vista: `{"topo": {"rotacao_graus": 90, "recorte": [x, y, largura, altura]}}` — rotação ∈ {0, 90, 180, 270}; recorte em pixels da foto **já girada**, dentro dela e ≥ 64 px (F3-T13) |
 
 Resposta **202**: `{"modelo_id": "uuid", "job_id": "uuid"}` — o job roda em segundo plano (acompanhe em `/jobs/{id}`).
@@ -81,6 +81,11 @@ vira `erro` no *startup*. `suavizacao` entra na lista quando a F1-T02 existir.
 
 ## Arquivos (F3)
 
+Cada versão traz em `arquivos`: o `modelo.glb` (`tipo: glb`) e, desde a F5-T01, os intermediários do **Raio-X** —
+`mascara-<vista>.png` (`tipo: mascara`), `voxels.glb` e `malha-bruta.glb` (`tipo: etapa`). Por isso a rota
+`GET /versoes/{id}/etapas` planejada não foi necessária.
+
+
 ### `GET /arquivos/{id}/download` → o binário com `Content-Type` correto
 (`model/gltf-binary`, `model/obj`, `model/stl`, `image/png`), com `Content-Disposition` e o nome do arquivo.
 
@@ -95,14 +100,13 @@ Para miniaturas e para desenhar o contorno sobre a foto original (F3-T14).
 | POST | `/auth/login` | `{email, senha}` → `{access_token}` (JWT) |
 | GET | `/me` | usuário + saldo de créditos |
 | POST | `/modelos/{id}/versoes` | `{transformacao: number[16]}` → nova versão com a matriz aplicada |
-| GET | `/versoes/{id}/exportar?formato=obj\|stl\|glb` | gera/baixa o formato |
+| GET | `/versoes/{id}/exportar?formato=obj\|stl\|glb` | outro formato no download (F4-T05; o modelo é o mesmo) |
 
 ## Fase 5
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/versoes/{id}/etapas` | URLs dos intermediários para o Raio-X |
-| POST | `/modelos/{id}/regerar` | regerar com outros parâmetros/preset (`{preset, resolucao, mascaras_corrigidas?}`) |
+| POST | `/modelos/{id}/regerar` | regerar com as máscaras corrigidas pelo pincel (`{mascaras_corrigidas}`; F5-T05) |
 | GET | `/publico/{id}` | dados para o visualizador incorporável (sem login) |
 
 ## Desenvolvimento (já existe)

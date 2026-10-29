@@ -32,7 +32,7 @@ test-py:  ## testes do pipeline e da API
 test-web:  ## testes do front
 	cd apps/web && npm test
 
-e2e:  ## ponta a ponta com Playwright (sobe API :8001 no banco relevo_test + front :5174)
+e2e:  ## ponta a ponta com Playwright (sobe API :8001 no banco relevo_test + front :5180)
 	cd apps/web && npx playwright test
 
 lint:  ## lint Python (ruff) e front (oxlint)

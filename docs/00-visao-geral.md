@@ -44,7 +44,8 @@ modelo base para jogos/AR; makers que querem imprimir em 3D.
 ## Depois do MVP (Fases 4–5)
 
 Login e créditos · editor de transformações completo (pivô, desfazer, salvar versão) · exportação .obj/.stl · textura UV real ·
-versões · Raio-X do pipeline · LOD · régua 3D · presets de destino · pincel de correção · link de incorporação.
+versões · Raio-X do pipeline · LOD · régua 3D · pincel de correção · link de incorporação.
+(Presets de destino foram cancelados: configuração única, sem escolhas técnicas — ADR 0009.)
 
 ## Fora de escopo (decisão consciente)
 

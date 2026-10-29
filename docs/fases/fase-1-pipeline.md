@@ -5,12 +5,16 @@ com métricas de qualidade e testes. Tudo em `packages/pipeline`.
 
 **Depende de:** Fase 0 (F0-T10 mostra os problemas reais a resolver).
 **Roda em paralelo com:** Fase 2.
-**Entrega da fase:** `relevo-pipeline gerar ... --preset ecommerce` produz um `.glb` **colorido, suave, ~20 mil faces**
+**Entrega da fase:** `relevo-pipeline gerar ...` produz um `.glb` **colorido, suave, ~20 mil faces**
 em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sintéticos.
 
 ---
 
-### F1-T01 — Configuração e presets
+### F1-T01 — Configuração e presets — **CANCELADA (28/10, ADR 0009)**
+- **Por quê:** o foco é o lojista de tênis vendendo online; o modelo padrão (20 mil faces, ~0,5 MB, colorido) já
+  atende, "jogo" e "impressão 3D" fogem do foco e escolher preset é uma decisão técnica que o lojista não sabe
+  tomar (regra 11). Fica a **configuração única**: resolução 128, `faces_alvo` 20 000 (`FACES_ALVO_PADRAO` na CLI,
+  `FACES_ALVO` na API), cor ligada. O texto abaixo fica só como registro do que estava planejado.
 - **Frente:** pipeline
 - **Como fazer:**
   1. Criar `config.py` com `@dataclass(frozen=True) class ConfigPipeline`: `resolucao=128`, `sigma_campo=1.0`,
@@ -35,7 +39,8 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   - "rugosidade" diminui: desvio-padrão do ângulo entre normais de faces vizinhas (`malha.face_adjacency_angles.std()`) cai.
 - **Aceite:** no visualizador, os degraus visíveis na Fase 0 somem.
 - **Nota (01/10):** os degraus já foram resolvidos na origem pelo campo de distância assinada (ADR 0005). Taubin
-  medido depois disso no tenis-02: desvio do ângulo entre faces 4,5° → 3,5°. Fica como refinamento (presets).
+  medido depois disso no tenis-02: desvio do ângulo entre faces 4,5° → 3,5°. Fica como refinamento, sempre ligado
+  (sem virar opção — ADR 0009).
 - **Conceito de CG:** filtragem de malhas, operador Laplaciano discreto, encolhimento × filtro λ|μ.
 
 ### F1-T03 — Decimação por erro quádrico
@@ -48,7 +53,7 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   3. Medir o **erro geométrico**: amostrar 5 000 pontos da malha original (`trimesh.sample.sample_surface`) e calcular a
      distância à decimada com `trimesh.proximity.closest_point` → `erro_medio_mm` e `erro_max_mm` nas métricas.
 - **Testes:** faces ≤ alvo (+2 % de tolerância); erro médio < 0,5 mm no sintético; dimensões ±1 %.
-- **Aceite:** preset e-commerce gera ~20 mil faces com diferença visual imperceptível.
+- **Aceite:** a configuração única gera ~20 mil faces com diferença visual imperceptível.
 - **Conceito de CG:** simplificação de malhas, métrica de erro quádrico (Garland-Heckbert), colapso de arestas.
 - **Como ficou (28/10):** feita **antes** da F1-T02 (Taubin ainda não existe; a decimação não depende dela na
   prática). `malha.decimar(malha, faces_alvo) -> (malha, metricas)`; se a reduzida abrir, fica a original. O erro
@@ -127,12 +132,16 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   começo de cada etapa (`ETAPAS`) com o % já feito e no fim com `("concluido", 100)`; % por pesos fixos
   (`PESOS_ETAPAS`). Detalhes em `docs/03-pipeline-cg.md` (Progresso). O item 2 continua a fazer.
   Com a F1-T03, `decimacao` virou uma etapa da lista.
+- **Como ficou (28/10, item 2):** em vez de `salvar_intermediarios(pasta)` (I/O no resultado), `exportar.intermediarios(
+  resultado) -> dict[nome, bytes]` — a API grava no Storage. Saem `mascara-<vista>.png`, `voxels.glb` (só os voxels de
+  superfície, como nuvem de pontos em cm) e `malha-bruta.glb` (`ResultadoPipeline.malha_bruta`, antes da decimação e
+  da cor). `malha_suave.glb` fica para quando a F1-T02 existir; a decimada é a própria `modelo.glb` (vista em arame).
 
 ### F1-T09 — Desempenho
 - **Frente:** pipeline
 - **Como fazer:** medir com `tempos_s`; meta < 10 s na resolução 128 no notebook mais fraco do grupo. Se a cor estiver
   lenta, vetorizar com NumPy (sem laço por vértice). Registrar a tabela resolução × tempo × faces no relatório da fase.
-- **Testes:** teste marcado `@pytest.mark.lento` que falha se o preset e-commerce passar de 15 s.
+- **Testes:** teste marcado `@pytest.mark.lento` que falha se a configuração única passar de 15 s.
 
 ### F1-T10 — Notebook didático
 - **Frente:** pipeline

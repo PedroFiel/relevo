@@ -2,24 +2,25 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import EditorFoto from '../components/EditorFoto'
 import UploadSlot from '../components/UploadSlot'
-import { Botao, GrupoBotoes, Painel } from '../components/ui'
+import { Botao, Painel } from '../components/ui'
 import { useCriarModelo } from '../lib/consultas'
-import { OBRIGATORIAS, QUALIDADES, VISTAS_EXTRAS, VISTAS_PRINCIPAIS, pendencias } from '../lib/upload'
+import { OBRIGATORIAS, VISTAS_EXTRAS, VISTAS_PRINCIPAIS, pendencias } from '../lib/upload'
 import { SEM_AJUSTE, type AjusteFoto, type Vista } from '../lib/vistas'
 
-/** Novo modelo (F3-T08 + F3-T13): fotos guiadas por gabarito, ajuste de cada foto, tamanho real e qualidade. */
+/**
+ * Novo modelo (F3-T08 + F3-T13): fotos guiadas por gabarito, ajuste de cada foto e tamanho real. Nenhuma escolha
+ * técnica (resolução, faces): a API usa a configuração única (regra 11, ADR 0009).
+ */
 export default function NovoModelo() {
   const navegar = useNavigate()
   const criar = useCriarModelo()
   const [nome, setNome] = useState('')
   const [comprimento, setComprimento] = useState<number | ''>('')
-  const [qualidade, setQualidade] = useState('padrao')
   const [fotos, setFotos] = useState<Partial<Record<Vista, File>>>({})
   const [ajustes, setAjustes] = useState<Partial<Record<Vista, AjusteFoto>>>({})
   const [editando, setEditando] = useState<Vista | null>(null)
 
   const faltas = pendencias({ nome, comprimento_cm: comprimento, fotos })
-  const resolucao = QUALIDADES.find((q) => q.id === qualidade)!.resolucao
 
   function trocarFoto(vista: Vista, arquivo: File | null) {
     setFotos((f) => {
@@ -36,7 +37,7 @@ export default function NovoModelo() {
     e.preventDefault()
     if (faltas.length || criar.isPending) return
     criar.mutate(
-      { nome, comprimento_cm: Number(comprimento), resolucao, fotos, ajustes },
+      { nome, comprimento_cm: Number(comprimento), fotos, ajustes },
       { onSuccess: (r) => navegar(`/modelos/${r.modelo_id}`) },
     )
   }
@@ -108,16 +109,6 @@ export default function NovoModelo() {
               />
               <small id="dica-comprimento">Meça com fita métrica do calcanhar ao bico. O modelo sai exatamente nesse tamanho.</small>
             </div>
-          </div>
-          <div className="campo-form">
-            <span className="rotulo-campo">Qualidade</span>
-            <GrupoBotoes
-              rotulo="Qualidade"
-              valor={qualidade}
-              onChange={setQualidade}
-              opcoes={QUALIDADES.map((q) => ({ valor: q.id, rotulo: q.rotulo }))}
-            />
-            <small>{QUALIDADES.find((q) => q.id === qualidade)!.dica}</small>
           </div>
         </section>
 

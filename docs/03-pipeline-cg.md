@@ -303,8 +303,15 @@ atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma re
 | `consistencia.razao_frente` | proporção altura/largura da frontal ÷ a que lateral e topo implicam | 1 ± 0,15 (fora disso: aviso) |
 | `orientacao` | o que foi girado/espelhado em cada foto e se a pista era confiável | — |
 | `avisos` | mensagens para o usuário: correções feitas e problemas de foto | lista vazia |
-| Faces | `len(malha.faces)` | conforme preset |
+| Faces | `len(malha.faces)` | ≈ 20 mil (configuração única, ADR 0009) |
 | Tempo total | soma dos `tempos_s` | < 10 s (resolução 128) |
+
+### Intermediários do Raio-X (F1-T08 item 2, F5-T01)
+
+`exportar.intermediarios(resultado)` devolve os arquivos que a página do modelo mostra etapa por etapa: as máscaras
+(PNG), os **voxels de superfície** (`ocupado − erosão(ocupado)` com 6 vizinhos — a morfologia matemática em 3D; o
+centro de cada um em cm usa o mesmo mapeamento da cor por vértice: `(i + PAD) · tamanho_voxel + deslocamento`) e a
+**malha bruta** (`ResultadoPipeline.malha_bruta`, saída do Marching Cubes antes da decimação e da cor).
 
 ### Progresso (F1-T08)
 

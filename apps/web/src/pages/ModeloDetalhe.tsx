@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import EtapasJob from '../components/EtapasJob'
 import FotosDoModelo from '../components/FotosDoModelo'
+import RaioX from '../components/RaioX'
 import { Botao, Etiqueta, GrupoBotoes, Painel } from '../components/ui'
 import { urlApi, type ModeloDetalhe as Detalhe } from '../lib/api'
 import { jobAberto, useApagarModelo, useJob, useModelo } from '../lib/consultas'
@@ -11,7 +12,10 @@ import Visualizador from './Visualizador'
 const tamanho = (bytes: number) =>
   bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB` : `${Math.round(bytes / 1024)} KB`
 
-/** Página do modelo: andamento (F3-T09), modelo 3D com as ferramentas de CG (F3-T10) e fotos com contorno (F3-T14). */
+/**
+ * Página do modelo: andamento (F3-T09), modelo 3D com as ferramentas de CG (F3-T10), fotos com contorno (F3-T14)
+ * e o Raio-X do pipeline (F5-T01).
+ */
 export default function ModeloDetalhe() {
   const { id = '' } = useParams()
   const modelo = useModelo(id)
@@ -40,7 +44,7 @@ export default function ModeloDetalhe() {
 }
 
 function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['job'] }) {
-  const [aba, setAba] = useState<'modelo' | 'fotos'>('modelo')
+  const [aba, setAba] = useState<'modelo' | 'fotos' | 'raio-x'>('modelo')
   const navegar = useNavigate()
   const apagar = useApagarModelo()
   const [confirmando, setConfirmando] = useState(false)
@@ -123,14 +127,13 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
             opcoes={[
               { valor: 'modelo', rotulo: 'Modelo 3D' },
               { valor: 'fotos', rotulo: `Fotos e contornos (${dados.imagens.length})` },
+              { valor: 'raio-x', rotulo: 'Raio-X do pipeline' },
             ]}
           />
           <div className="aba-conteudo">
-            {aba === 'modelo' ? (
-              <Visualizador key={glb.id} urlFixa={urlApi(glb.url)} />
-            ) : (
-              <FotosDoModelo imagens={dados.imagens} metricas={m ?? null} />
-            )}
+            {aba === 'modelo' && <Visualizador key={glb.id} urlFixa={urlApi(glb.url)} />}
+            {aba === 'fotos' && <FotosDoModelo imagens={dados.imagens} metricas={m ?? null} />}
+            {aba === 'raio-x' && dados.versao && <RaioX imagens={dados.imagens} versao={dados.versao} />}
           </div>
         </>
       )}

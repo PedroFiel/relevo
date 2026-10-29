@@ -3,7 +3,7 @@
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
 **Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** MVP pronto no código (revisão em `docs/revisoes/fase-3.md`) → **F0-T10** (foto própria + fita métrica), vídeo da demo e tag `v0.1.0-mvp` depois do merge; depois **F4-T05** (ver [Plano de finalização](#plano-de-finalização))
+**Próxima tarefa:** MVP na `main` (PR #10) + Raio-X pronto (F5-T01) → **grupo:** F0-T10 (foto própria + fita métrica), slides e ensaio a partir de `docs/apresentacao/roteiro.md`, vídeo da demo; tag `v0.1.0-mvp` (ver [Plano de finalização](#plano-de-finalização))
 **Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
@@ -32,7 +32,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 | 1 | F3-T01 — tabelas e migração | **feito** (PR #4) |
 | 2 | F3-T02 — Storage local | **feito** (28/10, PR #6) — onde ficam fotos e `.glb`; base do upload |
 | 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | **feito** (28/10, PR #7) — fixture `cliente` |
-| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10, PR #7) — é o que a F3-T05 usa; os intermediários do Raio-X ficam para a F5-T01 |
+| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10, PR #7) — é o que a F3-T05 usa; os intermediários vieram depois, com a F5-T01 |
 | 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | **feito** (28/10) — valida pelos bytes; 202 com `modelo_id`/`job_id` |
 | 6 | F3-T05 — execução do job | **feito** (28/10) — etapa e progresso no banco; erro amigável |
 | 7 | F3-T06 — leitura, download e delete | **feito** (28/10) — a partir daqui o front sai do *mock* (testado contra o Neon) |
@@ -44,7 +44,7 @@ bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encon
 |---|---|---|
 | 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10, PR #9) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
 | 2 | F3-T07 — cliente da API | **feito** (28/10) — direto na API real (sem *mock*: a trilha A já tinha terminado) |
-| 3 | F3-T08 + F3-T13 — `/novo` | **feito** (28/10) — gabarito, editor (girar/recortar/ampliar), cm, qualidade |
+| 3 | F3-T08 + F3-T13 — `/novo` | **feito** (28/10, PR #10) — gabarito, editor (girar/recortar/ampliar), cm; sem escolha de qualidade (ADR 0009) |
 | 4 | F3-T09 — status por etapa | **feito** (28/10) — *polling* de 1 s até concluir/erro |
 | 5 | F3-T10 + F3-T14 — `/modelos/:id` | **feito** (28/10) — estúdio 3D completo embutido, aba Fotos com contorno, baixar `.glb` |
 | 6 | F3-T11 — `/modelos` | **feito** (28/10) — cartões, apagar com confirmação |
@@ -58,9 +58,10 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 3. `docs/revisoes/fase-3.md` **feito** (28/10); tag `v0.1.0-mvp` (depois do merge) e vídeo curto da demo **faltam**.
 
 **Depois do MVP (conforme a data de entrega)**
-- F4-T05 — exportar `.obj`/`.stl` (barato com trimesh).
+- ~~Presets (F1-T01, F5-T04)~~ — **cancelados** em 28/10: configuração única, sem escolha técnica (ADR 0009, regra 11).
+- F4-T05 — `.obj`/`.stl` só como opção no download, **se alguém pedir** (o modelo é sempre o mesmo).
 - F4-T01/T02 — login e créditos **só se** a professora exigir conta de usuário.
-- F5-T07 — apresentação; F5-T01 — Raio-X (usa a parte de intermediários da F1-T08) se sobrar tempo.
+- F5-T01 — Raio-X do pipeline: **feito** (28/10). F5-T07 — apresentação: **roteiro pronto** (`docs/apresentacao/roteiro.md`); slides, ensaio e vídeo com o grupo.
 
 **Pendências sem dono:** data de entrega · responsáveis de cada trilha (tabela Equipe) · proteção da `main` (F0-T08).
 
@@ -83,14 +84,14 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F1-T01 | Configuração e presets | | a fazer |
+| F1-T01 | Configuração e presets | — | **cancelada** (28/10, ADR 0009: configuração única) |
 | F1-T02 | Suavização de Taubin | | a fazer |
 | F1-T03 | Decimação por erro quádrico | Pedro + Claude | feito (28/10: 20 mil faces, *fallback* se abrir a malha) |
 | F1-T04 | Transformação inversa 3D → pixel | | a fazer |
 | F1-T05 | Cor por vértice | Pedro + Claude | feito |
 | F1-T06 | Segmentação robusta | Pedro + Claude | feito |
 | F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | em andamento |
-| F1-T08 | Intermediários + progresso | Pedro + Claude | em andamento (28/10: callback feito; intermediários ficam para a F5-T01) |
+| F1-T08 | Intermediários + progresso | Pedro + Claude | feito (28/10: callback + máscaras, voxels de superfície e malha bruta; a "suave" vem com a F1-T02) |
 | F1-T09 | Desempenho | | a fazer |
 | F1-T10 | Notebook didático | | a fazer |
 | F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | feito |
@@ -143,7 +144,7 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | F4-T02 | Créditos | | a fazer |
 | F4-T03 | Editor de transformações | | a fazer |
 | F4-T04 | Versões no back | | a fazer |
-| F4-T05 | Exportação multi-formato | | a fazer |
+| F4-T05 | Outros formatos no download | | a fazer (só se pedirem; ADR 0009) |
 | F4-T06 | Mapeamento UV e textura | | a fazer |
 | F4-T07 | Modo UV no visualizador | | a fazer |
 | F4-T08 | Storage S3 (MinIO) | | a fazer |
@@ -152,13 +153,13 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F5-T01 | Raio-X do pipeline | | a fazer |
+| F5-T01 | Raio-X do pipeline | Pedro + Claude | feito (28/10: aba na página do modelo, 6 etapas, apresentação automática) |
 | F5-T02 | LOD | | a fazer |
 | F5-T03 | Régua 3D | | a fazer |
-| F5-T04 | Presets na interface | | a fazer |
+| F5-T04 | Presets na interface | — | **cancelada** (28/10, ADR 0009) |
 | F5-T05 | Pincel de correção | | a fazer |
 | F5-T06 | Visualizador incorporável | | a fazer |
-| F5-T07 | Apresentação | todos | a fazer |
+| F5-T07 | Apresentação | todos | em andamento (28/10: roteiro, imagens e perguntas da banca; faltam slides, ensaio e vídeo) |
 
 ## Riscos e bloqueios
 

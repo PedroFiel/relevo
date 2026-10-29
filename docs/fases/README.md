@@ -18,11 +18,11 @@ flowchart LR
 | Fase | Objetivo | Frentes | Esforço estimado* | Doc |
 |---|---|---|---|---|
 | 0 | Repositório, stacks instaladas, pipeline mínimo provado com fotos reais | todas | 1 semana | [fase-0](fase-0-setup-e-poc.md) |
-| 1 | Pipeline com suavização, decimação, cor, presets, métricas, recorte da foto e contorno | pipeline | 2–2,5 semanas | [fase-1](fase-1-pipeline.md) |
+| 1 | Pipeline com suavização, decimação, cor, métricas, recorte da foto e contorno | pipeline | 2–2,5 semanas | [fase-1](fase-1-pipeline.md) |
 | 2 | Visualizador 3D completo com conceitos de CG visíveis + visor 2D (zoom, pan, clipping), corte 3D, raycasting e transformações | front | 2,5–3 semanas | [fase-2](fase-2-visualizador.md) |
 | 3 | API + banco + upload (com editor de foto) + status + visualizador + contorno/avisos integrados | back, banco, front | 2–2,5 semanas | [fase-3](fase-3-integracao-mvp.md) |
 | 4 | Login, créditos, editor de transformações, exportações, textura UV, versões, S3 | todas | 2–3 semanas | [fase-4](fase-4-produto.md) |
-| 5 | Raio-X do pipeline, LOD, régua 3D, presets, correção de máscara, incorporação, apresentação | todas | 2 semanas | [fase-5](fase-5-diferenciais.md) |
+| 5 | Raio-X do pipeline, LOD, régua 3D, correção de máscara, incorporação, apresentação | todas | 2 semanas | [fase-5](fase-5-diferenciais.md) |
 
 \* Estimativa para um grupo de 3–5 pessoas dedicando algumas horas por semana, executando com o Claude.
 Ajuste no STATUS quando souberem a data de entrega.
