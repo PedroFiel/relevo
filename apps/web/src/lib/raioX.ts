@@ -5,7 +5,7 @@
 import type { Arquivo, Imagem, MetricasVersao } from './api'
 import { VISTAS_PRINCIPAIS, VISTAS_EXTRAS } from './upload'
 
-export type IdPasso = 'fotos' | 'mascaras' | 'voxels' | 'bruta' | 'decimada' | 'final'
+export type IdPasso = 'fotos' | 'mascaras' | 'voxels' | 'bruta' | 'suavizada' | 'decimada' | 'final'
 export type Passo = { id: IdPasso; titulo: string; conceito: string; legenda: string; tipo: '2d' | '3d' }
 
 const ORDEM_VISTAS = [...VISTAS_PRINCIPAIS, ...VISTAS_EXTRAS]
@@ -15,6 +15,7 @@ export type ArquivosRaioX = {
   glb?: Arquivo
   voxels?: Arquivo
   bruta?: Arquivo
+  suave?: Arquivo
   mascaras: { vista: string; arquivo: Arquivo }[]
 }
 
@@ -28,6 +29,7 @@ export function arquivosDoRaioX(arquivos: Arquivo[]): ArquivosRaioX {
     glb: arquivos.find((a) => a.tipo === 'glb'),
     voxels: arquivos.find((a) => a.nome === 'voxels.glb'),
     bruta: arquivos.find((a) => a.nome === 'malha-bruta.glb'),
+    suave: arquivos.find((a) => a.nome === 'malha-suave.glb'),
     mascaras,
   }
 }
@@ -69,6 +71,15 @@ export function passosDoRaioX(imagens: Imagem[], a: ArquivosRaioX, m: MetricasVe
       conceito: 'Marching Cubes',
       tipo: '3d',
       legenda: `O campo de distância das silhuetas — já arredondado pela seção transversal comum — vira triângulos: cada célula 2×2×2 consulta uma tabela de 256 casos. Saem ${num(m?.decimacao?.faces_antes)} faces, já fechadas e em escala real.`,
+    })
+  }
+  if (a.suave) {
+    passos.push({
+      id: 'suavizada',
+      titulo: 'Suavizada',
+      conceito: 'Filtro de Taubin',
+      tipo: '3d',
+      legenda: `O filtro passa-baixas λ|μ de Taubin (${m?.suavizacao?.iteracoes ?? 10} iterações) alterna contração e inflação para tirar a rugosidade da grade sem encolher o volume (variação de ${String(m?.suavizacao?.variacao_volume_pct ?? 0).replace('.', ',')} %).`,
     })
   }
   if (a.glb) {

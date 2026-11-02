@@ -36,6 +36,7 @@ export default function RaioX({ imagens, versao }: { imagens: Imagem[]; versao: 
               passo={atual.id}
               voxels={arquivos.voxels && urlApi(arquivos.voxels.url)}
               bruta={arquivos.bruta && urlApi(arquivos.bruta.url)}
+              suave={arquivos.suave && urlApi(arquivos.suave.url)}
               final={arquivos.glb && urlApi(arquivos.glb.url)}
               ladoVoxel={versao.metricas?.tamanho_voxel_cm || 0.25}
             />

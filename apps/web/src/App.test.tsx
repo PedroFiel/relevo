@@ -16,6 +16,9 @@ describe('App', () => {
     fetchFalso({
       'GET /api/modelos/': { status: 404, corpo: { detail: 'Modelo não encontrado.' } },
       'GET /api/modelos': { corpo: [] },
+      'GET /api/me': {
+        corpo: { id: 'u1', nome: 'Demo', email: 'demo@relevo.local', creditos: 10, movimentos: [] },
+      },
     })
   })
   afterEach(() => {
@@ -28,6 +31,7 @@ describe('App', () => {
     ['/novo', 'Novo modelo'],
     ['/modelos', 'Meus modelos'],
     ['/modelos/abc-123', 'Modelo não encontrado'],
+    ['/conta', 'Conta e créditos'],
     ['/guia', 'Guia de fotos'],
     ['/rota-que-nao-existe', 'Página não encontrada'],
   ])('renderiza %s com o cabeçalho', async (rota, titulo) => {

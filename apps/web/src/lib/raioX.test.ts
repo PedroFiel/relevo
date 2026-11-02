@@ -35,6 +35,17 @@ describe('Raio-X (F5-T01)', () => {
     expect(passos[4].legenda).toMatch(/61\.084 → 20\.000 faces.*0,026 mm/)
   })
 
+  it('inclui a etapa Suavizada (Taubin) quando malha-suave.glb está presente', () => {
+    const comSuave = [...COMPLETO, arq('etapa', 'malha-suave.glb')]
+    const m = {
+      ...metricas,
+      suavizacao: { usada: true, iteracoes: 10, variacao_volume_pct: 0.4, rugosidade_antes_graus: 24.5, rugosidade_depois_graus: 11.2 },
+    } as unknown as MetricasVersao
+    const passos = passosDoRaioX([img('lateral'), img('topo')], arquivosDoRaioX(comSuave), m)
+    expect(passos.map((p) => p.id)).toEqual(['fotos', 'mascaras', 'voxels', 'bruta', 'suavizada', 'decimada', 'final'])
+    expect(passos[4].legenda).toContain('Taubin')
+  })
+
   it('modelo sem intermediários (antigo) mostra só fotos e o final', () => {
     const passos = passosDoRaioX([img('lateral')], arquivosDoRaioX([arq('glb', 'modelo.glb')]), { faces: 1 } as MetricasVersao)
     expect(passos.map((p) => p.id)).toEqual(['fotos', 'final'])

@@ -52,9 +52,19 @@ function ComoFunciona({ children }: { children: ReactNode }) {
 
 /**
  * Estúdio 3D. Com `urlFixa` fica embutido na página de um modelo (F3-T10): abre só aquele `.glb`,
- * sem o seletor de amostras nem as abas do estúdio.
+ * sem o seletor de amostras nem as abas do estúdio, e permite salvar a transformação 4×4 como nova versão (F4-T03).
  */
-export default function Visualizador({ urlFixa }: { urlFixa?: string } = {}) {
+export default function Visualizador({
+  urlFixa,
+  aoSalvarVersao,
+  salvandoVersao,
+  erroVersao,
+}: {
+  urlFixa?: string
+  aoSalvarVersao?: (matriz16: number[]) => void
+  salvandoVersao?: boolean
+  erroVersao?: string
+} = {}) {
   const [modo, setModo] = useState<ModoRender>('solido')
   // ?modelo=tenis-03&v=123 abre aquele modelo (v força recarregar depois de regerar)
   const [busca] = useSearchParams()
@@ -423,6 +433,18 @@ export default function Visualizador({ urlFixa }: { urlFixa?: string } = {}) {
                 <button aria-pressed={ordem === 'SRT'} onClick={() => setOrdem('SRT')}>M = S·R·T</button>
               </div>
               <pre className="matriz" aria-label="Matriz 4×4">{linhasDaMatriz(matriz).join('\n')}</pre>
+              {aoSalvarVersao && (
+                <div className="toolbar" style={{ marginTop: 8 }}>
+                  <button
+                    className="primario"
+                    disabled={salvandoVersao}
+                    onClick={() => aoSalvarVersao(matriz)}
+                  >
+                    {salvandoVersao ? 'Salvando versão…' : 'Salvar como nova versão'}
+                  </button>
+                </div>
+              )}
+              {erroVersao && <p role="alert" className="erro-envio">{erroVersao}</p>}
               <ComoFunciona>
                 <p>
                   Coordenadas homogêneas: o ponto vira (x, y, z, 1) e mover, girar e aumentar viram multiplicação por uma matriz

@@ -28,10 +28,47 @@ export type MetricasVersao = Metricas & {
   dims_voxels?: number[]
   tamanho_voxel_cm?: number
   tempos_s?: Record<string, number>
+  suavizacao?: {
+    usada: boolean
+    iteracoes?: number
+    variacao_volume_pct?: number
+    rugosidade_antes_graus?: number
+    rugosidade_depois_graus?: number
+  }
   decimacao?: { usada: boolean; faces_antes?: number; erro_medio_mm?: number; erro_max_mm?: number }
 }
 
-export type Versao = { numero: number; metricas: MetricasVersao | null; arquivos: Arquivo[]; criado_em: string }
+export type Versao = {
+  id?: string
+  numero: number
+  metricas: MetricasVersao | null
+  transformacao?: number[] | null
+  arquivos: Arquivo[]
+  criado_em: string
+}
+
+export type VersaoResumo = {
+  id: string
+  numero: number
+  transformacao?: number[] | null
+  criado_em: string
+}
+
+export type MovimentoCredito = {
+  id: string
+  quantidade: number
+  motivo: string
+  job_id: string | null
+  criado_em: string
+}
+
+export type Conta = {
+  id: string
+  nome: string
+  email: string
+  creditos: number
+  movimentos: MovimentoCredito[]
+}
 
 export type ModeloResumo = {
   id: string
@@ -49,6 +86,7 @@ export type ModeloDetalhe = {
   comprimento_cm: number
   imagens: Imagem[]
   versao: Versao | null
+  versoes?: VersaoResumo[]
   job: Job | null
   criado_em: string
   atualizado_em: string
@@ -128,3 +166,22 @@ export const buscarJob = (id: string) => pedir<Job>(`/jobs/${id}`)
 export const listarModelos = () => pedir<ModeloResumo[]>('/modelos')
 export const buscarModelo = (id: string) => pedir<ModeloDetalhe>(`/modelos/${id}`)
 export const apagarModelo = (id: string) => pedir<void>(`/modelos/${id}`, { method: 'DELETE' })
+export const buscarConta = () => pedir<Conta>('/me')
+export const recarregarCreditos = (quantidade = 10) =>
+  pedir<Conta>(`/creditos/recarregar?quantidade=${quantidade}`, { method: 'POST' })
+export const criarVersao = (modeloId: string, transformacao: number[]) =>
+  pedir<Versao>(`/modelos/${modeloId}/versoes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transformacao }),
+  })
+export const restaurarVersao = (modeloId: string, numero: number) =>
+  pedir<ModeloDetalhe>(`/modelos/${modeloId}/versoes/${numero}/restaurar`, { method: 'POST' })
+export const regerarModelo = (modeloId: string, mascaras: Partial<Record<Vista, string>>) =>
+  pedir<ModeloCriado>(`/modelos/${modeloId}/regerar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mascaras }),
+  })
+export const urlExportarVersao = (versaoId: string, formato: 'glb' | 'obj' | 'stl') =>
+  urlApi(`/versoes/${versaoId}/exportar?formato=${formato}`)

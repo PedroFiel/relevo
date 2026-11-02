@@ -1,11 +1,25 @@
 /** Hooks TanStack Query sobre o cliente da API (F3-T07). */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apagarModelo, buscarJob, buscarModelo, criarModelo, listarModelos, type Job } from './api'
+import {
+  apagarModelo,
+  buscarConta,
+  buscarJob,
+  buscarModelo,
+  criarModelo,
+  criarVersao,
+  listarModelos,
+  recarregarCreditos,
+  regerarModelo,
+  restaurarVersao,
+  type Job,
+} from './api'
+import type { Vista } from './vistas'
 
 export const chaves = {
   modelos: ['modelos'] as const,
   modelo: (id: string) => ['modelos', id] as const,
   job: (id: string) => ['jobs', id] as const,
+  conta: ['conta'] as const,
 }
 
 /** Job ainda rodando? Enquanto sim, o front consulta de novo a cada segundo (F3-T09). */
@@ -20,14 +34,33 @@ export function useModelo(id: string) {
   return useQuery({ queryKey: chaves.modelo(id), queryFn: () => buscarModelo(id), retry: false })
 }
 
+export function useConta() {
+  return useQuery({ queryKey: chaves.conta, queryFn: buscarConta, retry: false })
+}
+
+export function useRecarregarCreditos() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (quantidade?: number) => recarregarCreditos(quantidade),
+    onSuccess: (dados) => {
+      cliente.setQueryData(chaves.conta, dados)
+    },
+  })
+}
+
 export function useJob(id: string | undefined) {
   const cliente = useQueryClient()
   return useQuery({
     queryKey: chaves.job(id ?? ''),
     queryFn: async () => {
       const job = await buscarJob(id!)
-      // Terminou: o detalhe do modelo (status, versão, arquivos) mudou junto
-      if (!jobAberto(job)) await cliente.invalidateQueries({ queryKey: chaves.modelos })
+      // Terminou: o detalhe do modelo (status, versão, arquivos) e o saldo (caso estornado) mudaram junto
+      if (!jobAberto(job)) {
+        await Promise.all([
+          cliente.invalidateQueries({ queryKey: chaves.modelos }),
+          cliente.invalidateQueries({ queryKey: chaves.conta }),
+        ])
+      }
       return job
     },
     enabled: Boolean(id),
@@ -39,7 +72,40 @@ export function useCriarModelo() {
   const cliente = useQueryClient()
   return useMutation({
     mutationFn: criarModelo,
-    onSuccess: () => cliente.invalidateQueries({ queryKey: chaves.modelos }),
+    onSuccess: () => {
+      void cliente.invalidateQueries({ queryKey: chaves.modelos })
+      void cliente.invalidateQueries({ queryKey: chaves.conta })
+    },
+  })
+}
+
+export function useCriarVersao(modeloId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (transformacao: number[]) => criarVersao(modeloId, transformacao),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: chaves.modelo(modeloId) }),
+  })
+}
+
+export function useRestaurarVersao(modeloId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (numero: number) => restaurarVersao(modeloId, numero),
+    onSuccess: (dados) => {
+      cliente.setQueryData(chaves.modelo(modeloId), dados)
+      return cliente.invalidateQueries({ queryKey: chaves.modelos })
+    },
+  })
+}
+
+export function useRegerarModelo(modeloId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (mascaras: Partial<Record<Vista, string>>) => regerarModelo(modeloId, mascaras),
+    onSuccess: () => {
+      void cliente.invalidateQueries({ queryKey: chaves.modelo(modeloId) })
+      void cliente.invalidateQueries({ queryKey: chaves.conta })
+    },
   })
 }
 
