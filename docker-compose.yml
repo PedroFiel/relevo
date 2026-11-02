@@ -24,5 +24,19 @@ services:
     depends_on:
       - postgres
 
+  minio:
+    image: minio/minio:latest
+    container_name: relevo-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - relevo-minio:/data
+
 volumes:
   relevo-pgdata:
+  relevo-minio:

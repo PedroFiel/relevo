@@ -75,6 +75,19 @@ def engine_teste() -> Iterator[Engine]:
         pytest.skip(f"banco de teste indisponível ({e.orig.__class__.__name__})")
     engine = create_engine(url, pool_pre_ping=True)
     migrar(engine)
+    with engine.begin() as conn:
+        demo_id = "00000000-0000-0000-0000-000000000001"
+        conn.execute(
+            text(
+                "DELETE FROM movimentos_credito "
+                "WHERE usuario_id = :id AND motivo <> 'boas-vindas'"
+            ),
+            {"id": demo_id},
+        )
+        conn.execute(
+            text("UPDATE usuarios SET creditos = 10 WHERE id = :id"),
+            {"id": demo_id},
+        )
     yield engine
     engine.dispose()
 

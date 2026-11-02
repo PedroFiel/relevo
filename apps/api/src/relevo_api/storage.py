@@ -18,7 +18,7 @@ import shutil
 import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 from relevo_api.config import settings
@@ -122,7 +122,72 @@ class LocalStorage:
             alvo.unlink(missing_ok=True)
 
 
+class S3Storage:
+    """Storage compatível com S3 / MinIO / Cloudflare R2 (F4-T08, decisão D9).
+
+    Guarda os objetos no bucket S3 e mantém um cache local em disco para que `caminho_local`
+    continue servindo `FileResponse` e o pipeline sem mudar nenhuma linha dos serviços.
+    """
+
+    def __init__(
+        self,
+        bucket: str,
+        cache_dir: Path,
+        cliente: object | None = None,
+    ) -> None:
+        self.bucket = bucket
+        self._cache = LocalStorage(cache_dir)
+        if cliente is None:
+            import boto3  # type: ignore[import-not-found]
+
+            cliente = boto3.client(
+                "s3",
+                endpoint_url=settings.s3_endpoint_url,
+                aws_access_key_id=settings.s3_access_key,
+                aws_secret_access_key=settings.s3_secret_key,
+                region_name=settings.s3_region,
+            )
+        self.cliente: Any = cliente
+
+    def salvar(self, chave: str, dados: bytes) -> str:
+        chave_limpa = validar_chave(chave)
+        self.cliente.put_object(Bucket=self.bucket, Key=chave_limpa, Body=dados)
+        self._cache.salvar(chave_limpa, dados)
+        return chave_limpa
+
+    def abrir(self, chave: str) -> bytes:
+        chave_limpa = validar_chave(chave)
+        try:
+            resposta = self.cliente.get_object(Bucket=self.bucket, Key=chave_limpa)
+        except Exception as erro:
+            raise FileNotFoundError(chave_limpa) from erro
+        corpo = resposta["Body"]
+        dados = corpo.read() if hasattr(corpo, "read") else bytes(corpo)
+        self._cache.salvar(chave_limpa, dados)
+        return dados
+
+    def caminho_local(self, chave: str) -> Path:
+        chave_limpa = validar_chave(chave)
+        caminho = self._cache.caminho_local(chave_limpa)
+        if not caminho.is_file():
+            try:
+                self.abrir(chave_limpa)
+            except FileNotFoundError:
+                pass
+        return caminho
+
+    def apagar_prefixo(self, prefixo: str) -> None:
+        prefixo_limpo = validar_chave(prefixo)
+        listagem = self.cliente.list_objects_v2(Bucket=self.bucket, Prefix=prefixo_limpo)
+        objetos = [{"Key": obj["Key"]} for obj in listagem.get("Contents", [])]
+        if objetos:
+            self.cliente.delete_objects(Bucket=self.bucket, Delete={"Objects": objetos})
+        self._cache.apagar_prefixo(prefixo_limpo)
+
+
 @lru_cache
 def get_storage() -> Storage:
     """Dependência do FastAPI; nos testes é trocada por um `LocalStorage(tmp_path)` (F3-T04)."""
+    if settings.storage_tipo.lower() == "s3":
+        return S3Storage(settings.s3_bucket, settings.storage_dir / ".s3-cache")
     return LocalStorage(settings.storage_dir)

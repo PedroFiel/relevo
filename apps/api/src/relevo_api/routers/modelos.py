@@ -4,7 +4,8 @@ import uuid
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, Response, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from relevo_api.db import get_db, get_fabrica_sessao
@@ -12,21 +13,29 @@ from relevo_api.models import USUARIO_DEMO_ID
 from relevo_api.schemas import (
     ModeloCriadoOut,
     ModeloDetalheOut,
+    ModeloPublicoOut,
     ModeloResumoOut,
     NovaVersaoIn,
     RegerarModeloIn,
     VersaoOut,
 )
+from relevo_api.servicos import auth as servico_auth
 from relevo_api.servicos import modelos as servico
 from relevo_api.servicos.processamento import executar_job
 from relevo_api.storage import Storage, get_storage
 
 router = APIRouter(prefix="/modelos", tags=["modelos"])
+router_publico = APIRouter(prefix="/publico", tags=["publico"])
 
 
-def get_usuario_id() -> uuid.UUID:
-    """Usuário fixo do MVP (D10); vira o usuário do token JWT na F4-T01."""
-    return USUARIO_DEMO_ID
+def get_usuario_id(authorization: Annotated[str | None, Header()] = None) -> uuid.UUID:
+    """Devolve o usuário do token JWT (`Bearer`) ou o usuário demo se sem cabeçalho (F4-T01)."""
+    if not authorization:
+        return USUARIO_DEMO_ID
+    esquema, _, token = authorization.partition(" ")
+    if esquema.lower() != "bearer" or not token.strip():
+        raise servico.ErroPedido(401, "Cabeçalho Authorization inválido; use Bearer <token>.")
+    return servico_auth.decodificar_token_jwt(token)
 
 
 Db = Annotated[Session, Depends(get_db)]
@@ -124,3 +133,18 @@ def regerar(
     )
     tarefas.add_task(executar_job, job.id, fabrica, storage)
     return ModeloCriadoOut(modelo_id=modelo_id, job_id=job.id)
+
+
+@router_publico.get("/{modelo_id}")
+def detalhar_publico(modelo_id: uuid.UUID, db: Db) -> ModeloPublicoOut:
+    resumo, _ = servico.buscar_modelo_publico(db, modelo_id)
+    return resumo
+
+
+@router_publico.get("/{modelo_id}/glb")
+def baixar_glb_publico(modelo_id: uuid.UUID, db: Db, storage: Arquivos) -> FileResponse:
+    _, glb = servico.buscar_modelo_publico(db, modelo_id)
+    caminho = storage.caminho_local(glb.caminho)
+    if not caminho.is_file():
+        raise servico.ErroPedido(404, "O arquivo não está mais no servidor.")
+    return FileResponse(caminho, media_type="model/gltf-binary", filename=glb.nome)
