@@ -195,7 +195,7 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 
 ## Encerramento da Fase 1
 
-- [ ] Todas as tarefas com testes passando
-- [ ] Relatório em `docs/testes/relatorios/` com os tênis reais: prints antes/depois, métricas (IoU, erro dimensional, faces, tempo)
-- [ ] `docs/03-pipeline-cg.md` atualizado se alguma decisão mudou
-- [ ] Revisão de fase `docs/revisoes/fase-1.md`
+- [x] Todas as tarefas com testes passando
+- [x] Relatório em `docs/testes/relatorios/` com os tênis reais: prints antes/depois, métricas (IoU, erro dimensional, faces, tempo)
+- [x] `docs/03-pipeline-cg.md` atualizado se alguma decisão mudou
+- [x] Revisão de fase `docs/revisoes/fase-1.md`

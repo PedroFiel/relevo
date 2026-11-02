@@ -62,28 +62,32 @@ sequenceDiagram
 | Front | rastreamento de raios com BVH e raio de sombra (F2-T15); seleção por janela + recorte de triângulos contra planos e separação (F2-T14); recorte pelo plano near; pipeline de visualização 2D: janela→viewport, zoom/pan, recorte Cohen–Sutherland e Sutherland–Hodgman (F2-T10); plano de corte 3D com stencil (F2-T11); zoom no ponto (F2-T12); pipeline gráfico/rasterização (WebGL), câmera perspectiva, transformações por matrizes homogêneas 4×4 (F2-T13), iluminação e shading (flat × suave, PBR), shaders GLSL, raycasting, LOD por distância | `apps/web/src/components/*` |
 | Banco | representação persistente de malhas e versões, matriz de transformação 4×4 por versão, parâmetros e métricas do pipeline (reprodutibilidade) | `apps/api/src/relevo_api/models.py` |
 
-## Estrutura de pastas (alvo ao fim da Fase 3)
+## Estrutura de pastas (Fases 0 a 5 concluídas)
 
 ```
 apps/api/src/relevo_api/
-├── main.py            # cria o app, CORS, inclui routers
-├── config.py          # Settings (.env)
+├── main.py            # cria o app, CORS, inclui routers (modelos, publico, jobs, arquivos, conta, auth, amostras)
+├── config.py          # Settings (.env: banco, storage local/S3, JWT)
 ├── db.py              # engine, sessão, Base
-├── models.py          # ORM: usuarios, modelos, imagens, jobs, versoes, arquivos
+├── models.py          # ORM: usuarios, movimentos_credito, modelos, imagens, jobs, versoes, arquivos
 ├── schemas.py         # Pydantic (entrada/saída da API)
-├── storage.py         # interface Storage + LocalStorage (S3Storage na Fase 4)
+├── storage.py         # interface Storage + LocalStorage + S3Storage (MinIO / S3)
 ├── routers/
-│   ├── modelos.py
+│   ├── auth.py        # POST /auth/registrar e POST /auth/login (F4-T01)
+│   ├── conta.py       # GET /me e POST /creditos/recarregar (F4-T02)
+│   ├── modelos.py     # CRUD + versões 4×4 + regerar máscara + rotas públicas /publico/{id}
 │   ├── jobs.py
-│   └── arquivos.py
+│   └── arquivos.py    # download e exportação sob demanda .glb/.obj/.stl (F4-T05)
 └── servicos/
-    ├── modelos.py         # valida o upload, cria/lista/detalha/apaga (F3-T03, F3-T06)
-    └── processamento.py   # executa o pipeline e atualiza o job (F3-T05)
+    ├── auth.py            # hash scrypt + tokens JWT HS256 (F4-T01)
+    ├── creditos.py        # débito SELECT FOR UPDATE, estorno automático e extrato (F4-T02)
+    ├── modelos.py         # valida o upload, cria/lista/detalha/apaga, versões e exportação
+    └── processamento.py   # executa o pipeline e atualiza o job (F3-T05, F5-T05)
 
 apps/web/src/
-├── pages/            # Home, NovoModelo, Modelos, ModeloDetalhe (status + 3D + fotos), Guia; estúdio: Visualizador, Fotos
-├── components/       # ui/ (base), AppLayout, ModelViewer, VisorFoto, UploadSlot, EditorFoto, EtapasJob, FotosDoModelo…
-├── lib/              # api.ts (cliente), consultas.ts (TanStack Query), upload.ts, visualizacao2d.ts… (funções puras)
+├── pages/            # Home, NovoModelo, Modelos, ModeloDetalhe, Conta, Entrar, Cadastrar, EmbedModelo, Guia, Visualizador, Fotos
+├── components/       # ui/ (base), AppLayout, ModelViewer, VisorFoto, UploadSlot, EditorFoto, EditorMascara, RaioX, CenaRaioX…
+├── lib/              # api.ts, consultas.ts, matrizes.ts, camera.ts, visualizador.ts, corte.ts, selecao.ts, rastreamento.ts…
 ├── testes/           # auxiliares dos testes (provedores, fetch falso)
-└── shaders/          # GLSL customizados (Fase 2)
+└── shaders/          # GLSL customizados: altura.vert/.frag e fresnel.vert/.frag (F2-T05)
 ```

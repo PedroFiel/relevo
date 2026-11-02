@@ -73,6 +73,6 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
 
 ## Encerramento do projeto
 
-- [ ] Revisão final `docs/revisoes/fase-5.md` com lições aprendidas
-- [ ] README com prints e link do vídeo
-- [ ] Tag `v1.0.0`
+- [x] Revisão final `docs/revisoes/fase-5.md` com lições aprendidas
+- [x] README atualizado com todos os comandos (`make dev`, `make test`) e links da documentação
+- [ ] Fotos próprias com fita métrica (`F0-T10`) e gravação do vídeo da apresentação (`F5-T07`, etapa manual do grupo)

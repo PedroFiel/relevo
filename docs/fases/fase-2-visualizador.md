@@ -210,6 +210,6 @@ Diferença do plano: o plano de corte é definido nas coordenadas do modelo e ac
 
 ## Encerramento da Fase 2
 
-- [ ] Prints de todos os modos no relatório da fase (são material para os slides)
-- [ ] Tabela "conceito de CG → onde aparece na tela" atualizada em `02-arquitetura.md`
-- [ ] Revisão de fase `docs/revisoes/fase-2.md`
+- [x] Prints de todos os modos no relatório da fase (são material para os slides)
+- [x] Tabela "conceito de CG → onde aparece na tela" atualizada em `02-arquitetura.md` e `09-funcionalidades-cg.md`
+- [x] Revisão de fase `docs/revisoes/fase-2.md`

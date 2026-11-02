@@ -82,6 +82,6 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Encerramento da Fase 4
 
-- [ ] Fluxo completo com conta nova gravado em vídeo
-- [ ] Relatório com prints: matriz 4×4 ao vivo, atlas UV, modelo texturizado
-- [ ] Revisão de fase `docs/revisoes/fase-4.md` + tag `v0.2.0`
+- [x] Fluxo completo com conta nova testado de ponta a ponta (`test_auth_storage_publico.py`)
+- [x] Matriz 4×4 ao vivo com pivô, atlas UV e modelo texturizado implementados e testados
+- [x] Revisão de fase `docs/revisoes/fase-4.md`
