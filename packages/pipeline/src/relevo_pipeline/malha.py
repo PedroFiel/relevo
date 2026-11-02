@@ -73,6 +73,56 @@ def _malha_do_campo(campo: np.ndarray, nivel: float, comprimento_cm: float) -> t
     return malha
 
 
+# ---------- [5] Suavização de Taubin (F1-T02) ----------
+ITERACOES_TAUBIN = 10
+LAMBDA_TAUBIN = 0.5
+NU_TAUBIN = 0.53
+
+
+def suavizar(
+    malha: trimesh.Trimesh, iteracoes: int = ITERACOES_TAUBIN
+) -> tuple[trimesh.Trimesh, dict]:
+    """Suavização de Taubin (filtro passa-baixas λ|μ sem encolhimento, F1-T02).
+
+    Diferente da suavização Laplaciana simples — que puxa cada vértice para a média dos vizinhos
+    repetidamente e faz o objeto encolher —, o filtro de Taubin alterna um passo de contração
+    (+λ) com um passo de inflação (−μ, com μ > λ), atenuando altas frequências (ondulações da
+    grade) enquanto preserva o volume e a escala real em cm.
+    """
+    if iteracoes <= 0 or len(malha.faces) == 0:
+        return malha, {"usada": False, "iteracoes": 0}
+    vol_antes = abs(float(malha.volume))
+    angulos_antes = malha.face_adjacency_angles
+    rug_antes = float(np.degrees(angulos_antes.std())) if len(angulos_antes) else 0.0
+
+    suave = malha.copy()
+    trimesh.smoothing.filter_taubin(
+        suave, lamb=LAMBDA_TAUBIN, nu=NU_TAUBIN, iterations=iteracoes
+    )
+    suave.fix_normals()
+    if not suave.is_watertight:
+        return malha, {"usada": False, "iteracoes": iteracoes, "motivo": "abriria a malha"}
+    suave.metadata.update(malha.metadata)
+
+    vol_depois = abs(float(suave.volume))
+    variacao_vol = 100.0 * abs(vol_depois - vol_antes) / max(vol_antes, 1e-6)
+    angulos_depois = suave.face_adjacency_angles
+    rug_depois = float(np.degrees(angulos_depois.std())) if len(angulos_depois) else 0.0
+    if suave.extents[0] > 0:
+        suave.vertices *= float(malha.extents[0]) / float(suave.extents[0])
+        minimo, maximo = suave.bounds
+        suave.apply_translation(
+            [-(minimo[0] + maximo[0]) / 2, -minimo[1], -(minimo[2] + maximo[2]) / 2]
+        )
+    return suave, {
+        "usada": True,
+        "iteracoes": iteracoes,
+        "variacao_volume_pct": round(variacao_vol, 2),
+        "rugosidade_antes_graus": round(rug_antes, 2),
+        "rugosidade_depois_graus": round(rug_depois, 2),
+    }
+
+
 # ---------- [6] Decimação por erro quádrico (F1-T03) ----------
 AMOSTRAS_ERRO = 5000
 VIZINHOS_ERRO = 12  # triângulos candidatos por ponto (pelo centro mais próximo)
