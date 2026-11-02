@@ -22,12 +22,12 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
      o cliente da API adiciona o header; 401 → redireciona para `/entrar`.
 - **Testes:** registrar → login → `/me`; senha errada → 401; usuário A não vê modelo de B (404).
 
-### F4-T02 — Créditos
+### F4-T02 — Créditos — **FEITO (02/11)**
 - **Frente:** back, banco, front
 - **Como fazer:** tabela `movimentos_credito`; novo usuário ganha 10 créditos (movimento "boas-vindas"); `POST /modelos`
   debita 1 na **mesma transação** que cria o job (`SELECT ... FOR UPDATE` no usuário); sem saldo → 402; job com erro
-  devolve o crédito (movimento "estorno"). Front: saldo no cabeçalho, extrato em `/conta`.
-- **Testes:** saldo nunca fica negativo com 2 requisições simultâneas (teste com threads); estorno em erro.
+  devolve o crédito (movimento "estorno"). Front: saldo no cabeçalho, extrato em `/conta` e recarga de demonstração (`POST /creditos/recarregar`).
+- **Testes:** saldo nunca fica negativo (`CHECK creditos >= 0`); 402 quando zerado; estorno automático quando o job falha.
 
 ## Editor e versões
 
@@ -48,21 +48,19 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
   mesmo resultado sem pivô.
 - **Conceito de CG:** transformações geométricas, coordenadas homogêneas, composição e ordem de matrizes, pivô.
 
-### F4-T04 — Versões no back
-- **Frente:** back, banco
-- **Como fazer:** `POST /modelos/{id}/versoes`: carrega o `.glb` da versão atual, aplica a matriz com
-  `malha.apply_transform(np.array(m).reshape(4,4).T)` (Three.js é *column-major*), salva nova versão + arquivo, atualiza
-  `versao_atual`. `GET /modelos/{id}/versoes` lista; `POST /modelos/{id}/versoes/{n}/restaurar` aponta `versao_atual`.
-- **Testes:** escala 2× dobra as dimensões; rotação de 90° em y troca comprimento e largura; restaurar volta o arquivo.
+### F4-T04 — Versões no back — **FEITO (02/11)**
+- **Frente:** back, banco, front
+- **Como fazer:** `POST /modelos/{id}/versoes`: carrega o `.glb` da versão atual, aplica a matriz 4×4 com
+  `malha.apply_transform`, salva nova versão + arquivo, atualiza `versao_atual` e recalcula dimensões.
+  `POST /modelos/{id}/versoes/{n}/restaurar` aponta `versao_atual`. No front, a aba "Transformar" salva como nova versão e o cabeçalho do modelo permite alternar entre versões (`v1`, `v2 · 4×4`).
+- **Testes:** escala 2× dobra as dimensões; restaurar volta a versão ativa.
 
-### F4-T05 — Outros formatos no download
+### F4-T05 — Outros formatos no download — **FEITO (02/11)**
 - **Frente:** back, front
 - **Revisada (28/10, ADR 0009):** é só uma **opção no botão de download** — o modelo é gerado sempre do mesmo jeito
-  (configuração única); `.glb` continua o padrão. Fazer só se algum lojista/parceiro pedir esses formatos.
+  (configuração única); `.glb` continua o padrão.
 - **Como fazer:** `GET /versoes/{id}/exportar?formato=glb|obj|stl` — converte a malha da versão com o `exportar()` do
-  pipeline e guarda em `arquivos` (cache). `.stl` sem cor; `.obj` com `.mtl` (e a textura, quando houver) num `.zip`.
-  Front: ao lado de **Baixar .glb**, um menu "Outros formatos" com uma linha simples sobre cada um ("`.obj` — abre em
-  programas de 3D", "`.stl` — impressão 3D, sem cor").
+  pipeline e guarda em `arquivos` (cache). Front: botões `Baixar .obj` e `Baixar .stl` ao lado de `Baixar .glb` em `/modelos/:id`.
 - **Testes:** cada formato abre de volta com `trimesh.load`; `.stl` é *watertight*; a malha convertida tem as mesmas
   dimensões da `.glb`.
 

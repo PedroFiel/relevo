@@ -49,12 +49,12 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
 - **Como fazer:** cartões "Loja online (leve, colorido)", "Jogo (low poly)", "Impressão 3D (fechado, sem cor, .stl)" no
   upload e em "Regerar"; `POST /modelos/{id}/regerar {preset}` cria novo job reaproveitando as fotos (custa 1 crédito).
 
-### F5-T05 — Pincel de correção da máscara
+### F5-T05 — Pincel de correção da máscara — **FEITO (02/11)**
 - **Frente:** front, back, pipeline
 - **Depende de:** F2-T10 (`VisorFoto` com zoom/pan) e F3-T14 (máscara sobre a foto)
-- **Como fazer:** editor em `<canvas>` sobre a foto com a máscara semitransparente; ferramentas pincel (adiciona) e
-  borracha (remove), tamanho ajustável; envia as máscaras corrigidas como PNG em `regerar`; o pipeline aceita
-  `mascaras` prontas e pula a segmentação.
+- **Como fazer:** editor em `<canvas>` (`EditorMascara.tsx`) sobre a foto com a máscara semitransparente inicializada pelo contorno automático; ferramentas pincel (adiciona) e
+  borracha (remove), tamanho ajustável; envia as máscaras corrigidas como PNG base64 em `POST /modelos/{id}/regerar`; o pipeline aceita
+  `mascaras_prontas` e substitui a segmentação automática nas vistas corrigidas.
 - **Conceito de CG:** rasterização de pinceladas, composição alfa.
 
 ### F5-T06 — Visualizador incorporável
