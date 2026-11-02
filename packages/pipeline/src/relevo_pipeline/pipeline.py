@@ -21,7 +21,7 @@ from relevo_pipeline.ajuste import AjusteFoto, aplicar_ajuste, aplicar_matriz
 from relevo_pipeline.alinhamento import VistasAlinhadas, alinhar_vistas
 from relevo_pipeline.contorno import medidas, rastrear_contorno, simplificar
 from relevo_pipeline.cor import colorir_malha
-from relevo_pipeline.malha import campo_para_malha, decimar
+from relevo_pipeline.malha import ITERACOES_TAUBIN, campo_para_malha, decimar, suavizar
 from relevo_pipeline.metricas import avisos_consistencia, consistencia
 from relevo_pipeline.orientacao import Orientacao, orientar_lateral, orientar_topo
 from relevo_pipeline.segmentacao import qualidade_mascara, segmentar
@@ -38,10 +38,11 @@ ORIENTADORES = {"lateral": orientar_lateral, "topo": orientar_topo, "sola": orie
 # Etapas avisadas a `ao_progredir`, na ordem, com o peso de cada uma no percentual (≈ % do tempo
 # medido nos tenis-01..03 em resolução 256). Ajuste, orientação e contorno contam na segmentação.
 PESOS_ETAPAS = {
-    "segmentacao": 35,
+    "segmentacao": 33,
     "alinhamento": 5,
     "visual_hull": 10,
-    "marching_cubes": 15,
+    "marching_cubes": 14,
+    "suavizacao": 3,
     "decimacao": 2,
     "cor": 33,
 }
@@ -67,9 +68,11 @@ class ResultadoPipeline:
     # Ajuste aplicado e matriz 3×3 "foto processada -> foto original" de cada vista
     ajustes: dict[str, dict] = field(default_factory=dict)
     secao: dict = field(default_factory=dict)
+    suavizacao: dict = field(default_factory=dict)
     decimacao: dict = field(default_factory=dict)
-    # Saída do Marching Cubes antes da decimação e da cor (Raio-X, F5-T01)
+    # Saída do Marching Cubes antes da suavização/decimação e saída pós-suavização (Raio-X, F5-T01)
     malha_bruta: trimesh.Trimesh | None = None
+    malha_suave: trimesh.Trimesh | None = None
 
     @property
     def metricas(self) -> dict:
@@ -86,6 +89,7 @@ class ResultadoPipeline:
             "orientacao": {k: o.descrever() for k, o in self.orientacoes.items()},
             "registro": {"espelhamento_trocado": self.vistas.registradas},
             "secao": self.secao,
+            "suavizacao": self.suavizacao,
             "decimacao": self.decimacao,
             "consistencia": self.consistencia,
             "avisos": self.avisos,
@@ -105,7 +109,9 @@ def processar(
     *,
     extras: dict[str, np.ndarray] | None = None,
     ajustes: dict[str, AjusteFoto] | None = None,
+    mascaras_prontas: dict[str, np.ndarray] | None = None,
     secao: bool = True,
+    iteracoes_suavizacao: int = ITERACOES_TAUBIN,
     faces_alvo: int | None = None,
     ao_progredir: AoProgredir | None = None,
 ) -> ResultadoPipeline:
@@ -113,7 +119,9 @@ def processar(
 
     `extras`: fotos opcionais além das 3 principais — "outro_lado", "sola", "tras".
     `ajustes`: recorte/rotação escolhidos pelo usuário, por vista (ver ajuste.py).
+    `mascaras_prontas`: máscaras booleanas/uint8 corrigidas pelo pincel (F5-T05), por vista.
     `secao`: aplica a hipótese de seção transversal comum (voxel.campo_secao).
+    `iteracoes_suavizacao`: iterações do filtro de Taubin (F1-T02; 0 desliga).
     `faces_alvo`: decimação por erro quádrico até ~esse número de faces (None = não decimar).
     `ao_progredir`: chamado no começo de cada etapa com (nome, % já feito) e no fim com
     ("concluido", 100) — a API grava isso no job (F3-T05).
@@ -126,23 +134,45 @@ def processar(
         fotos["frente"] = frente_bgr
     fotos.update(extras or {})
     ajustes = ajustes or {}
+    mascaras_prontas = mascaras_prontas or {}
     validar_nomes(fotos)
     validar_nomes(ajustes)
-    sem_foto = sorted(set(ajustes) - set(fotos))
+    validar_nomes(mascaras_prontas)
+    sem_foto = sorted((set(ajustes) | set(mascaras_prontas)) - set(fotos))
     if sem_foto:
         raise ValueError(f"Há ajuste para vista sem foto: {', '.join(sem_foto)}.")
 
     avisar("segmentacao")
     # [0] Ajuste do usuário. `matrizes[v]` leva um ponto da foto processada à foto ORIGINAL.
     matrizes: dict[str, np.ndarray] = {}
+    shapes_originais = {v: fotos[v].shape[:2] for v in fotos}
     for vista in fotos:
         fotos[vista], matrizes[vista] = aplicar_ajuste(fotos[vista], ajustes.get(vista))
 
     t = time.perf_counter()
     mascaras = {}
     for vista, img in fotos.items():
-        mascaras[vista], bruta = segmentar(img)
-        avisos += qualidade_mascara(mascaras[vista], bruta, VISTAS[vista].rotulo)
+        if vista in mascaras_prontas:
+            mp = mascaras_prontas[vista]
+            if mp.ndim == 3:
+                mp = mp[..., 0]
+            if mp.shape[:2] == shapes_originais[vista] and mp.shape[:2] != img.shape[:2]:
+                mp_ajustada, _ = aplicar_ajuste(mp.astype(np.uint8) * 255, ajustes.get(vista))
+                mascaras[vista] = mp_ajustada > 127
+            elif mp.shape[:2] == img.shape[:2]:
+                mascaras[vista] = mp > 0 if mp.dtype == bool else mp > 127
+            else:
+                raise ValueError(
+                    f"A máscara corrigida da vista {VISTAS[vista].rotulo} não tem o mesmo "
+                    "tamanho da foto."
+                )
+            if not mascaras[vista].any():
+                raise ValueError(
+                    f"A máscara corrigida da vista {VISTAS[vista].rotulo} ficou toda vazia."
+                )
+        else:
+            mascaras[vista], bruta = segmentar(img)
+            avisos += qualidade_mascara(mascaras[vista], bruta, VISTAS[vista].rotulo)
     tempos["segmentacao"] = time.perf_counter() - t
 
     # [1b] Orientação automática — só onde o usuário não girou a foto à mão
@@ -208,13 +238,20 @@ def processar(
     malha = campo_para_malha(campo, comprimento_cm=comprimento_cm)
     tempos["marching_cubes"] = time.perf_counter() - t
 
+    malha_bruta = malha.copy()
+
+    avisar("suavizacao")
+    t = time.perf_counter()
+    malha, info_suavizacao = suavizar(malha, iteracoes=iteracoes_suavizacao)
+    malha_suave = malha.copy()
+    tempos["suavizacao"] = time.perf_counter() - t
+
     avisar("decimacao")
     t = time.perf_counter()
-    malha_bruta = malha if faces_alvo is None else malha.copy()  # a cor pinta a malha final
     malha, info_decimacao = decimar(malha, faces_alvo)
     tempos["decimacao"] = time.perf_counter() - t
 
-    cons = consistencia(vistas, campo < 0)
+    cons = consistencia(vistas, campo < 0, malha=malha, mascaras_originais=mascaras)
     avisos += avisos_consistencia(cons)
 
     if colorir:
@@ -242,8 +279,10 @@ def processar(
             for v in fotos
         },  # fmt: skip
         secao=info_secao,
+        suavizacao=info_suavizacao,
         decimacao=info_decimacao,
         malha_bruta=malha_bruta,
+        malha_suave=malha_suave,
     )
 
 

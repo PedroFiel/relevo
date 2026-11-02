@@ -229,3 +229,70 @@ def test_progresso_nao_avisa_conclusao_quando_da_erro():
     with pytest.raises(ValueError):
         processar(branca, branca, ao_progredir=lambda *a: chamadas.append(a))
     assert chamadas and chamadas[-1][0] != ETAPA_FINAL
+
+
+# ---------- Taubin (F1-T02), projeção (F1-T04), IoU malha (F1-T07) e máscara (F5-T05) ----------
+def test_suavizacao_taubin_preserva_volume_e_reduz_rugosidade():
+    import trimesh
+    from relevo_pipeline.malha import suavizar, voxels_para_malha
+
+    occ = tenis_implicito(48)
+    bruta = voxels_para_malha(occ, comprimento_cm=28, suavizacao_campo=0.4)
+    suave, info = suavizar(bruta, iteracoes=10)
+    assert info["usada"] is True
+    assert suave.is_watertight
+    assert info["variacao_volume_pct"] < 3.0
+    assert info["rugosidade_depois_graus"] < info["rugosidade_antes_graus"]
+
+    # Comparação didática com Laplaciano simples (sem restrição artificial de volume): encolhe mais que Taubin
+    lap = bruta.copy()
+    trimesh.smoothing.filter_laplacian(lap, lamb=0.5, iterations=10, volume_constraint=False)
+    encolhimento_lap = abs(float(lap.volume) - float(bruta.volume)) / abs(float(bruta.volume)) * 100
+    assert info["variacao_volume_pct"] < encolhimento_lap
+
+
+def test_projecao_3d_para_pixel_ida_e_volta_e_dentro_da_mascara(fotos):
+    from relevo_pipeline.alinhamento import projetar_vertices
+    from relevo_pipeline.malha import PAD
+
+    r = processar(fotos["lateral"], fotos["topo"], fotos["frente"], comprimento_cm=28, resolucao=64)
+    tv = r.malha.metadata["tamanho_voxel"]
+    desl = r.malha.metadata["deslocamento"]
+    uv = projetar_vertices(r.malha.vertices, tv, desl, r.vistas, "lateral", pad=PAD)
+    mascara = r.mascaras["lateral"]
+    h, w = mascara.shape
+    xs = np.clip(np.round(uv[:, 0]).astype(int), 0, w - 1)
+    ys = np.clip(np.round(uv[:, 1]).astype(int), 0, h - 1)
+    # Com uma pequena dilatação de 2 px para tolerar suavização/borda subpixel, > 98 % caem dentro
+    import cv2
+
+    dilatada = cv2.dilate(mascara.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+    assert dilatada[ys, xs].mean() > 0.98
+
+    # Ida e volta pela matriz 3×3 M (grade -> foto -> grade) com erro < 1e-6 px
+    M = r.vistas.matrizes["lateral"]
+    M_inv = np.linalg.inv(M)
+    pontos_grade = np.array([[0.0, 0.0, 1.0], [32.0, 15.0, 1.0], [64.0, 30.0, 1.0]])
+    volta = (pontos_grade @ M.T) @ M_inv.T
+    np.testing.assert_allclose(volta, pontos_grade, atol=1e-6)
+
+
+def test_iou_reprojecao_da_malha_presente_nas_metricas(fotos):
+    r = processar(fotos["lateral"], fotos["topo"], fotos["frente"], comprimento_cm=28, resolucao=64)
+    cons = r.metricas["consistencia"]
+    for vista in ("lateral", "topo", "frente"):
+        assert f"iou_malha_{vista}" in cons
+        assert cons[f"iou_malha_{vista}"] > 0.85
+
+
+def test_mascaras_prontas_substituem_segmentacao_automatica(fotos):
+    m_lat = gerar_mascara(fotos["lateral"])
+    r = processar(
+        fotos["lateral"],
+        fotos["topo"],
+        comprimento_cm=28,
+        resolucao=48,
+        mascaras_prontas={"lateral": m_lat},
+    )
+    assert r.metricas["fechada"] is True
+    assert np.array_equal(r.mascaras["lateral"], m_lat)

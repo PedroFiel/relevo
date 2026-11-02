@@ -89,11 +89,11 @@ erDiagram
 
 ## Tabelas
 
-### `usuarios` (F3; autenticação em F4)
-No MVP existe um usuário **demo** criado por *seed* na migração; todas as requisições usam ele:
+### `usuarios` (F3; créditos em F4-T02)
+Existe um usuário **demo** criado por *seed* na migração; todas as requisições usam ele:
 id fixo `00000000-0000-0000-0000-000000000001`, e-mail `demo@relevo.local` (constante `USUARIO_DEMO_ID` em
-`relevo_api/models.py`). `creditos` começa em 0 e só passa a valer na F4.
-Na F4 entram `senha_hash` (Argon2) e login JWT. `email` único.
+`relevo_api/models.py`). `creditos` começa em 10 (`server_default="10"`, `CHECK (creditos >= 0)`) com o movimento
+inicial `boas-vindas` (migração `c4a9e12b8f01`). `email` único.
 
 ### `modelos` (F3)
 O "projeto" do usuário: um calçado. `comprimento_cm` é o tamanho real informado (escala do modelo).
@@ -118,19 +118,20 @@ Cada execução do pipeline. O worker atualiza `etapa_atual` e `progresso` a cad
 - `progresso` com `CHECK progresso BETWEEN 0 AND 100`.
 Índice em `(status)` para achar jobs travados no *startup*.
 
-### `versoes` (F3)
-Cada resultado aceito. `UNIQUE (modelo_id, numero)`. Na F4, editar escala/rotação/pivô cria nova versão com a
-**matriz de transformação homogênea 4×4** em `transformacao` (lista de 16 números, ordem *column-major* como no Three.js).
+### `versoes` (F3; matriz 4×4 e restauração em F4-T03/T04)
+Cada resultado aceito. `UNIQUE (modelo_id, numero)`. Editar escala/rotação/translação cria nova versão com a
+**matriz de transformação homogênea 4×4** em `transformacao` (lista de 16 números, ordem *row-major* igual a `src/lib/matrizes.ts`).
 - `metricas` (JSONB): o **resultado** exibido — `ResultadoPipeline.metricas` (faces, dimensões, fechada, IoU, avisos,
-  contornos, ajustes). É o que `GET /modelos/{id}` devolve em `versao.metricas` (ADR 0006, F3-T14).
-- `job_id` é opcional: a versão criada por edição (F4) não roda o pipeline. Apagar o job deixa `job_id` nulo.
+  contornos, ajustes, suavização, decimação). É o que `GET /modelos/{id}` devolve em `versao.metricas` (ADR 0006, F3-T14).
+- `job_id` é opcional: a versão criada por edição (`POST /modelos/{id}/versoes`, F4-T04) não roda o pipeline. Apagar o job deixa `job_id` nulo.
 
-### `arquivos` (F3)
-Arquivos de uma versão: `.glb` principal, exportações `.obj/.stl` (F4), textura (F4), máscaras e malhas
-intermediárias para o Raio-X (F5). `nivel_lod` (smallint, nulo = completo) entra na F5.
+### `arquivos` (F3; exportações sob demanda em F4-T05)
+Arquivos de uma versão: `.glb` principal, exportações `.obj/.stl` cacheadas sob demanda (`GET /versoes/{id}/exportar`),
+máscaras e malhas intermediárias (`voxels.glb`, `malha-bruta.glb`, `malha-suave.glb`) para o Raio-X (F5-T01).
 
-### `movimentos_credito` (F4)
-Extrato de créditos. Saldo = `usuarios.creditos` (atualizado na mesma transação do movimento).
+### `movimentos_credito` (F4-T02)
+Extrato auditável de créditos (`boas-vindas`, `geracao`, `regeracao`, `estorno`, `recarga_demo`). Saldo = `usuarios.creditos`
+(atualizado na mesma transação do movimento com `SELECT ... FOR UPDATE`; `ON DELETE CASCADE` para `usuarios` e `ON DELETE SET NULL` para `jobs`).
 
 ## Regras de integridade
 

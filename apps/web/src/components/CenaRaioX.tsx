@@ -8,6 +8,7 @@ type Props = {
   passo: IdPasso
   voxels?: string
   bruta?: string
+  suave?: string
   final?: string
   /** Lado do voxel em cm (para o tamanho do cubo de cada instância). */
   ladoVoxel: number
@@ -89,7 +90,7 @@ function Malha({ url, modo, alvo }: { url: string; modo: 'arame' | 'cor'; alvo: 
  * Palco 3D do Raio-X (F5-T01). Fica montado o tempo todo: a câmera não muda entre as etapas e cada
  * objeto só sobe ou desce a opacidade (crossfade).
  */
-export default function CenaRaioX({ passo, voxels, bruta, final, ladoVoxel }: Props) {
+export default function CenaRaioX({ passo, voxels, bruta, suave, final, ladoVoxel }: Props) {
   const alvo = (id: IdPasso) => (passo === id ? 1 : 0)
   return (
     <Canvas camera={{ position: [30, 20, 30], fov: 40, near: 0.1, far: 500 }} dpr={[1, 2]}>
@@ -99,6 +100,7 @@ export default function CenaRaioX({ passo, voxels, bruta, final, ladoVoxel }: Pr
       <Suspense fallback={null}>
         {voxels && <Voxels url={voxels} lado={ladoVoxel} alvo={alvo('voxels')} />}
         {bruta && <Malha url={bruta} modo="arame" alvo={alvo('bruta')} />}
+        {suave && <Malha url={suave} modo="arame" alvo={alvo('suavizada')} />}
         {final && <Malha url={final} modo="arame" alvo={alvo('decimada')} />}
         {final && <Malha url={final} modo="cor" alvo={alvo('final')} />}
       </Suspense>

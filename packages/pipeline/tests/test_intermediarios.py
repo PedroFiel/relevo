@@ -25,16 +25,18 @@ def test_superficie_de_um_cubo_cheio_e_so_a_casca():
 
 
 def test_guarda_a_malha_antes_da_decimacao(resultado):
-    assert resultado.malha_bruta is not None
+    assert resultado.malha_bruta is not None and resultado.malha_suave is not None
     assert len(resultado.malha_bruta.faces) == resultado.decimacao["faces_antes"]
+    assert len(resultado.malha_suave.faces) == resultado.decimacao["faces_antes"]
     assert len(resultado.malha.faces) < len(resultado.malha_bruta.faces)
     assert resultado.malha_bruta.visual.kind != "vertex"  # a cor só vai na final
+    assert resultado.malha_suave.visual.kind != "vertex"
 
 
 def test_intermediarios_abrem_e_ficam_no_lugar_da_malha(resultado):
     arquivos = intermediarios(resultado)
     mascaras = {f"mascara-{v}.png" for v in ("lateral", "topo", "frente")}
-    assert set(arquivos) == mascaras | {"voxels.glb", "malha-bruta.glb"}
+    assert set(arquivos) == mascaras | {"voxels.glb", "malha-bruta.glb", "malha-suave.glb"}
 
     m = cv2.imdecode(np.frombuffer(arquivos["mascara-topo.png"], np.uint8), cv2.IMREAD_GRAYSCALE)
     assert set(np.unique(m)) == {0, 255}

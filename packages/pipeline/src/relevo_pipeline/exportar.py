@@ -66,4 +66,8 @@ def intermediarios(resultado: ResultadoPipeline) -> dict[str, bytes]:
         bruta = resultado.malha_bruta.copy()
         bruta.visual = trimesh.visual.ColorVisuals(bruta)  # sem cor: a cor vem depois
         arquivos["malha-bruta.glb"] = bruta.export(file_type="glb")
+    if resultado.malha_suave is not None:
+        suave = resultado.malha_suave.copy()
+        suave.visual = trimesh.visual.ColorVisuals(suave)
+        arquivos["malha-suave.glb"] = suave.export(file_type="glb")
     return arquivos

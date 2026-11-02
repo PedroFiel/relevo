@@ -33,6 +33,18 @@ def baixar(arquivo_id: uuid.UUID, db: Db, storage: Arquivos, usuario_id: Usuario
     return _resposta(storage, arquivo.caminho, arquivo.nome)
 
 
+@router.get("/versoes/{versao_id}/exportar")
+def exportar(
+    versao_id: uuid.UUID,
+    db: Db,
+    storage: Arquivos,
+    usuario_id: Usuario,
+    formato: str = "glb",
+) -> FileResponse:
+    arquivo = servico.exportar_versao(db, storage, usuario_id, versao_id, formato)
+    return _resposta(storage, arquivo.caminho, arquivo.nome)
+
+
 @router.get("/imagens/{imagem_id}")
 def foto(imagem_id: uuid.UUID, db: Db, storage: Arquivos, usuario_id: Usuario) -> FileResponse:
     return _resposta(storage, servico.buscar_imagem(db, usuario_id, imagem_id).caminho)

@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
+import Conta from './pages/Conta'
 import Fotos from './pages/Fotos'
 import Guia from './pages/Guia'
 import Home from './pages/Home'
@@ -9,7 +10,7 @@ import NaoEncontrada from './pages/NaoEncontrada'
 import NovoModelo from './pages/NovoModelo'
 import Visualizador from './pages/Visualizador'
 
-/** Rotas finais do MVP (F2-T01). /visualizador e /fotos são o estúdio de CG (demonstração). */
+/** Rotas finais do produto (F2-T01, F4-T02). /visualizador e /fotos são o estúdio de CG (demonstração). */
 export default function App() {
   return (
     <Routes>
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/novo" element={<NovoModelo />} />
         <Route path="/modelos" element={<Modelos />} />
         <Route path="/modelos/:id" element={<ModeloDetalhe />} />
+        <Route path="/conta" element={<Conta />} />
         <Route path="/guia" element={<Guia />} />
         <Route path="/visualizador" element={<Visualizador />} />
         <Route path="/fotos" element={<Fotos />} />

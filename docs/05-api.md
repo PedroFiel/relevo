@@ -92,22 +92,21 @@ Cada versão traz em `arquivos`: o `modelo.glb` (`tipo: glb`) e, desde a F5-T01,
 ### `GET /imagens/{id}` → a foto enviada (`image/jpeg` ou `image/png`)
 Para miniaturas e para desenhar o contorno sobre a foto original (F3-T14).
 
-## Fase 4
+## Fase 4 (implementadas)
 
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/auth/registrar` | `{nome, email, senha}` → 201 |
-| POST | `/auth/login` | `{email, senha}` → `{access_token}` (JWT) |
-| GET | `/me` | usuário + saldo de créditos |
-| POST | `/modelos/{id}/versoes` | `{transformacao: number[16]}` → nova versão com a matriz aplicada |
-| GET | `/versoes/{id}/exportar?formato=obj\|stl\|glb` | outro formato no download (F4-T05; o modelo é o mesmo) |
+| GET | `/me` | usuário + saldo de créditos + últimos 50 movimentos (`ContaOut`, F4-T02) |
+| POST | `/creditos/recarregar?quantidade=10` | recarrega créditos de demonstração (1–100) e grava `recarga_demo` (F4-T02) |
+| POST | `/modelos/{id}/versoes` | `{transformacao: number[16]}` → aplica matriz 4×4 ao `.glb` atual e salva nova versão (F4-T04) |
+| POST | `/modelos/{id}/versoes/{numero}/restaurar` | aponta `versao_atual` para uma versão anterior (F4-T04) |
+| GET | `/versoes/{id}/exportar?formato=obj\|stl\|glb` | converte sob demanda (com cache em `arquivos` + Storage) e faz download (F4-T05) |
 
-## Fase 5
+## Fase 5 (implementadas)
 
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/modelos/{id}/regerar` | regerar com as máscaras corrigidas pelo pincel (`{mascaras_corrigidas}`; F5-T05) |
-| GET | `/publico/{id}` | dados para o visualizador incorporável (sem login) |
+| POST | `/modelos/{id}/regerar` | `{mascaras: {vista: "data:image/png;base64,..."}}` → debita 1 crédito e dispara novo job pulando a segmentação automática nas vistas corrigidas pelo pincel (F5-T05) |
 
 ## Desenvolvimento (já existe)
 

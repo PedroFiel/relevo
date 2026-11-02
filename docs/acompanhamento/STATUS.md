@@ -2,9 +2,9 @@
 
 > Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
 
-**Fase atual:** 3 — Integração (MVP). Das Fases 0–2 ficaram pendências que não travam a 3 (ver as tabelas).
-**Próxima tarefa:** MVP na `main` (PR #10) + Raio-X pronto (F5-T01) → **grupo:** F0-T10 (foto própria + fita métrica), slides e ensaio a partir de `docs/apresentacao/roteiro.md`, vídeo da demo; tag `v0.1.0-mvp` (ver [Plano de finalização](#plano-de-finalização))
-**Data de entrega:** _a definir_ · **Última atualização:** 28/10/2026
+**Fase atual:** 4/5 — Produto completo no código (Fases 0–3 concluídas + F1-T02/T04/T07 + F4-T02/T03/T04/T05 + F5-T01/T05).
+**Próxima tarefa:** Testes práticos do grupo com tênis real + fita métrica (F0-T10) e gravação da apresentação (F5-T07).
+**Data de entrega:** _a definir_ · **Última atualização:** 02/11/2026
 
 Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
 
@@ -85,13 +85,13 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
 | F1-T01 | Configuração e presets | — | **cancelada** (28/10, ADR 0009: configuração única) |
-| F1-T02 | Suavização de Taubin | | a fazer |
+| F1-T02 | Suavização de Taubin | Pedro + Claude | feito (02/11: `malha.suavizar` + `malha-suave.glb` no Raio-X) |
 | F1-T03 | Decimação por erro quádrico | Pedro + Claude | feito (28/10: 20 mil faces, *fallback* se abrir a malha) |
-| F1-T04 | Transformação inversa 3D → pixel | | a fazer |
+| F1-T04 | Transformação inversa 3D → pixel | Pedro + Claude | feito (02/11: `matriz_grade_para_foto` 3×3 + `projetar_vertices`) |
 | F1-T05 | Cor por vértice | Pedro + Claude | feito |
 | F1-T06 | Segmentação robusta | Pedro + Claude | feito |
-| F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | em andamento |
-| F1-T08 | Intermediários + progresso | Pedro + Claude | feito (28/10: callback + máscaras, voxels de superfície e malha bruta; a "suave" vem com a F1-T02) |
+| F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | feito (02/11: IoU em voxels + `iou_malha_<vista>` na resolução da foto) |
+| F1-T08 | Intermediários + progresso | Pedro + Claude | feito (02/11: callback + máscaras, voxels, malha bruta e malha suave) |
 | F1-T09 | Desempenho | | a fazer |
 | F1-T10 | Notebook didático | | a fazer |
 | F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | feito |
@@ -141,10 +141,10 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
 | F4-T01 | Autenticação | | a fazer |
-| F4-T02 | Créditos | | a fazer |
-| F4-T03 | Editor de transformações | | a fazer |
-| F4-T04 | Versões no back | | a fazer |
-| F4-T05 | Outros formatos no download | | a fazer (só se pedirem; ADR 0009) |
+| F4-T02 | Créditos | Pedro + Claude | feito (02/11: `movimentos_credito`, débito/estorno transacional, `/me`, `/conta`) |
+| F4-T03 | Editor de transformações | Pedro + Claude | feito (02/11: matriz 4×4 ao vivo + salvar como nova versão) |
+| F4-T04 | Versões no back | Pedro + Claude | feito (02/11: `POST /modelos/{id}/versoes` e `/restaurar` + seletor no front) |
+| F4-T05 | Outros formatos no download | Pedro + Claude | feito (02/11: `.glb`, `.obj` e `.stl` via `GET /versoes/{id}/exportar`) |
 | F4-T06 | Mapeamento UV e textura | | a fazer |
 | F4-T07 | Modo UV no visualizador | | a fazer |
 | F4-T08 | Storage S3 (MinIO) | | a fazer |
@@ -153,11 +153,11 @@ modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F5-T01 | Raio-X do pipeline | Pedro + Claude | feito (28/10: aba na página do modelo, 6 etapas, apresentação automática) |
+| F5-T01 | Raio-X do pipeline | Pedro + Claude | feito (02/11: 7 etapas incluindo Suavizada Taubin, apresentação automática) |
 | F5-T02 | LOD | | a fazer |
 | F5-T03 | Régua 3D | | a fazer |
 | F5-T04 | Presets na interface | — | **cancelada** (28/10, ADR 0009) |
-| F5-T05 | Pincel de correção | | a fazer |
+| F5-T05 | Pincel de correção | Pedro + Claude | feito (02/11: `EditorMascara` com pincel/borracha + `POST /modelos/{id}/regerar`) |
 | F5-T06 | Visualizador incorporável | | a fazer |
 | F5-T07 | Apresentação | todos | em andamento (28/10: roteiro, imagens e perguntas da banca; faltam slides, ensaio e vídeo) |
 

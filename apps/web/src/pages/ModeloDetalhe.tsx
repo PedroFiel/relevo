@@ -4,8 +4,16 @@ import EtapasJob from '../components/EtapasJob'
 import FotosDoModelo from '../components/FotosDoModelo'
 import RaioX from '../components/RaioX'
 import { Botao, Etiqueta, GrupoBotoes, Painel } from '../components/ui'
-import { urlApi, type ModeloDetalhe as Detalhe } from '../lib/api'
-import { jobAberto, useApagarModelo, useJob, useModelo } from '../lib/consultas'
+import { urlApi, urlExportarVersao, type ModeloDetalhe as Detalhe } from '../lib/api'
+import {
+  jobAberto,
+  useApagarModelo,
+  useCriarVersao,
+  useJob,
+  useModelo,
+  useRegerarModelo,
+  useRestaurarVersao,
+} from '../lib/consultas'
 import { STATUS } from '../lib/upload'
 import Visualizador from './Visualizador'
 
@@ -13,8 +21,8 @@ const tamanho = (bytes: number) =>
   bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB` : `${Math.round(bytes / 1024)} KB`
 
 /**
- * Página do modelo: andamento (F3-T09), modelo 3D com as ferramentas de CG (F3-T10), fotos com contorno (F3-T14)
- * e o Raio-X do pipeline (F5-T01).
+ * Página do modelo: andamento (F3-T09), modelo 3D com as ferramentas de CG (F3-T10), fotos com contorno e pincel (F3-T14, F5-T05),
+ * versões transformadas (F4-T03, F4-T04), exportação multi-formato .glb/.obj/.stl (F4-T05) e o Raio-X do pipeline (F5-T01).
  */
 export default function ModeloDetalhe() {
   const { id = '' } = useParams()
@@ -47,13 +55,18 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
   const [aba, setAba] = useState<'modelo' | 'fotos' | 'raio-x'>('modelo')
   const navegar = useNavigate()
   const apagar = useApagarModelo()
+  const criarVersao = useCriarVersao(dados.id)
+  const restaurarVersao = useRestaurarVersao(dados.id)
+  const regerar = useRegerarModelo(dados.id)
   const [confirmando, setConfirmando] = useState(false)
   const job = jobAoVivo ?? dados.job
   const processando = jobAberto(job)
   const status = processando ? 'processando' : dados.status
-  const glb = dados.versao?.arquivos.find((a) => a.tipo === 'glb')
-  const m = dados.versao?.metricas
+  const versao = dados.versao
+  const glb = versao?.arquivos.find((a) => a.tipo === 'glb')
+  const m = versao?.metricas
   const tempo = m?.tempos_s ? Object.values(m.tempos_s).reduce((a, b) => a + b, 0) : null
+  const versoes = dados.versoes ?? []
 
   return (
     <main className="container largo detalhe">
@@ -64,11 +77,45 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
           <div className="selos">
             <Etiqueta tom={STATUS[status].tom}>{STATUS[status].rotulo}</Etiqueta>
             <Etiqueta>{dados.comprimento_cm.toLocaleString('pt-BR')} cm</Etiqueta>
-            {dados.versao && <Etiqueta>versão {dados.versao.numero}</Etiqueta>}
+            {versao && <Etiqueta>versão {versao.numero}</Etiqueta>}
           </div>
+          {versoes.length > 1 && versao && (
+            <div className="versoes-barra" role="group" aria-label="Histórico de versões">
+              <span className="conceito">Versões:</span>
+              {versoes.map((v) => {
+                const ativa = v.numero === versao.numero
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    className="versao-pilula"
+                    aria-pressed={ativa}
+                    disabled={ativa || restaurarVersao.isPending}
+                    onClick={() => restaurarVersao.mutate(v.numero)}
+                  >
+                    v{v.numero}
+                    {v.transformacao && ' · 4×4'}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
         <div className="acoes">
-          {glb && (
+          {glb && versao && versao.id && (
+            <>
+              <a className="botao botao-primario" href={urlApi(glb.url)} download={`${dados.nome}.glb`}>
+                Baixar .glb ({tamanho(glb.tamanho_bytes)})
+              </a>
+              <a className="botao" href={urlExportarVersao(versao.id, 'obj')} download={`${dados.nome}.obj`}>
+                Baixar .obj
+              </a>
+              <a className="botao" href={urlExportarVersao(versao.id, 'stl')} download={`${dados.nome}.stl`}>
+                Baixar .stl
+              </a>
+            </>
+          )}
+          {glb && (!versao || !versao.id) && (
             <a className="botao botao-primario" href={urlApi(glb.url)} download={`${dados.nome}.glb`}>
               Baixar .glb ({tamanho(glb.tamanho_bytes)})
             </a>
@@ -89,6 +136,7 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
         </div>
       </div>
       {apagar.isError && <p role="alert" className="erro-envio">{apagar.error.message}</p>}
+      {restaurarVersao.isError && <p role="alert" className="erro-envio">{restaurarVersao.error.message}</p>}
       {confirmando && !apagar.isError && (
         <p className="conceito">Apagar remove o modelo, as fotos e os arquivos para sempre.</p>
       )}
@@ -131,9 +179,27 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
             ]}
           />
           <div className="aba-conteudo">
-            {aba === 'modelo' && <Visualizador key={glb.id} urlFixa={urlApi(glb.url)} />}
-            {aba === 'fotos' && <FotosDoModelo imagens={dados.imagens} metricas={m ?? null} />}
-            {aba === 'raio-x' && dados.versao && <RaioX imagens={dados.imagens} versao={dados.versao} />}
+            {aba === 'modelo' && (
+              <Visualizador
+                key={glb.id}
+                urlFixa={urlApi(glb.url)}
+                aoSalvarVersao={(matriz) => criarVersao.mutate(matriz)}
+                salvandoVersao={criarVersao.isPending}
+                erroVersao={criarVersao.isError ? criarVersao.error.message : undefined}
+              />
+            )}
+            {aba === 'fotos' && (
+              <FotosDoModelo
+                imagens={dados.imagens}
+                metricas={m ?? null}
+                regerando={regerar.isPending}
+                erroRegerar={regerar.isError ? regerar.error.message : undefined}
+                aoRegerarMascara={(vista, png) =>
+                  regerar.mutate({ [vista]: png }, { onSuccess: () => setAba('modelo') })
+                }
+              />
+            )}
+            {aba === 'raio-x' && versao && <RaioX imagens={dados.imagens} versao={versao} />}
           </div>
         </>
       )}

@@ -9,7 +9,14 @@ from sqlalchemy.orm import Session
 
 from relevo_api.db import get_db, get_fabrica_sessao
 from relevo_api.models import USUARIO_DEMO_ID
-from relevo_api.schemas import ModeloCriadoOut, ModeloDetalheOut, ModeloResumoOut
+from relevo_api.schemas import (
+    ModeloCriadoOut,
+    ModeloDetalheOut,
+    ModeloResumoOut,
+    NovaVersaoIn,
+    RegerarModeloIn,
+    VersaoOut,
+)
 from relevo_api.servicos import modelos as servico
 from relevo_api.servicos.processamento import executar_job
 from relevo_api.storage import Storage, get_storage
@@ -80,3 +87,40 @@ def detalhar(modelo_id: uuid.UUID, db: Db, usuario_id: Usuario) -> ModeloDetalhe
 def apagar(modelo_id: uuid.UUID, db: Db, storage: Arquivos, usuario_id: Usuario) -> Response:
     servico.apagar_modelo(db, storage, servico.buscar_modelo(db, usuario_id, modelo_id))
     return Response(status_code=204)
+
+
+@router.post("/{modelo_id}/versoes", status_code=201)
+def criar_versao(
+    modelo_id: uuid.UUID,
+    corpo: NovaVersaoIn,
+    db: Db,
+    storage: Arquivos,
+    usuario_id: Usuario,
+) -> VersaoOut:
+    return servico.criar_versao_transformada(
+        db, storage, usuario_id, modelo_id, corpo.transformacao
+    )
+
+
+@router.post("/{modelo_id}/versoes/{numero}/restaurar")
+def restaurar_versao(
+    modelo_id: uuid.UUID, numero: int, db: Db, usuario_id: Usuario
+) -> ModeloDetalheOut:
+    return servico.restaurar_versao(db, usuario_id, modelo_id, numero)
+
+
+@router.post("/{modelo_id}/regerar", status_code=202)
+def regerar(
+    modelo_id: uuid.UUID,
+    corpo: RegerarModeloIn,
+    db: Db,
+    storage: Arquivos,
+    usuario_id: Usuario,
+    tarefas: BackgroundTasks,
+    fabrica: Annotated[Callable[[], Session], Depends(get_fabrica_sessao)],
+) -> ModeloCriadoOut:
+    job = servico.regerar_com_mascaras(
+        db, storage, usuario_id, modelo_id, corpo.mascaras, corpo.resolucao
+    )
+    tarefas.add_task(executar_job, job.id, fabrica, storage)
+    return ModeloCriadoOut(modelo_id=modelo_id, job_id=job.id)

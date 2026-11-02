@@ -27,6 +27,7 @@ const PRONTO = modelo({
   status: 'pronto',
   job: job({ status: 'concluido', etapa_atual: 'exportacao', progresso: 100 }),
   versao: {
+    id: 'v1',
     numero: 1,
     criado_em: '2026-10-28T20:00:05Z',
     arquivos: [{ id: 'a1', tipo: 'glb', nome: 'modelo.glb', tamanho_bytes: 521188, url: '/arquivos/a1/download' }],
@@ -36,6 +37,10 @@ const PRONTO = modelo({
       tempos_s: { segmentacao: 0.5, cor: 0.7 },
     },
   },
+  versoes: [
+    { id: 'v1', numero: 1, transformacao: null, criado_em: '2026-10-28T20:00:05Z' },
+    { id: 'v2', numero: 2, transformacao: [1, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], criado_em: '2026-10-28T20:05:00Z' },
+  ],
 })
 
 function abrir() {
@@ -66,17 +71,33 @@ describe('página do modelo (F3-T09, F3-T10, F3-T14)', () => {
     expect(screen.queryByText(/Baixar .glb/)).toBeNull()
   })
 
-  it('pronto: baixar .glb, estúdio 3D com a URL da API e aba de fotos com avisos', async () => {
-    fetchFalso({ 'GET /api/modelos/m1': { corpo: PRONTO } })
+  it('pronto: baixar .glb/.obj/.stl, estúdio 3D com a URL da API e aba de fotos com avisos e pincel', async () => {
+    const f = fetchFalso({
+      'GET /api/modelos/m1': { corpo: PRONTO },
+      'POST /api/modelos/m1/versoes/2/restaurar': { corpo: { ...PRONTO, versao: { ...PRONTO.versao!, numero: 2 } } },
+      'POST /api/modelos/m1/regerar': { status: 202, corpo: { modelo_id: 'm1', job_id: 'j2' } },
+    })
     abrir()
     const baixar = await screen.findByRole('link', { name: /Baixar .glb \(509 KB\)/ })
     expect(baixar).toHaveAttribute('href', '/api/arquivos/a1/download')
+    expect(screen.getByRole('link', { name: 'Baixar .obj' })).toHaveAttribute('href', '/api/versoes/v1/exportar?formato=obj')
+    expect(screen.getByRole('link', { name: 'Baixar .stl' })).toHaveAttribute('href', '/api/versoes/v1/exportar?formato=stl')
     expect(screen.getByTestId('estudio')).toHaveTextContent('/api/arquivos/a1/download')
     expect(screen.getByText('20.000 faces')).toBeInTheDocument()
     expect(screen.getByText('malha fechada')).toBeInTheDocument()
+
+    // Alternar versão pelo histórico (F4-T04)
+    fireEvent.click(screen.getByRole('button', { name: /v2/ }))
+    await waitFor(() => expect(f.mock.calls.some((c) => String(c[0]).includes('/versoes/2/restaurar'))).toBe(true))
+
+    // Aba de fotos + corrigir máscara com pincel (F5-T05)
     fireEvent.click(screen.getByRole('button', { name: /Fotos e contornos/ }))
     expect(screen.getByText('Giramos a foto de topo em 90°.')).toBeInTheDocument()
     expect(screen.getByText(/contorno com 3 vértices/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Corrigir com pincel/ }))
+    expect(screen.getByRole('heading', { name: /Corrigir silhueta/ })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Regerar modelo com esta máscara/ }))
+    await waitFor(() => expect(f.mock.calls.some((c) => String(c[0]).includes('/regerar'))).toBe(true))
   })
 
   it('erro: mostra a mensagem do back e o caminho para tentar de novo', async () => {

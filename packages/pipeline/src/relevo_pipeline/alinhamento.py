@@ -44,6 +44,9 @@ class VistasAlinhadas:
     caixas: dict[str, tuple[int, int, int, int]] = field(default_factory=dict)
     # Espelhamentos foto -> quadro efetivamente usados: (colunas, linhas)
     espelhos: dict[str, tuple[bool, bool]] = field(default_factory=dict)
+    # Matriz afim 3×3 por vista (F1-T04): leva (coluna, linha, 1) da grade alinhada para
+    # (u, v, 1) em pixels da foto orientada/ajustada
+    matrizes: dict[str, np.ndarray] = field(default_factory=dict)
     # Vistas extras cujo espelhamento foi trocado pelo registro (foto do outro pé, por exemplo)
     registradas: list[str] = field(default_factory=list)
 
@@ -185,4 +188,48 @@ def alinhar_vistas(
         v.campos[nome] = _espelhar(campo, *esp)
         v.caixas[nome] = caixa_objeto(m)
         v.espelhos[nome] = (esp[0], esp[1])
+        v.matrizes[nome] = matriz_grade_para_foto(v.caixas[nome], linhas, colunas, esp[0], esp[1])
     return v
+
+
+def matriz_grade_para_foto(
+    caixa: tuple[int, int, int, int],
+    linhas_grade: int,
+    colunas_grade: int,
+    espelhar_colunas: bool = False,
+    espelhar_linhas: bool = False,
+) -> np.ndarray:
+    """Matriz afim 3×3 (coordenadas homogêneas, F1-T04) que leva (coluna, linha, 1) da grade
+    alinhada para (u, v, 1) em pixels da foto."""
+    y0, y1, x0, x1 = caixa
+    largura, altura = float(x1 - x0), float(y1 - y0)
+    sx = -largura / colunas_grade if espelhar_colunas else largura / colunas_grade
+    tx = (x1 - 0.5) if espelhar_colunas else (x0 - 0.5)
+    sy = -altura / linhas_grade if espelhar_linhas else altura / linhas_grade
+    ty = (y1 - 0.5) if espelhar_linhas else (y0 - 0.5)
+    return np.array([[sx, 0.0, tx], [0.0, sy, ty], [0.0, 0.0, 1.0]], dtype=np.float64)
+
+
+def projetar_vertices(
+    pontos_cm: np.ndarray,
+    tamanho_voxel: float,
+    deslocamento: list[float] | np.ndarray,
+    vistas: VistasAlinhadas,
+    vista: str,
+    pad: int = 2,
+) -> np.ndarray:
+    """Projeta pontos 3D (em cm, ref. da malha) nos pixels (u, v) da foto `vista` (F1-T04)."""
+    desl = np.asarray(deslocamento, dtype=np.float64)
+    idx = (np.asarray(pontos_cm, dtype=np.float64) - desl) / float(tamanho_voxel) - pad + 0.5
+    ix, iy, iz = idx[:, 0], idx[:, 1], idx[:, 2]
+    _, H, _ = vistas.dims
+    quadro = VISTAS[vista].quadro
+    if quadro == "lateral":
+        col_grade, lin_grade = ix, H - iy
+    elif quadro == "topo":
+        col_grade, lin_grade = ix, iz
+    else:
+        col_grade, lin_grade = iz, H - iy
+    homog = np.column_stack([col_grade, lin_grade, np.ones(len(idx), dtype=np.float64)])
+    uv = homog @ vistas.matrizes[vista].T
+    return uv[:, :2]

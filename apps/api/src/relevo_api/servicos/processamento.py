@@ -89,6 +89,11 @@ def _executar(db: Session, storage: Storage, job_id: uuid.UUID) -> None:
 
     fotos = {i.vista: _decodificar(storage.abrir(i.caminho)) for i in modelo.imagens}
     parametros = job.parametros
+    caminhos_mascaras: dict[str, str] = parametros.get("mascaras_corrigidas") or {}
+    mascaras_prontas = {
+        vista: _decodificar_mascara(storage.abrir(caminho))
+        for vista, caminho in caminhos_mascaras.items()
+    }
     resultado = processar(
         fotos.pop("lateral"),
         fotos.pop("topo"),
@@ -97,6 +102,7 @@ def _executar(db: Session, storage: Storage, job_id: uuid.UUID) -> None:
         resolucao=int(parametros.get("resolucao", 128)),
         extras=fotos,
         ajustes=ler_ajustes(parametros.get("ajustes", {})),
+        mascaras_prontas=mascaras_prontas or None,
         faces_alvo=parametros.get("faces_alvo"),
         ao_progredir=ao_progredir,
     )
@@ -141,16 +147,31 @@ def _decodificar(dados: bytes) -> np.ndarray:
     return imagem
 
 
+def _decodificar_mascara(dados: bytes) -> np.ndarray:
+    mascara = cv2.imdecode(np.frombuffer(dados, np.uint8), cv2.IMREAD_GRAYSCALE)
+    if mascara is None:
+        raise ValueError("Uma das máscaras corrigidas não abriu mais. Tente regerar de novo.")
+    return mascara > 127
+
+
 def _marcar_erro(db: Session, job: Job, mensagem: str) -> None:
+    from relevo_api.servicos.creditos import estornar_credito_se_debitado
+
     job.status, job.erro, job.finalizado_em = "erro", mensagem, datetime.now(UTC)
     job.modelo.status = "erro"
+    estornar_credito_se_debitado(db, job)
     db.commit()
 
 
 def marcar_interrompidos(db: Session) -> int:
     """No *startup*: job pendente ou rodando quando a API caiu nunca vai terminar -> erro
     (as BackgroundTasks vivem só na memória do processo)."""
+    from relevo_api.servicos.creditos import estornar_credito_se_debitado
+
     abertos = Job.status.in_(("pendente", "processando"))
+    jobs_presos = list(db.scalars(select(Job).where(abertos)))
+    for job in jobs_presos:
+        estornar_credito_se_debitado(db, job)
     presos = select(Job.modelo_id).where(abertos)
     db.execute(
         update(Modelo).where(Modelo.id.in_(presos)).values(status="erro"),

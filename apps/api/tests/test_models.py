@@ -13,6 +13,7 @@ from relevo_api.models import (
     Imagem,
     Job,
     Modelo,
+    MovimentoCredito,
     Usuario,
     Versao,
 )
@@ -47,7 +48,31 @@ def test_usuario_demo_vem_da_migracao(db):
     demo = db.get(Usuario, USUARIO_DEMO_ID)
     assert demo is not None
     assert demo.email == "demo@relevo.local"
-    assert demo.creditos == 0
+    assert demo.creditos == 10
+    assert len(demo.movimentos) == 1
+    assert demo.movimentos[0].motivo == "boas-vindas" and demo.movimentos[0].quantidade == 10
+
+
+def test_creditos_negativos_sao_recusados(db):
+    demo = db.get(Usuario, USUARIO_DEMO_ID)
+    demo.creditos = -1
+    with pytest.raises(IntegrityError, match="ck_usuarios_creditos"):
+        db.flush()
+
+
+def test_movimento_credito_cascata_ao_apagar_usuario(db):
+    u = Usuario(nome="Teste", email="teste@relevo.local", creditos=5)
+    db.add(u)
+    db.flush()
+    db.add(MovimentoCredito(usuario_id=u.id, quantidade=5, motivo="boas-vindas"))
+    db.flush()
+    db.execute(text("DELETE FROM usuarios WHERE id = :id"), {"id": u.id})
+    q = (
+        select(func.count())
+        .select_from(MovimentoCredito)
+        .where(MovimentoCredito.usuario_id == u.id)
+    )
+    assert db.scalar(q) == 0
 
 
 def test_modelo_aceita_as_6_vistas_do_pipeline(db):

@@ -41,6 +41,9 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 - **Nota (01/10):** os degraus já foram resolvidos na origem pelo campo de distância assinada (ADR 0005). Taubin
   medido depois disso no tenis-02: desvio do ângulo entre faces 4,5° → 3,5°. Fica como refinamento, sempre ligado
   (sem virar opção — ADR 0009).
+- **Feito (02/11):** `malha.suavizar(malha, iteracoes=10)` integrado logo após o Marching Cubes (`ETAPAS` ganha
+  `suavizacao`), preservando o comprimento exato em cm, exportando `malha-suave.glb` nos intermediários do Raio-X e
+  registrando `variacao_volume_pct` e `rugosidade_antes_graus`/`rugosidade_depois_graus` nas métricas.
 - **Conceito de CG:** filtragem de malhas, operador Laplaciano discreto, encolhimento × filtro λ|μ.
 
 ### F1-T03 — Decimação por erro quádrico
@@ -73,6 +76,8 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 - **Testes:** projetar os vértices da malha sintética na lateral: **> 98 %** caem dentro da máscara original;
   ida-e-volta (grade → foto → grade) com erro < 1 pixel.
 - **Aceite:** função usada pela T05 e T07.
+- **Feito (02/11):** `VistasAlinhadas.matrizes` (matriz afim 3×3 `matriz_grade_para_foto`) e `projetar_vertices` em
+  `alinhamento.py`, com teste de ida e volta (< 1e-6 px) e > 98 % dos vértices dentro da máscara original.
 - **Conceito de CG:** transformações 2D em coordenadas homogêneas, composição de matrizes, projeção ortográfica.
 
 ### F1-T05 — Cor por vértice (projeção das fotos)
@@ -117,6 +122,8 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 - **Parcial (01/10):** `metricas.py` já calcula o IoU **em voxels** (grade alinhada) e a razão de proporção da frente,
   com avisos; o teste da frente esticada 30 % existe. Falta o IoU rasterizando a malha na resolução da foto (depende
   da T04) — o IoU em voxels deu 1,00 nos 3 tênis, pouco sensível.
+- **Feito (02/11):** `iou_reprojecao_malha` rasteriza os triângulos voltados para a câmera na resolução original de cada
+  foto (`iou_malha_<vista>` em `metricas["consistencia"]`).
 
 ### F1-T08 — Intermediários para o Raio-X e progresso
 - **No MVP (27/10):** só o item 1 (callback de progresso), que a F3-T05 usa. O item 2 (intermediários) fica para quando

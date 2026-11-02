@@ -11,6 +11,7 @@ const NOME = `E2E tenis-01 ${Date.now()}`
 
 // Sobras de uma execução interrompida (o banco de teste é real, não é desfeito como no pytest)
 test.beforeAll(async ({ request }) => {
+  await request.post('/api/creditos/recarregar?quantidade=10')
   const modelos: { id: string; nome: string }[] = await (await request.get('/api/modelos')).json()
   for (const m of modelos.filter((m) => m.nome.startsWith('E2E '))) await request.delete(`/api/modelos/${m.id}`)
 })
@@ -70,12 +71,35 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
   await expect(page.getByRole('heading', { level: 3, name: /3\. Voxels/ })).toBeVisible()
   await expect(page.locator('.raio-x-palco canvas')).toBeVisible()
 
-  // Download
+  // Download (.glb, .obj e .stl — F4-T05)
   const href = (await baixar.getAttribute('href'))!
   const glb = await request.get(href)
   expect(glb.status()).toBe(200)
   expect(glb.headers()['content-type']).toBe('model/gltf-binary')
   expect((await glb.body()).subarray(0, 4).toString()).toBe('glTF')
+
+  const hrefObj = (await page.getByRole('link', { name: 'Baixar .obj' }).getAttribute('href'))!
+  const obj = await request.get(hrefObj)
+  expect(obj.status()).toBe(200)
+  expect(obj.headers()['content-type']).toContain('model/obj')
+
+  const hrefStl = (await page.getByRole('link', { name: 'Baixar .stl' }).getAttribute('href'))!
+  const stl = await request.get(hrefStl)
+  expect(stl.status()).toBe(200)
+  expect(stl.headers()['content-type']).toContain('model/stl')
+
+  // Salvar transformação 4×4 como nova versão e restaurar v1 (F4-T03, F4-T04)
+  await page.getByRole('button', { name: 'Modelo 3D' }).click()
+  await page.getByRole('tab', { name: 'Transformar' }).click()
+  await page.getByRole('button', { name: 'Salvar como nova versão' }).click()
+  await expect(page.getByText('versão 2')).toBeVisible()
+  await page.getByRole('button', { name: 'v1' }).click()
+  await expect(page.getByText('versão 1')).toBeVisible()
+
+  // Conta e créditos (F4-T02): saldo e histórico visíveis em /conta
+  await page.getByRole('link', { name: 'Conta e créditos' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Conta e créditos' })).toBeVisible()
+  await expect(page.getByText('Geração de modelo 3D').first()).toBeVisible()
 
   // Meus modelos mostra o cartão; apagar pede confirmação e some da lista (F3-T11)
   await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Meus modelos' }).click()

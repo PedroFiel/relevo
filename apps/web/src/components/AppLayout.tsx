@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useConta } from '../lib/consultas'
 import Logo from './Logo'
 
 const LINKS_PRINCIPAIS = [
@@ -7,8 +8,11 @@ const LINKS_PRINCIPAIS = [
   { para: '/modelos', rotulo: 'Meus modelos' },
 ] as const
 
-/** Moldura de todas as páginas: cabeçalho com a navegação principal, conteúdo e rodapé. */
+/** Moldura de todas as páginas: cabeçalho com a navegação principal, saldo de créditos, conteúdo e rodapé. */
 export default function AppLayout() {
+  const conta = useConta()
+  const creditos = conta.data?.creditos
+
   return (
     <div className="app">
       <header className="cabecalho">
@@ -17,13 +21,25 @@ export default function AppLayout() {
             <Logo />
             RELEVO
           </Link>
-          <nav className="nav-principal" aria-label="Principal">
-            {LINKS_PRINCIPAIS.map((l) => (
-              <NavLink key={l.para} to={l.para} end={l.para === '/'}>
-                {l.rotulo}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="cabecalho-direita">
+            <nav className="nav-principal" aria-label="Principal">
+              {LINKS_PRINCIPAIS.map((l) => (
+                <NavLink key={l.para} to={l.para} end={l.para === '/'}>
+                  {l.rotulo}
+                </NavLink>
+              ))}
+            </nav>
+            <NavLink
+              to="/conta"
+              className={`selo-creditos${creditos === 0 ? ' sem-creditos' : ''}`}
+              aria-label="Conta e créditos"
+            >
+              <span className="selo-creditos-ponto" aria-hidden="true" />
+              {typeof creditos === 'number'
+                ? `${creditos} ${creditos === 1 ? 'crédito' : 'créditos'}`
+                : 'Créditos'}
+            </NavLink>
+          </div>
         </div>
       </header>
       <div className="app-conteudo">
@@ -33,7 +49,8 @@ export default function AppLayout() {
         <div className="container">
           <span>RELEVO — fotos viram modelos 3D, sem IA.</span>
           <span>
-            <Link to="/guia">Guia de fotos</Link> · <Link to="/visualizador">Estúdio de CG</Link>
+            <Link to="/guia">Guia de fotos</Link> · <Link to="/visualizador">Estúdio de CG</Link> ·{' '}
+            <Link to="/conta">Créditos</Link>
           </span>
         </div>
       </footer>
