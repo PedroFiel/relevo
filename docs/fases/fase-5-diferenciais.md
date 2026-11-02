@@ -7,7 +7,7 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
 
 ---
 
-### F5-T01 — Raio-X do pipeline (prioridade máxima)
+### F5-T01 — Raio-X do pipeline (prioridade máxima) — **FEITO (28/10 + 02/11 com 7 etapas)**
 - **Frente:** front, back
 - **Como fazer:**
   1. Back: `GET /versoes/{id}/etapas` devolve as URLs dos intermediários salvos pela F1-T08 (fotos, máscaras, voxels,
@@ -28,13 +28,13 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
   `docs/09-funcionalidades-cg.md` (§9).
 - **Conceito de CG:** todos; destaque para *instancing*.
 
-### F5-T02 — LOD (níveis de detalhe)
+### F5-T02 — LOD (níveis de detalhe) — **A FAZER**
 - **Frente:** pipeline, front
 - **Como fazer:** pipeline gera 3 níveis (100 %, 25 %, 5 % das faces) salvos como arquivos com `nivel_lod`; front usa
   `<Detailed distances={[0, 40, 90]}>` da drei; indicador na tela de qual nível está ativo (cor diferente opcional).
 - **Conceito de CG:** LOD por distância à câmera, compromisso desempenho × qualidade.
 
-### F5-T03 — Régua 3D
+### F5-T03 — Régua 3D — **A FAZER**
 - **Frente:** front
 - **Depende de:** F2-T12 (raycasting do cursor já existe)
 - **Como fazer:** modo "Medir": clique 1 e clique 2 na superfície (evento `onPointerDown` do r3f traz o `point` do
@@ -57,7 +57,7 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
   `mascaras_prontas` e substitui a segmentação automática nas vistas corrigidas.
 - **Conceito de CG:** rasterização de pinceladas, composição alfa.
 
-### F5-T06 — Visualizador incorporável
+### F5-T06 — Visualizador incorporável — **A FAZER**
 - **Frente:** front, back
 - **Como fazer:** toggle "Público" no modelo; rota `/embed/:id` só com o canvas (sem cabeçalho); botão "Copiar código"
   gera `<iframe src=".../embed/<id>" width="600" height="400">`. Útil para colar na página de produto de uma loja.

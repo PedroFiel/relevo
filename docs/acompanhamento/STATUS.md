@@ -1,173 +1,173 @@
 # STATUS — Painel do projeto
 
-> Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o Claude lê.
+> Atualize este arquivo **no fim de toda sessão de trabalho**. É a primeira coisa que o agente lê.
 
-**Fase atual:** 4/5 — Produto completo no código (Fases 0–3 concluídas + F1-T02/T04/T07 + F4-T02/T03/T04/T05 + F5-T01/T05).
-**Próxima tarefa:** Testes práticos do grupo com tênis real + fita métrica (F0-T10) e gravação da apresentação (F5-T07).
+**Fase atual:** **Fase 4 (Produto) e Fase 5 (Diferenciais)** em andamento — Fases 0 a 3 (MVP) 100 % concluídas no código, além de F1-T02/T04/T07/T08, F4-T02/T03/T04/T05 e F5-T01/T05 já prontas na branch `fase-4/produto-completo`.
+**Branch única ativa:** `fase-4/produto-completo` (criada a partir da `main` pós-PR #11).
+**Próxima etapa de código sugerida:** concluir o restante da **Fase 4** (`F4-T01` Autenticação real com login/cadastro, `F4-T06`/`T07` Mapeamento UV e textura, `F4-T08` Storage S3/MinIO) e da **Fase 5** (`F5-T02` LOD, `F5-T03` Régua 3D, `F5-T06` Visualizador incorporável).
 **Data de entrega:** _a definir_ · **Última atualização:** 02/11/2026
 
-Legenda: `a fazer` · `em andamento` · `feito` · `bloqueado`
+Legenda: `a fazer` · `em andamento` · `feito` · `cancelada`
 
-## Equipe
+---
 
-| Pessoa | Frente principal | Contato |
-|---|---|---|
-| Pedro | _a definir_ | |
-| _integrante 2_ | | |
-| _integrante 3_ | | |
+## Onde estamos e o que falta desenvolver (Visão Geral)
 
-Divisão sugerida: 1 pessoa na **trilha A** (back + banco + pipeline), 1–2 na **trilha B** (front); no fechamento todos
-convergem.
+### 1. O que JÁ ESTÁ PRONTO e funcionando de ponta a ponta
+- **Fase 0 e Fase 3 (MVP completo):** upload guiado (`/novo`) com editor de foto (recorte, rotação 90°, zoom/pan), execução do job em segundo plano com progresso por etapa, página do modelo (`/modelos/:id`) com estúdio 3D embutido, aba "Fotos e contornos" e biblioteca "Meus modelos" (`/modelos`).
+- **Fase 1 (Pipeline completo):** segmentação por cor de fundo + morfologia (`F1-T06`), orientação automática (`orientacao.py`), ajuste de recorte/rotação com matriz 3×3 (`F1-T11`), rastreamento de contorno Suzuki–Abe / Moore + Douglas–Peucker (`F1-T12`), Visual Hull + seção transversal + campo assinado, **suavização de Taubin (`F1-T02`)**, decimação quádrica Garland–Heckbert para ~20 mil faces (`F1-T03`), **projeção inversa 3D → pixel (`F1-T04`)**, cor por vértice (`F1-T05`), **IoU de reprojeção da malha na resolução da foto (`F1-T07`)** e exportação de todos os intermediários (`F1-T08`).
+- **Fase 2 (Conceitos de CG no Visualizador):** base visual e layout responsivo 375 px (`F2-T01`), abrir `.glb` local (`F2-T08`), testes visuais Playwright (`F2-T09`), pipeline 2D janela→viewport com Cohen–Sutherland e Sutherland–Hodgman (`F2-T10`), plano de corte 3D + tampa por *stencil buffer* + recorte pelo plano *near* (`F2-T11`), zoom *dolly* no ponto via *raycasting* (`F2-T12`), transformações 4×4 `T·R·S` vs `S·R·T` (`F2-T13`), seleção retangular 3D com separação de sub-malha (`F2-T14`) e *ray tracing* CPU com BVH + sombra vs rasterização GPU (`F2-T15`).
+- **Fase 4 (Fluxos já entregues):**
+  - **`F4-T02` — Créditos e banco:** tabela `movimentos_credito`, saldo inicial de 10 créditos (`boas-vindas`), débito de 1 crédito com `SELECT ... FOR UPDATE`, bloqueio `402` quando sem saldo, **estorno automático** quando um job falha, rota `GET /me`, recarga `POST /creditos/recarregar`, selo no cabeçalho e página `/conta` (hoje operando sobre o usuário demo fixo até a `F4-T01`).
+  - **`F4-T03` / `F4-T04` — Versões com matriz 4×4:** salvar transformação 4×4 como nova versão (`POST /modelos/{id}/versoes`) e alternar/restaurar versões (`POST /modelos/{id}/versoes/{numero}/restaurar`).
+  - **`F4-T05` — Exportação multi-formato:** download em `.glb`, `.obj` e `.stl` (`GET /versoes/{id}/exportar?formato=glb|obj|stl`).
+- **Fase 5 (Fluxos já entregues):**
+  - **`F5-T01` — Raio-X do pipeline:** 7 etapas interativas (Fotos → Silhuetas → Voxels → Malha bruta → Suavizada Taubin → Decimada → Final colorida) + modo apresentação automática.
+  - **`F5-T05` — Pincel de correção da máscara:** `EditorMascara` com pincel/borracha sobre a foto + `POST /modelos/{id}/regerar` pulando a segmentação automática nas vistas corrigidas.
 
-## Plano de finalização
+---
 
-Definido em 27/10/2026. Meta: o fluxo ideal de ponta a ponta — subir as fotos (ajustando recorte/rotação) →
-acompanhar as etapas → ver o tênis 3D com as ferramentas de CG → baixar → achar em "Meus modelos" —, com o front
-bonito e funcionando em 375 px. As duas trilhas andam **em paralelo** e se encontram no passo 4 da trilha B.
+### 2. O que FALTA desenvolver no código (Backlog por prioridade)
 
-**Trilha A — back, banco e pipeline**
+#### Bloco A — Fechar a Fase 4 (Produto SaaS)
+| ID | Tarefa | Frente | O que falta fazer |
+|---|---|---|---|
+| **F4-T01** | **Autenticação real (Contas de usuário)** | banco, back, front | Atualmente `/conta` e os modelos usam o usuário demo fixo (`demo@relevo.local`). Falta: rotas `POST /auth/registrar` e `POST /auth/login` (hash Argon2 + token JWT), páginas `/entrar` e `/cadastrar`, guardar token no navegador, botão de Sair em `/conta` e isolar modelos/créditos por usuário logado. |
+| **F4-T03b** | **Pivô por clique, atalhos G/R/S e Desfazer** | front | Salvar nova versão 4×4 já funciona. Falta o botão "Definir pivô" clicando num ponto 3D do modelo (`M = T(p)·R·S·T(−p)`), atalhos de teclado `G`/`R`/`S`/`Esc` e pilha de desfazer (`Ctrl+Z`). |
+| **F4-T06** | **Mapeamento UV e textura (`textura.py`)** | pipeline | Parametrização UV da malha, *baking* de textura PNG 1024×1024 a partir das fotos com coordenadas baricêntricas e dilatação de bordas de ilhas UV. |
+| **F4-T07** | **Modo UV no visualizador** | front | Modo de renderização "UV" com textura xadrez procedural (mostra distorção de parametrização) + visualização 2D do atlas UV no painel lateral. |
+| **F4-T08** | **Storage S3 (MinIO)** | back, infra | Serviço `minio` no `docker-compose.yml` + implementação `S3Storage` (`boto3`) selecionável via `STORAGE_TIPO=local\|s3`. |
 
-| # | Tarefa | Por quê / observação |
-|---|---|---|
-| 1 | F3-T01 — tabelas e migração | **feito** (PR #4) |
-| 2 | F3-T02 — Storage local | **feito** (28/10, PR #6) — onde ficam fotos e `.glb`; base do upload |
-| 3 | F3-T04 — terminar: `get_db` e Storage trocados nos testes de rota | **feito** (28/10, PR #7) — fixture `cliente` |
-| 4 | F1-T08 — **só o callback** `ao_progredir(etapa, %)` | **feito** (28/10, PR #7) — é o que a F3-T05 usa; os intermediários vieram depois, com a F5-T01 |
-| 5 | F3-T03 — `POST /modelos` (upload + `ajustes`) | **feito** (28/10) — valida pelos bytes; 202 com `modelo_id`/`job_id` |
-| 6 | F3-T05 — execução do job | **feito** (28/10) — etapa e progresso no banco; erro amigável |
-| 7 | F3-T06 — leitura, download e delete | **feito** (28/10) — a partir daqui o front sai do *mock* (testado contra o Neon) |
-| 8 | F1-T03 — decimação (~20 mil faces) | **feito** (28/10) — tenis-01: 6,6 MB → 0,52 MB, erro médio 0,07 mm; rode `make reais` para regerar os locais |
+#### Bloco B — Fechar a Fase 5 (Diferenciais de CG)
+| ID | Tarefa | Frente | O que falta fazer |
+|---|---|---|---|
+| **F5-T02** | **LOD (Níveis de Detalhe)** | pipeline, front | Gerar 3 níveis de malha (`100 %`, `25 %`, `5 %` das faces) e trocar automaticamente no visualizador conforme a distância da câmera (`<Detailed>`), mostrando na tela qual nível está ativo. |
+| **F5-T03** | **Régua 3D (Medição ponto a ponto)** | front | Ferramenta "Medir" no visualizador: clicar em 2 pontos na superfície do tênis (*raycasting*), desenhar o segmento 3D entre eles e exibir a distância real em `cm`. |
+| **F5-T06** | **Visualizador incorporável (`/embed/:id`)** | front, back | Rota pública `/embed/:id` apenas com o canvas 3D (sem cabeçalho/rodapé) + botão "Copiar código `<iframe>`" na página do modelo. |
 
-**Trilha B — front (bonito, responsivo e funcional)**
+#### Bloco C — Complementos didáticos das Fases 1 e 2
+| ID | Tarefa | Frente | O que falta fazer |
+|---|---|---|---|
+| **F2-T02** | **Vistas rápidas de câmera e projeção ortográfica** | front | Botões para animar a câmera para Lateral / Topo / Frente / Perspectiva e alternar câmera Perspectiva × Ortográfica. |
+| **F2-T03** | **Modos extras de renderização** | front | Adicionar modos "Sólido + arestas" (`<Edges>`), "Flat × Suave" (`flatShading`) e alternar cor por vértice vs material neutro. |
+| **F2-T04** | **Iluminação controlável** | front | Sliders de intensidade ambiente e direção da luz (azimute/elevação esférica → cartesiana) + `DirectionalLightHelper` e sombras no chão. |
+| **F2-T05** | **Shader customizado (GLSL)** | front | *Vertex/fragment shaders* próprios: mapa de calor por altura (`y` normalizado com faixas a cada 1 cm) e efeito Fresnel. |
+| **F2-T06** | **Ajudantes visuais (Eixos, Grade e Caixa 3D)** | front | Toggles para `axesHelper`, grade em cm e `Box3Helper` com rótulos de comprimento × altura × largura no espaço 3D. |
+| **F2-T07** | **Estatísticas detalhadas e FPS** | front | Contagem ao vivo de vértices/triângulos da cena carregada e medidor de FPS. |
+| **F1-T09** | **Benchmark formal de desempenho** | pipeline | Teste `@pytest.mark.lento` garantindo execução < 15 s na configuração padrão e tabela resolução × tempo × faces. |
+| **F1-T10** | **Notebook didático passo a passo** | pipeline | `notebooks/01-pipeline-passo-a-passo.ipynb` ilustrando cada etapa para apoio na apresentação. |
 
-| # | Tarefa | Por quê / observação |
-|---|---|---|
-| 1 | F2-T01 — base visual **+ nova home** — **feito** (28/10, PR #9) | tokens, `components/ui/`, `AppLayout` com cabeçalho, rotas finais, 375 px; a home vira página de produto (ver a tarefa) |
-| 2 | F3-T07 — cliente da API | **feito** (28/10) — direto na API real (sem *mock*: a trilha A já tinha terminado) |
-| 3 | F3-T08 + F3-T13 — `/novo` | **feito** (28/10, PR #10) — gabarito, editor (girar/recortar/ampliar), cm; sem escolha de qualidade (ADR 0009) |
-| 4 | F3-T09 — status por etapa | **feito** (28/10) — *polling* de 1 s até concluir/erro |
-| 5 | F3-T10 + F3-T14 — `/modelos/:id` | **feito** (28/10) — estúdio 3D completo embutido, aba Fotos com contorno, baixar `.glb` |
-| 6 | F3-T11 — `/modelos` | **feito** (28/10) — cartões, apagar com confirmação |
+#### Bloco D — Etapas manuais do grupo (deixadas para depois que todo o código estiver pronto)
+- **`F0-T10`:** Tirar fotos próprias de um tênis real do grupo + medir com fita métrica e validar erro dimensional < 5 %.
+- **`F5-T07`:** Montar os slides a partir de `docs/apresentacao/roteiro.md`, ensaiar e gravar o vídeo de backup da demo.
 
-`/visualizador` e `/fotos` continuam como **estúdio** (demonstração para a banca, com os tênis de exemplo); o detalhe do
-modelo já usa o mesmo estúdio 3D embutido (`Visualizador urlFixa`).
+---
 
-**Fechamento do MVP (todos)**
-1. F3-T12 — E2E com Playwright (e F2-T09 junto, mesma ferramenta). **feito** (28/10) — `make e2e`; no CI só manual.
-2. F0-T10 — foto tirada pelo grupo + fita métrica → erro dimensional (< 5 %). **falta** (trabalho do grupo).
-3. `docs/revisoes/fase-3.md` **feito** (28/10); tag `v0.1.0-mvp` (depois do merge) e vídeo curto da demo **faltam**.
+## Como rodar o projeto localmente
 
-**Depois do MVP (conforme a data de entrega)**
-- ~~Presets (F1-T01, F5-T04)~~ — **cancelados** em 28/10: configuração única, sem escolha técnica (ADR 0009, regra 11).
-- F4-T05 — `.obj`/`.stl` só como opção no download, **se alguém pedir** (o modelo é sempre o mesmo).
-- F4-T01/T02 — login e créditos **só se** a professora exigir conta de usuário.
-- F5-T01 — Raio-X do pipeline: **feito** (28/10). F5-T07 — apresentação: **roteiro pronto** (`docs/apresentacao/roteiro.md`); slides, ensaio e vídeo com o grupo.
+> **Importante:** o frontend (`:5173`) precisa da API (`:8000`) ligada para carregar `/me` (créditos) e `/modelos`. Use sempre o `make dev` para subir os dois juntos:
 
-**Pendências sem dono:** data de entrega · responsáveis de cada trilha (tabela Equipe) · proteção da `main` (F0-T08).
+```bash
+make dev
+```
+*(Ou rode `make api` em um terminal e `make web` em outro).*
 
-## Fase 0 — Setup e prova de conceito
+---
+
+## Tabelas completas por fase
+
+### Fase 0 — Setup e prova de conceito
 
 | ID | Tarefa | Responsável | Status | Observação |
 |---|---|---|---|---|
-| F0-T01 | Estrutura do monorepo | Claude | feito | 30/09 |
-| F0-T02 | Workspace Python com uv | Claude | feito | 30/09 |
-| F0-T03 | Pipeline mínimo (PoC) | Claude | feito | 10 testes passando |
-| F0-T04 | Gerador de fotos sintéticas | Claude | feito | |
-| F0-T05 | API FastAPI esqueleto | Claude | feito | `/health/db` ok |
-| F0-T06 | PostgreSQL via Docker | Claude | feito | testado com Postgres 16 nativo; compose não testado no ambiente do Claude |
-| F0-T07 | Front React + Three.js esqueleto | Claude | feito | prints em `docs/revisoes/assets/` |
-| F0-T08 | Subir para o repo e CI | Pedro | em andamento | repo `PedroFiel/relevo` e CI (ruff, pytest com Postgres 16, oxlint, vitest, build) existem; falta conferir a proteção da `main` |
-| F0-T09 | Cada integrante roda o setup | todos | em andamento | Pedro: ok (testes, banco Neon, visualizador). Faltam os demais |
-| F0-T10 | Prova com fotos reais | Pedro + Claude | em andamento | 3 tênis de catálogo reconhecíveis, coloridos, fechados, escala exata; tenis-03 com 5 vistas, recorte e seção. Falta foto própria + fita métrica. Relatórios: `docs/testes/relatorios/2026-10-01-*.md` |
+| F0-T01 | Estrutura do monorepo | Pedro + Claude | feito | 30/09 |
+| F0-T02 | Workspace Python com uv | Pedro + Claude | feito | 30/09 |
+| F0-T03 | Pipeline mínimo (PoC) | Pedro + Claude | feito | 10 testes passando |
+| F0-T04 | Gerador de fotos sintéticas | Pedro + Claude | feito | |
+| F0-T05 | API FastAPI esqueleto | Pedro + Claude | feito | `/health/db` ok |
+| F0-T06 | PostgreSQL via Docker | Pedro + Claude | feito | Postgres 16 + Neon |
+| F0-T07 | Front React + Three.js esqueleto | Pedro + Claude | feito | prints em `docs/revisoes/assets/` |
+| F0-T08 | Subir para o repo e CI | Pedro | feito | repo `PedroFiel/relevo` e CI configurados |
+| F0-T09 | Cada integrante roda o setup | todos | em andamento | Pedro: ok |
+| F0-T10 | Prova com fotos reais | Pedro + Claude | em andamento | 3 tênis de catálogo prontos; falta foto própria com fita métrica (etapa manual final) |
 
-## Fase 1 — Pipeline completo
+### Fase 1 — Pipeline completo
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
 | F1-T01 | Configuração e presets | — | **cancelada** (28/10, ADR 0009: configuração única) |
-| F1-T02 | Suavização de Taubin | Pedro + Claude | feito (02/11: `malha.suavizar` + `malha-suave.glb` no Raio-X) |
-| F1-T03 | Decimação por erro quádrico | Pedro + Claude | feito (28/10: 20 mil faces, *fallback* se abrir a malha) |
-| F1-T04 | Transformação inversa 3D → pixel | Pedro + Claude | feito (02/11: `matriz_grade_para_foto` 3×3 + `projetar_vertices`) |
-| F1-T05 | Cor por vértice | Pedro + Claude | feito |
-| F1-T06 | Segmentação robusta | Pedro + Claude | feito |
-| F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | feito (02/11: IoU em voxels + `iou_malha_<vista>` na resolução da foto) |
-| F1-T08 | Intermediários + progresso | Pedro + Claude | feito (02/11: callback + máscaras, voxels, malha bruta e malha suave) |
-| F1-T09 | Desempenho | | a fazer |
-| F1-T10 | Notebook didático | | a fazer |
-| F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | feito |
-| F1-T12 | Rastreamento de contorno | Pedro + Claude | feito |
+| F1-T02 | Suavização de Taubin | Pedro + Claude | **feito** (02/11: `malha.suavizar` + `malha-suave.glb` no Raio-X) |
+| F1-T03 | Decimação por erro quádrico | Pedro + Claude | **feito** (28/10: 20 mil faces, *fallback* se abrir a malha) |
+| F1-T04 | Transformação inversa 3D → pixel | Pedro + Claude | **feito** (02/11: `matriz_grade_para_foto` 3×3 + `projetar_vertices`) |
+| F1-T05 | Cor por vértice | Pedro + Claude | **feito** |
+| F1-T06 | Segmentação robusta | Pedro + Claude | **feito** |
+| F1-T07 | Métricas (IoU, consistência) | Pedro + Claude | **feito** (02/11: IoU em voxels + `iou_malha_<vista>` na resolução da foto) |
+| F1-T08 | Intermediários + progresso | Pedro + Claude | **feito** (02/11: callback + máscaras, voxels, malha bruta e malha suave) |
+| F1-T09 | Desempenho (benchmark `@pytest.mark.lento`) | | a fazer |
+| F1-T10 | Notebook didático (`notebooks/`) | | a fazer |
+| F1-T11 | Ajuste da foto: recorte e rotação | Pedro + Claude | **feito** |
+| F1-T12 | Rastreamento de contorno | Pedro + Claude | **feito** |
 
-## Fase 2 — Visualizador 3D
-
-| ID | Tarefa | Responsável | Status |
-|---|---|---|---|
-| F2-T01 | Base visual e layout (+ home) | Pedro + Claude | feito (28/10: tokens, `components/ui`, `AppLayout`, home, `/guia`) |
-| F2-T02 | Câmera e controles | | a fazer |
-| F2-T03 | Modos de renderização | | a fazer |
-| F2-T04 | Iluminação controlável | | a fazer |
-| F2-T05 | Shader customizado (GLSL) | | a fazer |
-| F2-T06 | Ajudantes visuais | | a fazer |
-| F2-T07 | Estatísticas do modelo | | a fazer |
-| F2-T08 | Abrir arquivo local | Pedro + Claude | feito |
-| F2-T09 | Testes visuais (Playwright) | Pedro + Claude | feito (28/10: prints por modo com WebGL por software) |
-| F2-T10 | Visor 2D: janela→viewport, zoom, pan, clipping | Pedro + Claude | feito |
-| F2-T11 | Plano de corte 3D (clipping + stencil) | Pedro + Claude | feito |
-| F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | feito (27/10: modo Lente (FOV) tirado) |
-| F2-T13 | Mover, girar, aumentar (matriz 4×4) | Pedro + Claude | feito |
-| F2-T14 | Selecionar área, separar e mover | Pedro + Claude | feito |
-| F2-T15 | Rastreamento de raios × rasterização | Pedro + Claude | feito |
-
-## Fase 3 — Integração (MVP)
+### Fase 2 — Visualizador 3D
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F3-T01 | Modelos ORM e migração | Pedro + Claude | feito (27/10: 6 tabelas + usuário demo, aplicado no Neon) |
-| F3-T02 | Storage local | Pedro + Claude | feito (28/10: `LocalStorage` + `get_storage`; chave com `..` recusada) |
-| F3-T03 | Schemas + POST /modelos | Pedro + Claude | feito (28/10) |
-| F3-T04 | Banco de teste e fixtures | Pedro + Claude | feito (28/10: fixture `cliente` com `get_db` e `get_storage` trocados) |
-| F3-T05 | Execução do job | Pedro + Claude | feito (28/10: progresso, erro amigável, delete no meio, *startup*) |
-| F3-T06 | Endpoints de leitura | Pedro + Claude | feito (28/10: + `GET /imagens/{id}`) |
-| F3-T07 | Cliente da API | Pedro + Claude | feito (28/10) |
-| F3-T08 | Página Novo modelo | Pedro + Claude | feito (28/10; prévia da silhueta no navegador ficou de fora) |
-| F3-T09 | Status do processamento | Pedro + Claude | feito (28/10) |
-| F3-T10 | Detalhe + visualizador integrado | Pedro + Claude | feito (28/10) |
-| F3-T11 | Meus modelos | Pedro + Claude | feito (28/10) |
-| F3-T12 | E2E do MVP | Pedro + Claude | feito (28/10: `make e2e`, API :8001 no `relevo_test`) |
-| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | feito (28/10: editor no `/novo`, miniatura já ajustada, `ajustes` no `POST /modelos`) |
-| F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | feito (28/10: aba "Fotos e contornos" do modelo lendo da API) |
+| F2-T01 | Base visual e layout (+ home + Impeccable) | Pedro + Claude | **feito** (28/10 + polimento Impeccable em 02/11) |
+| F2-T02 | Câmera: vistas rápidas e projeção ortográfica | | a fazer |
+| F2-T03 | Modos extras de renderização (arestas, flat/suave) | | a fazer |
+| F2-T04 | Iluminação controlável (azimute/elevação + sombras) | | a fazer |
+| F2-T05 | Shader customizado (GLSL: altura e Fresnel) | | a fazer |
+| F2-T06 | Ajudantes visuais (eixos, grade, Box3) | | a fazer |
+| F2-T07 | Estatísticas detalhadas do modelo + FPS | | a fazer |
+| F2-T08 | Abrir arquivo local | Pedro + Claude | **feito** |
+| F2-T09 | Testes visuais (Playwright) | Pedro + Claude | **feito** (28/10) |
+| F2-T10 | Visor 2D: janela→viewport, zoom, pan, clipping | Pedro + Claude | **feito** |
+| F2-T11 | Plano de corte 3D (clipping + stencil + near) | Pedro + Claude | **feito** |
+| F2-T12 | Zoom no ponto e cursor (raycasting) | Pedro + Claude | **feito** |
+| F2-T13 | Mover, girar, aumentar (matriz 4×4) | Pedro + Claude | **feito** |
+| F2-T14 | Selecionar área, separar e mover | Pedro + Claude | **feito** |
+| F2-T15 | Rastreamento de raios × rasterização | Pedro + Claude | **feito** |
 
-## Fase 4 — Produto
+### Fase 3 — Integração (MVP — 100 % concluída)
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F4-T01 | Autenticação | | a fazer |
-| F4-T02 | Créditos | Pedro + Claude | feito (02/11: `movimentos_credito`, débito/estorno transacional, `/me`, `/conta`) |
-| F4-T03 | Editor de transformações | Pedro + Claude | feito (02/11: matriz 4×4 ao vivo + salvar como nova versão) |
-| F4-T04 | Versões no back | Pedro + Claude | feito (02/11: `POST /modelos/{id}/versoes` e `/restaurar` + seletor no front) |
-| F4-T05 | Outros formatos no download | Pedro + Claude | feito (02/11: `.glb`, `.obj` e `.stl` via `GET /versoes/{id}/exportar`) |
-| F4-T06 | Mapeamento UV e textura | | a fazer |
-| F4-T07 | Modo UV no visualizador | | a fazer |
+| F3-T01 | Modelos ORM e migração | Pedro + Claude | **feito** (27/10) |
+| F3-T02 | Storage local | Pedro + Claude | **feito** (28/10) |
+| F3-T03 | Schemas + POST /modelos | Pedro + Claude | **feito** (28/10) |
+| F3-T04 | Banco de teste e fixtures | Pedro + Claude | **feito** (28/10) |
+| F3-T05 | Execução do job | Pedro + Claude | **feito** (28/10) |
+| F3-T06 | Endpoints de leitura | Pedro + Claude | **feito** (28/10) |
+| F3-T07 | Cliente da API | Pedro + Claude | **feito** (28/10) |
+| F3-T08 | Página Novo modelo | Pedro + Claude | **feito** (28/10) |
+| F3-T09 | Status do processamento | Pedro + Claude | **feito** (28/10) |
+| F3-T10 | Detalhe + visualizador integrado | Pedro + Claude | **feito** (28/10) |
+| F3-T11 | Meus modelos | Pedro + Claude | **feito** (28/10) |
+| F3-T12 | E2E do MVP | Pedro + Claude | **feito** (28/10 + expandido em 02/11) |
+| F3-T13 | Editor da foto no upload (cortar, girar, ampliar) | Pedro + Claude | **feito** (28/10) |
+| F3-T14 | Segmentação e contorno visíveis no resultado | Pedro + Claude | **feito** (28/10) |
+
+### Fase 4 — Produto
+
+| ID | Tarefa | Responsável | Status |
+|---|---|---|---|
+| F4-T01 | Autenticação (`/entrar`, `/cadastrar`, Argon2 + JWT) | | a fazer |
+| F4-T02 | Créditos (`movimentos_credito`, débito/estorno, `/me`, `/conta`) | Pedro + Claude | **feito** (02/11) |
+| F4-T03 | Editor de transformações (salvar versão 4×4 feito; falta pivô/atalhos/undo) | Pedro + Claude | **em andamento** (02/11: salvar versão pronto) |
+| F4-T04 | Versões no back (`POST /versoes` e `/restaurar` + seletor no front) | Pedro + Claude | **feito** (02/11) |
+| F4-T05 | Outros formatos no download (`.glb`, `.obj`, `.stl`) | Pedro + Claude | **feito** (02/11) |
+| F4-T06 | Mapeamento UV e textura (`textura.py`) | | a fazer |
+| F4-T07 | Modo UV no visualizador (textura xadrez + atlas 2D) | | a fazer |
 | F4-T08 | Storage S3 (MinIO) | | a fazer |
 
-## Fase 5 — Diferenciais e apresentação
+### Fase 5 — Diferenciais e apresentação
 
 | ID | Tarefa | Responsável | Status |
 |---|---|---|---|
-| F5-T01 | Raio-X do pipeline | Pedro + Claude | feito (02/11: 7 etapas incluindo Suavizada Taubin, apresentação automática) |
-| F5-T02 | LOD | | a fazer |
-| F5-T03 | Régua 3D | | a fazer |
+| F5-T01 | Raio-X do pipeline (7 etapas incluindo Suavizada Taubin) | Pedro + Claude | **feito** (28/10 + 02/11) |
+| F5-T02 | LOD (3 níveis de detalhe por distância) | | a fazer |
+| F5-T03 | Régua 3D (medição ponto a ponto com raycasting) | | a fazer |
 | F5-T04 | Presets na interface | — | **cancelada** (28/10, ADR 0009) |
-| F5-T05 | Pincel de correção | Pedro + Claude | feito (02/11: `EditorMascara` com pincel/borracha + `POST /modelos/{id}/regerar`) |
-| F5-T06 | Visualizador incorporável | | a fazer |
-| F5-T07 | Apresentação | todos | em andamento (28/10: roteiro, imagens e perguntas da banca; faltam slides, ensaio e vídeo) |
-
-## Riscos e bloqueios
-
-| Risco | Impacto | Plano |
-|---|---|---|
-| Fotos reais segmentam mal (sombra, fundo parecido) | alto | F0-T10 cedo; F1-T06 chroma key; F5-T05 pincel |
-| Perspectiva das fotos de celular distorce o hull | médio | guia de fotos (afastar + zoom); `razao_frente` já avisa; IoU completo na F1-T07 |
-| Usuário envia foto girada/espelhada | médio | orientação automática por anatomia + aviso (feito); avisa quando a silhueta é ambígua |
-| Computador fraco de algum integrante | baixo | resolução 96 em dev; CI roda os testes |
-| Prazo | alto | MVP = Fases 0–3; Fase 5 prioriza T01 e T07 |
-| Conceitos exigidos pela professora (recorte, zoom, transformações, rastreamento, segmentação) | alto | 8 tarefas novas no MVP (ADR 0006); confirmar o sentido de "rastrear" com ela |
+| F5-T05 | Pincel de correção (`EditorMascara` + `POST /regerar`) | Pedro + Claude | **feito** (02/11) |
+| F5-T06 | Visualizador incorporável (`/embed/:id` + copiar `<iframe>`) | | a fazer |
+| F5-T07 | Apresentação (roteiro pronto; faltam slides/vídeo do grupo) | todos | em andamento |

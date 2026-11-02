@@ -39,10 +39,17 @@ export default function Conta() {
   }
 
   if (conta.isError) {
+    const semServidor = conta.error.message.includes('falar com o servidor') || conta.error.message.includes('erro 5')
     return (
       <main className="container pagina-simples vazio">
         <h1>Não deu para carregar a conta</h1>
         <p role="alert">{conta.error.message}</p>
+        {semServidor && (
+          <p className="conceito">
+            Dica: se você rodou apenas <code>make web</code>, a API na porta 8000 ainda não está ligada. Rode{' '}
+            <code>make dev</code> (sobe API + front juntos) ou <code>make api</code> em outro terminal.
+          </p>
+        )}
         <div className="acoes">
           <Botao onClick={() => void conta.refetch()} variante="primario">
             Tentar novamente

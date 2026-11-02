@@ -11,7 +11,8 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Contas e créditos
 
-### F4-T01 — Autenticação
+### F4-T01 — Autenticação — **A FAZER**
+- **Por que `/conta` hoje usa o usuário demo:** atualmente a API opera com `USUARIO_DEMO_ID` (`demo@relevo.local`), então `/conta` e `/me` já funcionam assim que a API está ligada (`make dev` ou `make api`). Quando a F4-T01 for implementada, cada pessoa terá seu próprio cadastro e login.
 - **Frente:** back, banco, front
 - **Como fazer:**
   1. Back: `pwdlib[argon2]` para hash de senha; `pyjwt` para tokens (HS256, expiração 7 dias, segredo no `.env`).
@@ -31,7 +32,7 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Editor e versões
 
-### F4-T03 — Editor de transformações (escala, rotação, pivô)
+### F4-T03 — Editor de transformações (escala, rotação, pivô) — **PARCIALMENTE FEITO (02/11: salvar versão 4×4 pronto; falta pivô/atalhos/desfazer)**
 - **Frente:** front
 - **Depende de:** F2-T13 (mover/girar/aumentar e painel da matriz já existem no MVP; aqui entram pivô, atalhos,
   desfazer e salvar versão)
@@ -66,7 +67,7 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Textura e storage
 
-### F4-T06 — Mapeamento UV e textura
+### F4-T06 — Mapeamento UV e textura — **A FAZER**
 - **Frente:** pipeline
 - **Como fazer:**
   1. `textura.py`: `vmapping, indices, uvs = xatlas.parametrize(vertices, faces)` → nova malha com UVs.
@@ -79,13 +80,13 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 - **Testes:** UVs dentro de [0,1]; nenhuma face com área UV zero; textura sem pixels "pretos" dentro das ilhas.
 - **Conceito de CG:** parametrização de superfícies, atlas UV, coordenadas baricêntricas, *texture baking*, PBR.
 
-### F4-T07 — Modo UV no visualizador
+### F4-T07 — Modo UV no visualizador — **A FAZER**
 - **Frente:** front
 - **Como fazer:** modo "UV" com textura **xadrez** procedural (`CanvasTexture`) — quadrados iguais = pouca distorção;
   painel lateral mostrando o atlas 2D (desenhar os triângulos UV num `<canvas>` a partir de `geometry.attributes.uv`).
 - **Conceito de CG:** distorção de parametrização, espaço de textura.
 
-### F4-T08 — Storage S3 (MinIO)
+### F4-T08 — Storage S3 (MinIO) — **A FAZER**
 - **Frente:** back
 - **Como fazer:** serviço `minio` no `docker-compose.yml`; `S3Storage` com `boto3` implementando o mesmo `Storage`;
   escolher pelo `.env` (`STORAGE_TIPO=local|s3`); downloads via *URL pré-assinada* (expira em 1 h).
