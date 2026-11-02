@@ -24,7 +24,7 @@
 | 6 | **Demo ao vivo** | Foto na hora → `/novo` → etapas ao vivo → estúdio 3D (zoom no ponto, recorte, transformar, rastrear raios) → **Raio-X** em modo apresentação → baixar. | | 5:00 |
 | 7 | **O que o algoritmo não consegue** | Abertura do pé fechada; formato visto de frente estimado; sem foto do outro lado → espelhado; fundo parecido com o tênis separa mal. Dizemos isso na tela. | | 1:00 |
 | 8 | **Números** | Malha fechada sempre; 20 mil faces; ~1 s por modelo; IoU 0,91–0,997; testes automatizados (pytest, Vitest, Playwright). Erro dimensional: resultado da F0-T10. | | 1:00 |
-| 9 | **Próximos passos** | Textura UV (F4-T06), suavização de Taubin (F1-T02), LOD, régua 3D, incorporar na loja (F5-T06). | | 0:30 |
+| 9 | **Diferenciais entregues e extensões futuras** | Entregues: Textura UV em 6 ilhas (`F4-T06`), Suavização de Taubin (`F1-T02`), LOD (`F5-T02`), Régua 3D (`F5-T03`), Pincel de máscara (`F5-T05`) e Embed `<iframe>` (`F5-T06`). Futuro: calibração de câmera perspectiva $P = K[R|t]$. | | 0:30 |
 
 ### Imagens do slide 4 (tenis-01, geradas pelo próprio Raio-X)
 
@@ -71,8 +71,7 @@ silhuetas. A **seção transversal comum** (ADR 0007) supõe que todas as fatias
 tamanho — arredonda o bico. É uma hipótese e dizemos isso ao usuário.
 
 **Por que Taubin e não Laplaciano?** O Laplaciano move cada vértice para a média dos vizinhos e **encolhe** o modelo
-a cada passo. Taubin alterna um passo para dentro (λ) e outro para fora (μ < −λ) — filtro passa-baixa sem encolher.
-(Ainda é refinamento planejado, F1-T02: o campo de distância já tirou a maior parte da "escada".)
+a cada passo. Taubin alterna um passo para dentro ($\lambda = 0{,}5$) e outro para fora ($\mu = -0{,}53 < -\lambda$) — filtro passa-baixa sem encolher, implementado em `malha.suavizar` (`F1-T02`) e visível na 5ª etapa do Raio-X (`malha-suave.glb`).
 
 **Como a matriz de transformação é composta?** Matrizes homogêneas 4×4: `M = T · R · S` (escala, depois rotação,
 depois translação — a ordem dos motores 3D; o estúdio também mostra `S · R · T` para comparar). Com pivô `p`:

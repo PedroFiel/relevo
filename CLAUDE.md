@@ -228,21 +228,19 @@ cd apps/api && uv run alembic revision --autogenerate -m "mensagem"
 
 ## 12. Onde estamos
 
-- **Fase atual:** 3 — Integração (MVP), em duas trilhas paralelas: **A** (back, banco, pipeline) e **B** (front bonito
-  e responsivo) — ordem no **Plano de finalização** do STATUS. Já prontos: pipeline com até 6 vistas, recorte/rotação
-  da foto, orientação automática, registro por IoU, contorno rastreado, visual hull por SDF + seção transversal, cor por
-  vértice e avisos; visualizador com plano de corte, zoom no ponto/raycasting, transformações 4×4, seleção e ray
-  tracing; página `/fotos` com visor 2D (zoom, pan, clipping) e editor de recorte; banco (Neon) com as 6 tabelas do MVP
-  e o usuário demo (F3-T01). **Trilha A concluída (28/10):** Storage local, `POST /modelos` → job em segundo plano com
-  progresso → versão com `.glb` decimado (~20 mil faces), leitura/download/delete — tudo gravando no Neon. Falta o
-  front usar a API (trilha B). **Trilha B concluída (28/10):** home, `/novo` (upload guiado + editor), página do modelo
-  (etapas ao vivo, estúdio 3D, fotos com contorno, download) e "Meus modelos" — o fluxo do MVP funciona ponta a ponta.
-  Fechamento (28/10): E2E com Playwright (`make e2e`) e revisão `docs/revisoes/fase-3.md`. Depois: configuração única
-  (ADR 0009) e **Raio-X do pipeline** (F5-T01) na página do modelo; roteiro da apresentação em `docs/apresentacao/`.
-  Falta (grupo): F0-T10, slides/ensaio/vídeo e a tag `v0.1.0-mvp`.
-- **Pendências das fases anteriores:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), **F0-T10 (fotos
-  tiradas pelo grupo + fita métrica — falta o erro dimensional)**.
-- **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão; este parágrafo pode estar defasado.
+- **Fases 0 a 5 concluídas em código (02/11/2026):** pipeline com até 6 vistas, recorte/rotação da foto, orientação
+  automática, registro por IoU, contorno rastreado (Suzuki–Abe, Moore e Douglas–Peucker), visual hull por SDF + seção
+  transversal, suavização de Taubin (`F1-T02`), decimação por erro quádrico de Garland–Heckbert (`F1-T03`), cor por
+  vértice ponderada por normal (`F1-T05`), mapeamento UV em 6 ilhas (`F4-T06`), níveis de detalhe LOD (`F5-T02`) e IoU
+  de reprojeção da malha (`F1-T07`); estúdio 3D com 8 modos de renderização (incluindo shaders GLSL de altura e Fresnel
+  e textura UV), iluminação esférica, vistas de câmera, plano de corte + stencil, ray casting, régua 3D (`F5-T03`),
+  transformações 4×4 com pivô arbitrário (`F4-T03`), seleção por frustum com Sutherland–Hodgman e ray tracing com BVH;
+  API e web com autenticação JWT (`F4-T01`), créditos auditáveis e estorno automático (`F4-T02`), histórico de versões
+  4×4 (`F4-T04`), exportação `.glb/.obj/.stl` (`F4-T05`), Storage S3/MinIO (`F4-T08`), Raio-X em 7 etapas (`F5-T01`),
+  pincel de correção de máscara (`F5-T05`) e embed público `<iframe>` (`F5-T06`).
+- **Pendências presenciais do grupo:** F0-T08 (proteção da `main`), F0-T09 (setup de cada integrante), F0-T10 (fotos
+  tiradas pelo grupo + fita métrica) e F5-T07 (slides/ensaio/apresentação ao vivo).
+- **Sempre confirme em `docs/acompanhamento/STATUS.md`** — ele é atualizado a cada sessão.
 
 ## 13. Limites conhecidos (comunicar, não esconder)
 

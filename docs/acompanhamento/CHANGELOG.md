@@ -4,6 +4,13 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado (02/11/2026 — fechamento das Fases 1, 2, 4 e 5)
+- **Suavização de Taubin ($\lambda|\mu$) e IoU da malha 3D** no pipeline (`malha.py`, `metricas.py`): filtro passa-baixa sem encolhimento com exportação de `malha-suave.glb` para a 5ª etapa do Raio-X, e reprojeção rasterizada dos triângulos nas vistas (`iou_malha_medio` > 0,90). [F1-T02, F1-T07]
+- **Mapeamento UV em 6 ilhas (`textura.py`) e Níveis de Detalhe — LOD (`malha.gerar_lods`, `simplificarMalhaLod`)**: desdobramento ortográfico em grade 3×2 com dilatação por transformada de distância e simplificação em 3 níveis (`100 %`, `25 %`, `5 %`). [F4-T06, F4-T07, F5-T02]
+- **Shaders GLSL customizados, iluminação esférica, vistas de câmera, captura PNG e régua 3D** no Estúdio 3D (`Visualizador.tsx`, `ModelViewer.tsx`): modos `Altura (GLSL)`, `Fresnel (GLSL)` e `Textura UV`, medição ponto a ponto em `cm`/`mm` na superfície e pivô arbitrário por clique (`comporComPivo`). [F2-T03, F2-T04, F2-T05, F2-T07, F2-T08, F4-T03, F5-T03]
+- **Autenticação JWT (`/entrar`, `/cadastrar`), créditos auditáveis com estorno (`/conta`), versões 4×4, exportação `.glb/.obj/.stl` e `S3Storage`**: produto completo mantendo o modo demo sem fricção. [F4-T01, F4-T02, F4-T04, F4-T05, F4-T08]
+- **Pincel de correção de máscara (`EditorMascara.tsx`) e visualizador incorporável (`/embed/:id`)**: edição de silhueta com composição de Porter–Duff para regerar o modelo e código `<iframe>` pronto para lojas. [F5-T05, F5-T06]
+
 ### Adicionado (28/10/2026 — Raio-X do pipeline)
 - **Raio-X do pipeline** na página do modelo: um slider passa pelas 6 etapas do modelo que você acabou de gerar —
   fotos, silhuetas, voxels, malha bruta, decimada e final — com a explicação de cada algoritmo e os números daquele

@@ -70,19 +70,19 @@ Modelo, job, arquivo ou foto de **outro usuário** responde **404**, igual a ine
 **200**:
 ```json
 {"id": "…", "modelo_id": "…", "status": "processando", "etapa_atual": "visual_hull", "progresso": 32,
- "etapas": ["segmentacao", "alinhamento", "visual_hull", "marching_cubes", "decimacao", "cor", "exportacao"],
+ "etapas": ["segmentacao", "alinhamento", "visual_hull", "marching_cubes", "suavizacao", "decimacao", "cor", "exportacao"],
  "erro": null}
 ```
 `status`: `pendente` → `processando` → `concluido` | `erro`. `etapas` = `relevo_pipeline.ETAPAS` + `exportacao`
 (feita pela API). `etapa_atual`/`progresso` vêm do callback `ao_progredir` do pipeline (F1-T08; ver
 `docs/03-pipeline-cg.md`): o pipeline vai de 0 a 90 % e a exportação fecha em 100. Com `status = erro`, `erro` traz a
 mensagem para o usuário (problema na foto) ou uma genérica (erro interno). Job que estava aberto quando a API reiniciou
-vira `erro` no *startup*. `suavizacao` entra na lista quando a F1-T02 existir.
+vira `erro` no *startup* (com estorno automático do crédito).
 
 ## Arquivos (F3)
 
 Cada versão traz em `arquivos`: o `modelo.glb` (`tipo: glb`) e, desde a F5-T01, os intermediários do **Raio-X** —
-`mascara-<vista>.png` (`tipo: mascara`), `voxels.glb` e `malha-bruta.glb` (`tipo: etapa`). Por isso a rota
+`mascara-<vista>.png` (`tipo: mascara`), `voxels.glb`, `malha-bruta.glb` e `malha-suave.glb` (`tipo: etapa`). Por isso a rota
 `GET /versoes/{id}/etapas` planejada não foi necessária.
 
 
