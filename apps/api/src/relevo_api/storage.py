@@ -47,9 +47,19 @@ def chave_glb(modelo_id: UUID, numero_versao: int) -> str:
     return validar_chave(f"modelos/{modelo_id}/v{numero_versao}/modelo.glb")
 
 
+def chave_exportado(modelo_id: UUID, numero_versao: int, formato: str) -> str:
+    """Arquivo exportado sob demanda (.glb, .obj, .stl) de uma versão (F4-T05)."""
+    return validar_chave(f"modelos/{modelo_id}/v{numero_versao}/modelo.{formato}")
+
+
 def chave_etapa(modelo_id: UUID, numero_versao: int, nome: str) -> str:
     """Intermediário do Raio-X (máscara, voxels, malha bruta) de uma versão."""
     return validar_chave(f"modelos/{modelo_id}/v{numero_versao}/etapas/{nome}")
+
+
+def chave_mascara_corrigida(modelo_id: UUID, job_id: UUID, vista: str) -> str:
+    """Máscara PNG desenhada pelo pincel de correção (F5-T05)."""
+    return validar_chave(f"modelos/{modelo_id}/jobs/{job_id}/mascara-{vista}.png")
 
 
 def prefixo_modelo(modelo_id: UUID) -> str:

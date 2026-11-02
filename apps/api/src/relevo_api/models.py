@@ -51,15 +51,40 @@ def _criado_em() -> Mapped[datetime]:
 
 class Usuario(Base):
     __tablename__ = "usuarios"
+    __table_args__ = (CheckConstraint("creditos >= 0", name="creditos"),)
 
     id: Mapped[uuid.UUID] = _id()
     nome: Mapped[str] = mapped_column(Text)
     email: Mapped[str] = mapped_column(Text, unique=True)
     senha_hash: Mapped[str | None] = mapped_column(Text)  # F4 (nulo no MVP)
-    creditos: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    creditos: Mapped[int] = mapped_column(Integer, default=10, server_default="10")
     criado_em: Mapped[datetime] = _criado_em()
 
     modelos: Mapped[list[Modelo]] = relationship(back_populates="usuario")
+    movimentos: Mapped[list[MovimentoCredito]] = relationship(
+        back_populates="usuario",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="MovimentoCredito.criado_em.desc()",
+    )
+
+
+class MovimentoCredito(Base):
+    __tablename__ = "movimentos_credito"
+
+    id: Mapped[uuid.UUID] = _id()
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
+    )
+    quantidade: Mapped[int] = mapped_column(Integer)
+    motivo: Mapped[str] = mapped_column(Text)
+    job_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="SET NULL")
+    )
+    criado_em: Mapped[datetime] = _criado_em()
+
+    usuario: Mapped[Usuario] = relationship(back_populates="movimentos")
+    job: Mapped[Job | None] = relationship()
 
 
 class Modelo(Base):

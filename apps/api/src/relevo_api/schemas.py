@@ -39,10 +39,44 @@ class ArquivoOut(BaseModel):
 
 
 class VersaoOut(BaseModel):
+    id: uuid.UUID | None = None
     numero: int
     metricas: dict | None
+    transformacao: list[float] | None = None
     arquivos: list[ArquivoOut]
     criado_em: datetime
+
+
+class VersaoResumoOut(BaseModel):
+    id: uuid.UUID
+    numero: int
+    transformacao: list[float] | None = None
+    criado_em: datetime
+
+
+class NovaVersaoIn(BaseModel):
+    transformacao: list[float]
+
+
+class RegerarModeloIn(BaseModel):
+    mascaras: dict[str, str]
+    resolucao: int = 128
+
+
+class MovimentoCreditoOut(BaseModel):
+    id: uuid.UUID
+    quantidade: int
+    motivo: str
+    job_id: uuid.UUID | None
+    criado_em: datetime
+
+
+class ContaOut(BaseModel):
+    id: uuid.UUID
+    nome: str
+    email: str
+    creditos: int
+    movimentos: list[MovimentoCreditoOut]
 
 
 class ModeloResumoOut(BaseModel):
@@ -61,6 +95,7 @@ class ModeloDetalheOut(BaseModel):
     comprimento_cm: float
     imagens: list[ImagemOut]
     versao: VersaoOut | None
+    versoes: list[VersaoResumoOut] = []
     # Último job: o front acompanha o processamento por ele (F3-T09)
     job: JobOut | None
     criado_em: datetime

@@ -131,6 +131,7 @@ def test_job_gera_versao_com_glb_e_metricas(criado, db, storage):
         "mascara-frente.png": "mascara",
         "voxels.glb": "etapa",
         "malha-bruta.glb": "etapa",
+        "malha-suave.glb": "etapa",
     }
     assert all("/v1/etapas/" in a.caminho for a in versao.arquivos if a.tipo != "glb")
 
@@ -317,3 +318,107 @@ def test_modelo_de_outro_usuario_da_404(cliente, db):
     assert cliente.get(f"/arquivos/{versao.arquivos[0].id}/download").status_code == 404
     assert cliente.delete(f"/modelos/{modelo.id}").status_code == 404
     assert all(m["id"] != str(modelo.id) for m in cliente.get("/modelos").json())
+
+
+# ---------- Créditos (F4-T02) ----------
+def test_creditos_debitam_ao_criar_e_recarregam(cliente, fotos_png):
+    conta_antes = cliente.get("/me").json()
+    saldo_inicial = conta_antes["creditos"]
+    assert saldo_inicial >= 1
+
+    r = enviar(cliente, fotos_png)
+    assert r.status_code == 202
+    conta_depois = cliente.get("/me").json()
+    assert conta_depois["creditos"] == saldo_inicial - 1
+    assert conta_depois["movimentos"][0]["motivo"] == "geracao"
+    assert conta_depois["movimentos"][0]["quantidade"] == -1
+
+    recarga = cliente.post("/creditos/recarregar?quantidade=5").json()
+    assert recarga["creditos"] == saldo_inicial + 4
+    assert recarga["movimentos"][0]["motivo"] == "recarga_demo"
+
+
+def test_sem_creditos_da_402_e_erro_no_job_estorna(cliente, fotos_png, db):
+    demo = db.get(Usuario, USUARIO_DEMO_ID)
+    demo.creditos = 0
+    db.flush()
+    r = enviar(cliente, fotos_png)
+    assert r.status_code == 402
+    assert "créditos" in r.json()["detail"].lower()
+
+    # Com 1 crédito, uma foto toda branca falha no job e devolve o crédito (estorno)
+    demo.creditos = 1
+    db.flush()
+    branca = cv2.imencode(".png", np.full((300, 500, 3), 255, np.uint8))[1].tobytes()
+    r2 = enviar(cliente, {"lateral": branca, "topo": branca})
+    assert r2.status_code == 202
+    conta = cliente.get("/me").json()
+    assert conta["creditos"] == 1
+    assert conta["movimentos"][0]["motivo"] == "estorno"
+    assert conta["movimentos"][0]["quantidade"] == 1
+
+
+# ---------- Exportação .glb / .obj / .stl (F4-T05) ----------
+def test_exportar_versao_em_obj_e_stl(cliente, criado):
+    det = cliente.get(f"/modelos/{criado['modelo_id']}").json()
+    versao_id = det["versao"]["id"]
+    dims_esperadas = det["versao"]["metricas"]["dimensoes_cm"]
+
+    formatos = [("obj", "model/obj"), ("stl", "model/stl"), ("glb", "model/gltf-binary")]
+    for formato, midia in formatos:
+        r = cliente.get(f"/versoes/{versao_id}/exportar?formato={formato}")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith(midia)
+        malha = trimesh.load(io.BytesIO(r.content), file_type=formato, force="mesh")
+        np.testing.assert_allclose(malha.extents, dims_esperadas, atol=0.1)
+        if formato == "stl":
+            assert malha.is_watertight
+
+    assert cliente.get(f"/versoes/{versao_id}/exportar?formato=fbx").status_code == 422
+
+
+# ---------- Versões por matriz 4×4 e restauração (F4-T04) ----------
+def test_criar_versao_com_matriz_4x4_e_restaurar(cliente, criado):
+    modelo_id = criado["modelo_id"]
+    det1 = cliente.get(f"/modelos/{modelo_id}").json()
+    dims1 = det1["versao"]["metricas"]["dimensoes_cm"]
+
+    # Matriz 4×4 column-major de escala 2× uniforme
+    escala_2x = [2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1]
+    r = cliente.post(f"/modelos/{modelo_id}/versoes", json={"transformacao": escala_2x})
+    assert r.status_code == 201, r.text
+    v2 = r.json()
+    assert v2["numero"] == 2
+    assert v2["transformacao"] == escala_2x
+    np.testing.assert_allclose(v2["metricas"]["dimensoes_cm"], [d * 2 for d in dims1], atol=0.1)
+
+    det2 = cliente.get(f"/modelos/{modelo_id}").json()
+    assert len(det2["versoes"]) == 2 and det2["versao"]["numero"] == 2
+
+    rest = cliente.post(f"/modelos/{modelo_id}/versoes/1/restaurar")
+    assert rest.status_code == 200
+    assert rest.json()["versao"]["numero"] == 1
+
+
+# ---------- Regerar com máscara corrigida pelo pincel (F5-T05) ----------
+def test_regerar_com_mascara_corrigida_gera_nova_versao(cliente, criado):
+    import base64
+
+    modelo_id = criado["modelo_id"]
+    det = cliente.get(f"/modelos/{modelo_id}").json()
+    lat_info = next(i for i in det["imagens"] if i["vista"] == "lateral")
+
+    # Cria uma máscara válida do tamanho da foto lateral
+    m = np.zeros((lat_info["altura_px"], lat_info["largura_px"]), np.uint8)
+    m[40:-40, 40:-40] = 255
+    b64 = base64.b64encode(cv2.imencode(".png", m)[1].tobytes()).decode()
+    png_b64 = f"data:image/png;base64,{b64}"
+
+    r = cliente.post(
+        f"/modelos/{modelo_id}/regerar",
+        json={"mascaras": {"lateral": png_b64}, "resolucao": 64},
+    )
+    assert r.status_code == 202, r.text
+    det_novo = cliente.get(f"/modelos/{modelo_id}").json()
+    assert det_novo["status"] == "pronto"
+    assert det_novo["versao"]["numero"] == 2
