@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Botao, Etiqueta, Painel } from '../components/ui'
-import { useConta, useRecarregarCreditos } from '../lib/consultas'
+import { obterToken } from '../lib/api'
+import { useConta, useRecarregarCreditos, useSair } from '../lib/consultas'
 
 const ROTULOS_MOTIVO: Record<string, string> = {
   'boas-vindas': 'Créditos de boas-vindas',
@@ -29,6 +30,8 @@ const data = (iso: string) =>
 export default function Conta() {
   const conta = useConta()
   const recarregar = useRecarregarCreditos()
+  const sair = useSair()
+  const autenticado = Boolean(obterToken())
 
   if (conta.isPending) {
     return (
@@ -70,9 +73,25 @@ export default function Conta() {
             {dados.nome} · <span>{dados.email}</span>
           </p>
         </div>
-        <Botao para="/novo" variante="primario">
-          Novo modelo
-        </Botao>
+        <div className="acoes">
+          {autenticado ? (
+            <Botao onClick={sair} variante="fantasma">
+              Sair da conta
+            </Botao>
+          ) : (
+            <>
+              <Botao para="/entrar" variante="secundario">
+                Entrar
+              </Botao>
+              <Botao para="/cadastrar" variante="fantasma">
+                Criar conta
+              </Botao>
+            </>
+          )}
+          <Botao para="/novo" variante="primario">
+            Novo modelo
+          </Botao>
+        </div>
       </div>
 
       <Painel className="conta-saldo-painel">

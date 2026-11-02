@@ -32,6 +32,8 @@ describe('App', () => {
     ['/modelos', 'Meus modelos'],
     ['/modelos/abc-123', 'Modelo não encontrado'],
     ['/conta', 'Conta e créditos'],
+    ['/entrar', 'Entrar na sua conta'],
+    ['/cadastrar', 'Criar conta no RELEVO'],
     ['/guia', 'Guia de fotos'],
     ['/rota-que-nao-existe', 'Página não encontrada'],
   ])('renderiza %s com o cabeçalho', async (rota, titulo) => {
@@ -54,7 +56,16 @@ describe('App', () => {
     expect(within(nav).getByRole('link', { name: 'Início' })).not.toHaveClass('active')
   })
 
-  it('tem os 3 modos de visualização da Fase 0', () => {
-    expect(MODOS.map((m) => m.id)).toEqual(['solido', 'wireframe', 'normais'])
+  it('tem todos os modos de visualização de CG (F0..F4)', () => {
+    expect(MODOS.map((m) => m.id)).toEqual([
+      'solido',
+      'wireframe',
+      'arestas',
+      'flat',
+      'normais',
+      'altura',
+      'fresnel',
+      'uv',
+    ])
   })
 })

@@ -65,6 +65,30 @@ export function compor(posicao: Vec3, rotacaoGraus: Vec3, esc: Vec3, ordem: Orde
   return ordem === 'TRS' ? multiplicar4(T, multiplicar4(R, S)) : multiplicar4(S, multiplicar4(R, T))
 }
 
+/**
+ * Compõe a transformação em torno de um pivô arbitrário `p = (px, py, pz)` (F4-T03b):
+ * leva o pivô à origem `T(-p)`, aplica rotação e escala `R·S` (ou `S·R`), devolve ao pivô `T(p)`
+ * e soma a translação `T(posicao)`. Quando `pivo = [0, 0, 0]` coincide exatamente com `compor`.
+ */
+export function comporComPivo(
+  posicao: Vec3,
+  rotacaoGraus: Vec3,
+  esc: Vec3,
+  pivo: Vec3 = [0, 0, 0],
+  ordem: Ordem = 'TRS',
+): Mat4 {
+  const [px, py, pz] = pivo
+  if (px === 0 && py === 0 && pz === 0) return compor(posicao, rotacaoGraus, esc, ordem)
+  const ida = translacao4([-px, -py, -pz])
+  const volta = translacao4([px, py, pz])
+  const R = rotacaoEuler(rotacaoGraus)
+  const S = escala4(esc)
+  const RS = ordem === 'TRS' ? multiplicar4(R, S) : multiplicar4(S, R)
+  const emTornoDoPivo = multiplicar4(volta, multiplicar4(RS, ida))
+  const T = translacao4(posicao)
+  return ordem === 'TRS' ? multiplicar4(T, emTornoDoPivo) : multiplicar4(emTornoDoPivo, T)
+}
+
 export function aplicar4(m: Mat4, [x, y, z]: Vec3): Vec3 {
   const w = m[12] * x + m[13] * y + m[14] * z + m[15]
   return [

@@ -2,21 +2,29 @@ import { OrbitControls, TransformControls, useGLTF, useProgress } from '@react-t
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import * as THREE from 'three'
-import { fatorDaRoda, pontoDeZoom } from '../lib/camera'
+import { DIRECOES_PRESET, esfericaParaCartesiana, fatorDaRoda, pontoDeZoom } from '../lib/camera'
 import { ladoDoPlano, planoDeCorte, pontoNoPlano, type Vec3 } from '../lib/corte'
 import { planosDaSelecao, separar, type Malha } from '../lib/selecao'
 import type { ModoRender } from '../lib/modosRender'
+import fragAltura from '../shaders/altura.frag?raw'
+import vertAltura from '../shaders/altura.vert?raw'
+import fragFresnel from '../shaders/fresnel.frag?raw'
+import vertFresnel from '../shaders/fresnel.vert?raw'
 
 const COR_NEUTRA = '#c9c3bb'
 const COR_TAMPA = '#ff6b3d'
 
 import {
+  AUXILIARES_INICIAIS,
+  ILUMINACAO_INICIAL,
   TRANSFORMACAO_INICIAL,
+  type AuxiliaresCena,
   type Caixa,
   type Comando,
   type Corte,
   type Cursor,
   type DadosRaios,
+  type Iluminacao,
   type InfoCamera,
   type InfoSeparacao,
   type Transformacao,
@@ -33,6 +41,12 @@ type Props = {
   onTransformar?: (t: Transformacao) => void
   onCursor?: (c: Cursor) => void
   onCaixa?: (c: Caixa) => void
+  onEstatisticas?: (e: { vertices: number; triangulos: number }) => void
+  onCliquePonto?: (pontoLocal: Vec3) => void
+  medicao?: { p1: Vec3 | null; p2: Vec3 | null }
+  pivo?: Vec3
+  iluminacao?: Iluminacao
+  auxiliares?: AuxiliaresCena
   /** Plano near da câmera (cm): o recorte do volume de visão (frustum) que toda GPU faz. */
   near?: number
   comando?: Comando
@@ -83,6 +97,57 @@ function materiaisStencil(plano: THREE.Plane) {
   return [tras, frente]
 }
 
+function criarTexturaXadrezUV(): THREE.DataTexture {
+  const tam = 64
+  const dados = new Uint8Array(tam * tam * 4)
+  for (let y = 0; y < tam; y++) {
+    for (let x = 0; x < tam; x++) {
+      const casa = ((x >> 3) + (y >> 3)) & 1
+      const i = (y * tam + x) * 4
+      dados[i] = casa ? 255 : 44
+      dados[i + 1] = casa ? 120 : 52
+      dados[i + 2] = casa ? 72 : 68
+      dados[i + 3] = 255
+    }
+  }
+  const tex = new THREE.DataTexture(dados, tam, tam, THREE.RGBAFormat)
+  tex.wrapS = THREE.RepeatWrapping
+  tex.wrapT = THREE.RepeatWrapping
+  tex.needsUpdate = true
+  return tex
+}
+
+function garantirUV6Ilhas(geo: THREE.BufferGeometry) {
+  if (geo.hasAttribute('uv')) return
+  geo.computeBoundingBox()
+  geo.computeVertexNormals()
+  const bb = geo.boundingBox ?? new THREE.Box3(new THREE.Vector3(-14, 0, -5), new THREE.Vector3(14, 10, 5))
+  const min = bb.min
+  const span = bb.max.clone().sub(bb.min)
+  const p = geo.getAttribute('position')
+  const n = geo.getAttribute('normal')
+  const uv = new Float32Array(p.count * 2)
+  for (let i = 0; i < p.count; i++) {
+    const nx = n ? Math.abs(n.getX(i)) : 0
+    const ny = n ? Math.abs(n.getY(i)) : 0
+    const nz = n ? Math.abs(n.getZ(i)) : 1
+    const uNorm = (p.getX(i) - min.x) / Math.max(span.x, 0.01)
+    const yNorm = (p.getY(i) - min.y) / Math.max(span.y, 0.01)
+    const zNorm = (p.getZ(i) - min.z) / Math.max(span.z, 0.01)
+    if (nz >= nx && nz >= ny) {
+      uv[2 * i] = uNorm
+      uv[2 * i + 1] = yNorm
+    } else if (ny >= nx) {
+      uv[2 * i] = uNorm
+      uv[2 * i + 1] = zNorm
+    } else {
+      uv[2 * i] = zNorm
+      uv[2 * i + 1] = yNorm
+    }
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+}
+
 function Modelo({
   url,
   modo,
@@ -91,6 +156,8 @@ function Modelo({
   cursorRef,
   onCursor,
   onCaixa,
+  onEstatisticas,
+  onCliquePonto,
 }: {
   url: string
   modo: ModoRender
@@ -99,6 +166,8 @@ function Modelo({
   cursorRef: MutableRefObject<THREE.Vector3 | null>
   onCursor?: (c: Cursor) => void
   onCaixa?: (c: Caixa) => void
+  onEstatisticas?: (e: { vertices: number; triangulos: number }) => void
+  onCliquePonto?: (pontoLocal: Vec3) => void
 }) {
   const { scene } = useGLTF(url)
   const cortar = !!corte?.ativo
@@ -111,25 +180,59 @@ function Modelo({
     clone.traverse((o) => {
       if (o instanceof THREE.Mesh) malhas.push(o)
     })
+    const caixaCena = new THREE.Box3().setFromObject(clone)
     for (const o of malhas) {
       // O pipeline grava a cor por vértice (atributo "color"); sem ela, usa cinza neutro.
       const temCor = o.geometry.hasAttribute('color')
-      const material =
+      if (modo === 'uv') garantirUV6Ilhas(o.geometry)
+      const material: THREE.Material =
         modo === 'normais'
           ? new THREE.MeshNormalMaterial()
           : modo === 'wireframe'
             ? new THREE.MeshBasicMaterial({ color: '#ff6b3d', wireframe: true })
-            : new THREE.MeshStandardMaterial({
-                color: temCor ? '#ffffff' : COR_NEUTRA,
-                vertexColors: temCor,
-                roughness: 0.6,
-                metalness: 0.05,
-              })
+            : modo === 'altura'
+              ? new THREE.ShaderMaterial({
+                  vertexShader: vertAltura,
+                  fragmentShader: fragAltura,
+                  uniforms: {
+                    uMinY: { value: caixaCena.min.y },
+                    uMaxY: { value: caixaCena.max.y },
+                  },
+                })
+              : modo === 'fresnel'
+                ? new THREE.ShaderMaterial({
+                    vertexShader: vertFresnel,
+                    fragmentShader: fragFresnel,
+                  })
+                : modo === 'uv'
+                  ? new THREE.MeshStandardMaterial({
+                      map: criarTexturaXadrezUV(),
+                      roughness: 0.55,
+                      metalness: 0.05,
+                    })
+                  : new THREE.MeshStandardMaterial({
+                      color: temCor ? '#ffffff' : COR_NEUTRA,
+                      vertexColors: temCor,
+                      flatShading: modo === 'flat',
+                      roughness: 0.6,
+                      metalness: 0.05,
+                    })
       material.clippingPlanes = cortar ? [plano] : []
       // Sem tampa, o interior aparece: pintamos as faces de trás para ver "a casca"
       material.side = cortar && !tampa ? THREE.DoubleSide : THREE.FrontSide
       o.material = material
       o.renderOrder = 2
+      if (modo === 'arestas') {
+        const MatArame = new THREE.MeshBasicMaterial({
+          color: '#ff6b3d',
+          wireframe: true,
+          clippingPlanes: cortar ? [plano] : [],
+        })
+        const arame = new THREE.Mesh(o.geometry, MatArame)
+        arame.renderOrder = 2.1
+        arame.raycast = () => {}
+        o.add(arame)
+      }
       if (tampa) {
         for (const m of materiaisStencil(plano)) {
           const filho = new THREE.Mesh(o.geometry, m)
@@ -145,7 +248,19 @@ function Modelo({
   useEffect(() => {
     const caixa = new THREE.Box3().setFromObject(objeto)
     onCaixa?.({ min: arred(caixa.min), max: arred(caixa.max) })
-  }, [objeto, onCaixa])
+    let vertices = 0
+    let triangulos = 0
+    objeto.traverse((o) => {
+      if (o instanceof THREE.Mesh && o.renderOrder === 2) {
+        const pos = o.geometry.getAttribute('position')
+        const idx = o.geometry.getIndex()
+        if (pos) vertices += pos.count
+        if (idx) triangulos += Math.floor(idx.count / 3)
+        else if (pos) triangulos += Math.floor(pos.count / 3)
+      }
+    })
+    onEstatisticas?.({ vertices, triangulos })
+  }, [objeto, onCaixa, onEstatisticas])
 
   // Libera os materiais criados acima quando o modo/modelo muda (evita vazamento de GPU)
   useEffect(
@@ -176,9 +291,21 @@ function Modelo({
     onCursor?.({ modelo: arred(local), normal: arred(normal) })
   }
 
+  function aoClicar(e: ThreeEvent<MouseEvent>) {
+    if (!onCliquePonto) return
+    const visivel = e.intersections.find(
+      (i) => !cortar || ladoDoPlano([i.point.x, i.point.y, i.point.z], { normal: plano.normal.toArray() as Vec3, constante: plano.constant }) >= 0,
+    )
+    if (!visivel) return
+    e.stopPropagation()
+    const local = objeto.worldToLocal(visivel.point.clone())
+    onCliquePonto(arred(local))
+  }
+
   return (
     <primitive
       object={objeto}
+      onClick={aoClicar}
       onPointerMove={aoMover}
       onPointerOut={() => {
         cursorRef.current = null
@@ -316,6 +443,14 @@ function ControleCamera({
       const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 40
       const dist = esfera.radius / Math.sin(((fov / 2) * Math.PI) / 180)
       const dir = camera.position.clone().sub(orbita.target).normalize()
+      orbita.target.copy(esfera.center)
+      camera.position.copy(esfera.center).addScaledVector(dir, dist)
+      orbita.update()
+    } else if (comando.tipo === 'preset' && grupo.current && orbita) {
+      const esfera = new THREE.Box3().setFromObject(grupo.current).getBoundingSphere(new THREE.Sphere())
+      const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 40
+      const dist = esfera.radius / Math.sin(((fov / 2) * Math.PI) / 180)
+      const dir = new THREE.Vector3(...DIRECOES_PRESET[comando.preset]).normalize()
       orbita.target.copy(esfera.center)
       camera.position.copy(esfera.center).addScaledVector(dir, dist)
       orbita.update()
@@ -600,7 +735,47 @@ function Cena(props: Props) {
     <>
       <group ref={grupo}>
         {/* O pipeline já entrega o modelo em cm, centrado em x/z e apoiado no chão (y = 0) */}
-        <Modelo key={url} url={url} modo={modo} corte={corte} plano={plano} cursorRef={cursorRef} onCursor={onCursor} onCaixa={aoCaixa} />
+        <Modelo
+          key={url}
+          url={url}
+          modo={modo}
+          corte={corte}
+          plano={plano}
+          cursorRef={cursorRef}
+          onCursor={onCursor}
+          onCaixa={aoCaixa}
+          onEstatisticas={props.onEstatisticas}
+          onCliquePonto={props.onCliquePonto}
+        />
+        {props.medicao?.p1 && (
+          <mesh position={props.medicao.p1} raycast={() => {}} renderOrder={5}>
+            <sphereGeometry args={[0.32, 16, 12]} />
+            <meshBasicMaterial color="#06d6a0" depthTest={false} />
+          </mesh>
+        )}
+        {props.medicao?.p2 && (
+          <mesh position={props.medicao.p2} raycast={() => {}} renderOrder={5}>
+            <sphereGeometry args={[0.32, 16, 12]} />
+            <meshBasicMaterial color="#06d6a0" depthTest={false} />
+          </mesh>
+        )}
+        {props.medicao?.p1 && props.medicao?.p2 && (
+          <lineSegments raycast={() => {}} renderOrder={5}>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([...props.medicao.p1, ...props.medicao.p2]), 3]}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#06d6a0" depthTest={false} />
+          </lineSegments>
+        )}
+        {props.pivo && (props.pivo[0] !== 0 || props.pivo[1] !== 0 || props.pivo[2] !== 0) && (
+          <mesh position={props.pivo} raycast={() => {}} renderOrder={5}>
+            <sphereGeometry args={[0.36, 16, 12]} />
+            <meshBasicMaterial color="#ff6b3d" depthTest={false} />
+          </mesh>
+        )}
       </group>
       {corte?.ativo && corte.tampa && <Tampa plano={plano} />}
       {corte?.ativo && <IndicadorPlano plano={plano} tamanho={tamanhoPlano} />}
@@ -644,6 +819,9 @@ function Carregando() {
 }
 
 export default function ModelViewer(props: Props) {
+  const ilum = props.iluminacao ?? ILUMINACAO_INICIAL
+  const aux = props.auxiliares ?? AUXILIARES_INICIAIS
+  const posLuz = esfericaParaCartesiana(ilum.azimute, ilum.elevacao, 38)
   return (
     <>
     <Carregando />
@@ -658,13 +836,19 @@ export default function ModelViewer(props: Props) {
       }}
     >
       <color attach="background" args={['#181b22']} />
-      <hemisphereLight args={['#ffffff', '#444444', 1.2]} />
-      <directionalLight position={DIRECAO_LUZ} intensity={2} />
+      <hemisphereLight args={['#ffffff', '#444444', ilum.ambiente]} />
+      <directionalLight position={posLuz} intensity={ilum.direcional} />
       <Suspense fallback={null}>
         <Cena {...props} />
       </Suspense>
-      {/* Grade de 2 cm por célula (o modelo está em centímetros) */}
-      <gridHelper args={[60, 30, '#3a4150', '#262b35']} raycast={() => {}} />
+      {aux.grade && <gridHelper args={[60, 30, '#3a4150', '#262b35']} raycast={() => {}} />}
+      {aux.eixos && <axesHelper args={[18]} raycast={() => {}} />}
+      {ilum.sombraChao && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} raycast={() => {}}>
+          <circleGeometry args={[18, 48]} />
+          <meshBasicMaterial color="#0b0d12" transparent opacity={0.38} depthWrite={false} />
+        </mesh>
+      )}
       {/* A roda do mouse é tratada pelo ControleCamera (dolly no ponto sob o cursor) */}
       <OrbitControls makeDefault target={[0, 4, 0]} enableZoom={false} />
     </Canvas>

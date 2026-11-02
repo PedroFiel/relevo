@@ -32,3 +32,37 @@ export function pontoDeZoom(
 export function fatorDaRoda(deltaY: number): number {
   return Math.exp(Math.sign(deltaY) * Math.min(Math.abs(deltaY), 120) * 0.0015)
 }
+
+/**
+ * Distância da câmera ao centro da esfera envolvente para enquadrar o objeto inteiro (F2-T02):
+ * d = (raio / sen(fov/2)) · margem.
+ */
+export function distanciaParaEnquadrar(raio: number, fovGraus: number, margem = 1.15): number {
+  const meioFovRad = ((Math.max(10, Math.min(120, fovGraus)) / 2) * Math.PI) / 180
+  return (Math.max(0.1, raio) / Math.sin(meioFovRad)) * margem
+}
+
+export type PresetCamera = 'perspectiva' | 'lateral' | 'topo' | 'frente'
+
+/** Direções unitárias de cada vista predefinida de câmera (F2-T02). */
+export const DIRECOES_PRESET: Record<PresetCamera, Vec3> = {
+  perspectiva: [0.62, 0.42, 0.66],
+  lateral: [0, 0.08, 1],
+  topo: [0, 1, 0.02],
+  frente: [1, 0.08, 0],
+}
+
+/**
+ * Converte coordenadas esféricas (azimute e elevação em graus, raio) para cartesianas (x, y, z)
+ * para posicionar a luz direcional (F2-T04).
+ */
+export function esfericaParaCartesiana(azimuteGraus: number, elevacaoGraus: number, raio = 36): Vec3 {
+  const az = (azimuteGraus * Math.PI) / 180
+  const el = (elevacaoGraus * Math.PI) / 180
+  const cosEl = Math.cos(el)
+  return [
+    Math.round(raio * cosEl * Math.sin(az) * 100) / 100,
+    Math.round(raio * Math.sin(el) * 100) / 100,
+    Math.round(raio * cosEl * Math.cos(az) * 100) / 100,
+  ]
+}

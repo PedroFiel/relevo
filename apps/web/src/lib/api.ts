@@ -70,6 +70,22 @@ export type Conta = {
   movimentos: MovimentoCredito[]
 }
 
+export type RespostaToken = {
+  access_token: string
+  token_type: string
+  usuario: Conta
+}
+
+export type ModeloPublico = {
+  id: string
+  nome: string
+  comprimento_cm: number
+  glb_url: string
+  dimensoes_cm?: number[] | null
+  faces?: number | null
+  vertices?: number | null
+}
+
 export type ModeloResumo = {
   id: string
   nome: string
@@ -114,15 +130,46 @@ export class ErroApi extends Error {
   }
 }
 
+const CHAVE_TOKEN = 'relevo.jwt.v1'
+
+export function obterToken(): string | null {
+  try {
+    return localStorage.getItem(CHAVE_TOKEN)
+  } catch {
+    return null
+  }
+}
+
+export function salvarToken(token: string): void {
+  try {
+    localStorage.setItem(CHAVE_TOKEN, token)
+  } catch {
+    /* modo privado ou storage bloqueado */
+  }
+}
+
+export function limparToken(): void {
+  try {
+    localStorage.removeItem(CHAVE_TOKEN)
+  } catch {
+    /* modo privado ou storage bloqueado */
+  }
+}
+
 /** URL que a API devolve (`/arquivos/…`, `/imagens/…`) → URL que o navegador usa. */
 export function urlApi(caminho: string): string {
   return caminho.startsWith(BASE_API) ? caminho : `${BASE_API}${caminho}`
 }
 
 async function pedir<T>(caminho: string, init?: RequestInit): Promise<T> {
+  const token = obterToken()
+  const cabecalhos = new Headers(init?.headers)
+  if (token && !cabecalhos.has('Authorization')) {
+    cabecalhos.set('Authorization', `Bearer ${token}`)
+  }
   let resposta: Response
   try {
-    resposta = await fetch(urlApi(caminho), init)
+    resposta = await fetch(urlApi(caminho), { ...init, headers: cabecalhos })
   } catch {
     throw new ErroApi(0, 'Não conseguimos falar com o servidor. Confira sua conexão e tente de novo.')
   }
@@ -185,3 +232,16 @@ export const regerarModelo = (modeloId: string, mascaras: Partial<Record<Vista, 
   })
 export const urlExportarVersao = (versaoId: string, formato: 'glb' | 'obj' | 'stl') =>
   urlApi(`/versoes/${versaoId}/exportar?formato=${formato}`)
+export const registrarUsuario = (dados: { nome: string; email: string; senha: string }) =>
+  pedir<RespostaToken>('/auth/registrar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados),
+  })
+export const loginUsuario = (dados: { email: string; senha: string }) =>
+  pedir<RespostaToken>('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados),
+  })
+export const buscarModeloPublico = (id: string) => pedir<ModeloPublico>(`/publico/${id}`)
