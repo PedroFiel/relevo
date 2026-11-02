@@ -158,3 +158,96 @@ def test_s3_storage_salvar_abrir_cache_local_e_apagar_prefixo(tmp_path: Path):
     # Proteção contra path traversal
     with pytest.raises(ChaveInvalida):
         s3.salvar("../fora/segredo.txt", b"x")
+
+
+def test_s3_storage_cliente_http_padrao_aws_sigv4(tmp_path: Path):
+    """Testa `S3Storage(..., cliente=None)` usando o cliente HTTP AWS SigV4 nativo (sem boto3)."""
+    import urllib.parse
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from threading import Thread
+
+    armazenamento: dict[str, bytes] = {}
+    cabecalhos_auth: list[str] = []
+
+    class _ServidorS3Falso(BaseHTTPRequestHandler):
+        def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+            pass
+
+        def _registrar_auth(self) -> None:
+            cabecalhos_auth.append(self.headers.get("Authorization", ""))
+
+        def do_PUT(self) -> None:
+            self._registrar_auth()
+            tamanho = int(self.headers.get("Content-Length", "0"))
+            corpo = self.rfile.read(tamanho) if tamanho > 0 else b""
+            partes = self.path.lstrip("/").split("/", 1)
+            if len(partes) == 2:
+                armazenamento[partes[1]] = corpo
+            self.send_response(200)
+            self.end_headers()
+
+        def do_GET(self) -> None:
+            self._registrar_auth()
+            parsed = urllib.parse.urlparse(self.path)
+            qs = urllib.parse.parse_qs(parsed.query)
+            partes = parsed.path.lstrip("/").split("/", 1)
+            if len(partes) == 1 and "list-type" in qs:
+                prefixo = qs.get("prefix", [""])[0]
+                chaves = [k for k in armazenamento if k.startswith(prefixo)]
+                itens = "".join(f"<Contents><Key>{k}</Key></Contents>" for k in chaves)
+                xml = (
+                    '<?xml version="1.0" encoding="UTF-8"?>'
+                    f"<ListBucketResult>{itens}</ListBucketResult>"
+                )
+                dados = xml.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/xml")
+                self.send_header("Content-Length", str(len(dados)))
+                self.end_headers()
+                self.wfile.write(dados)
+                return
+            if len(partes) == 2 and partes[1] in armazenamento:
+                dados = armazenamento[partes[1]]
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(dados)))
+                self.end_headers()
+                self.wfile.write(dados)
+                return
+            self.send_response(404)
+            self.end_headers()
+
+        def do_DELETE(self) -> None:
+            self._registrar_auth()
+            partes = self.path.lstrip("/").split("/", 1)
+            if len(partes) == 2:
+                armazenamento.pop(partes[1], None)
+            self.send_response(204)
+            self.end_headers()
+
+    servidor = HTTPServer(("127.0.0.1", 0), _ServidorS3Falso)
+    porta = servidor.server_port
+    t = Thread(target=servidor.serve_forever, daemon=True)
+    t.start()
+    try:
+        from relevo_api.config import settings
+
+        endpoint_antigo = settings.s3_endpoint_url
+        settings.s3_endpoint_url = f"http://127.0.0.1:{porta}"
+        try:
+            s3 = S3Storage(bucket="relevo-http", cache_dir=tmp_path / "cache-http", cliente=None)
+            chave = "modelos/abc/v1/modelo.glb"
+            s3.salvar(chave, b"glTF-via-http-sigv4")
+            assert any(h.startswith("AWS4-HMAC-SHA256 Credential=") for h in cabecalhos_auth)
+
+            # Força leitura pela rede apagando o cache local
+            s3.caminho_local(chave).unlink()
+            assert s3.abrir(chave) == b"glTF-via-http-sigv4"
+
+            s3.apagar_prefixo("modelos/abc")
+            with pytest.raises(FileNotFoundError):
+                s3.abrir(chave)
+        finally:
+            settings.s3_endpoint_url = endpoint_antigo
+    finally:
+        servidor.shutdown()
+        servidor.server_close()
