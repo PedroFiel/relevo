@@ -34,7 +34,7 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
   Item 5: o estúdio já tinha o layout canvas + painel (`.estudio`, painel de 360 px; abaixo em < 900 px) — mantido.
   Os componentes antigos do estúdio não foram migrados para `components/ui` (refatoração sem ganho agora).
 
-### F2-T02 — Câmera e controles de órbita
+### F2-T02 — Câmera e controles de órbita — **FEITO (02/11)**
 - **Frente:** front
 - **Como fazer:**
   1. `OrbitControls` com `enableDamping`, limites de distância (`minDistance` 10, `maxDistance` 150) e de ângulo
@@ -48,7 +48,7 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
 - **Aceite:** as vistas Lateral/Topo/Frente mostram o modelo igual às fotos de entrada.
 - **Conceito de CG:** câmera virtual, projeção perspectiva × ortográfica, *frustum*, interpolação.
 
-### F2-T03 — Modos de renderização
+### F2-T03 — Modos de renderização — **FEITO (02/11)**
 - **Frente:** front
 - **Como fazer:** ampliar `src/lib/modosRender.ts` e `ModelViewer`:
   | Modo | Implementação | Conceito |
@@ -63,7 +63,7 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
 - **Testes:** `MODOS` contém todos os ids; cada um tem rótulo e conceito não vazio.
 - **Aceite:** alternar modos não recarrega o modelo (materiais trocados no `useMemo`).
 
-### F2-T04 — Iluminação controlável
+### F2-T04 — Iluminação controlável — **FEITO (02/11)**
 - **Frente:** front
 - **Como fazer:**
   1. Painel "Luz": intensidade ambiente, intensidade e **direção** da luz direcional (azimute/elevação em sliders →
@@ -75,7 +75,7 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
 - **Aceite:** mover o slider de elevação muda sombra e sombreamento em tempo real.
 - **Conceito de CG:** modelos de iluminação (ambiente + difusa + especular), *shadow mapping*.
 
-### F2-T05 — Shader customizado (GLSL)
+### F2-T05 — Shader customizado (GLSL) — **FEITO (02/11)**
 - **Frente:** front
 - **Como fazer:**
   1. `src/shaders/altura.vert` / `altura.frag` (importar com `?raw`): *vertex shader* passa a posição em mundo
@@ -87,7 +87,7 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
 - **Aceite:** modos "Altura" e "Raio-X" aparecem no seletor e respondem aos controles.
 - **Conceito de CG:** pipeline programável, *vertex* × *fragment shader*, `varying`, `uniform`, espaços de coordenadas.
 
-### F2-T06 — Ajudantes visuais
+### F2-T06 — Ajudantes visuais — **FEITO (02/11)**
 - **Frente:** front
 - **Como fazer:** toggles para `axesHelper` (x vermelho = comprimento, y verde = altura, z azul = largura — mesma
   convenção do pipeline), grade de 1 cm/10 cm, `Box3Helper` (caixa envolvente) com as **dimensões em cm** em rótulos
@@ -95,7 +95,7 @@ customizado, eixos, estatísticas do modelo e carregamento por arrastar-e-soltar
 - **Aceite:** as dimensões mostradas batem com `metricas.dimensoes_cm` do pipeline.
 - **Conceito de CG:** sistema de coordenadas do mundo, caixa envolvente (AABB).
 
-### F2-T07 — Estatísticas do modelo
+### F2-T07 — Estatísticas do modelo — **FEITO (02/11)**
 - **Frente:** front
 - **Como fazer:** `src/lib/estatisticas.ts`: dado um `Object3D`, percorrer as `Mesh` e somar vértices
   (`geometry.attributes.position.count`) e triângulos (`index.count / 3`); dimensões via `Box3`. Exibir no painel +

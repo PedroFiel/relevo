@@ -96,6 +96,8 @@ Para miniaturas e para desenhar o contorno sobre a foto original (F3-T14).
 
 | Método | Rota | Descrição |
 |---|---|---|
+| POST | `/auth/registrar` | `{nome, email, senha}` → cria usuário com 10 créditos iniciais (`boas-vindas`) e devolve JWT (`TokenOut`, F4-T01) |
+| POST | `/auth/login` | `{email, senha}` → valida credenciais (`scrypt`) e devolve JWT (`TokenOut`, F4-T01) |
 | GET | `/me` | usuário + saldo de créditos + últimos 50 movimentos (`ContaOut`, F4-T02) |
 | POST | `/creditos/recarregar?quantidade=10` | recarrega créditos de demonstração (1–100) e grava `recarga_demo` (F4-T02) |
 | POST | `/modelos/{id}/versoes` | `{transformacao: number[16]}` → aplica matriz 4×4 ao `.glb` atual e salva nova versão (F4-T04) |
@@ -107,6 +109,8 @@ Para miniaturas e para desenhar o contorno sobre a foto original (F3-T14).
 | Método | Rota | Descrição |
 |---|---|---|
 | POST | `/modelos/{id}/regerar` | `{mascaras: {vista: "data:image/png;base64,..."}}` → debita 1 crédito e dispara novo job pulando a segmentação automática nas vistas corrigidas pelo pincel (F5-T05) |
+| GET | `/publico/{modelo_id}` | metadados públicos (`id`, `nome`, `comprimento_cm`, `glb_url`, `dimensoes_cm`, `faces`, `vertices`) para o visualizador incorporável `/embed/:id` (F5-T06) |
+| GET | `/publico/{modelo_id}/glb` | binário `.glb` da versão ativa do modelo pronto para exibição pública no `<iframe>` (F5-T06) |
 
 ## Desenvolvimento (já existe)
 

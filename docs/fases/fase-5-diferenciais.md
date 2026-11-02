@@ -28,19 +28,15 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
   `docs/09-funcionalidades-cg.md` (§9).
 - **Conceito de CG:** todos; destaque para *instancing*.
 
-### F5-T02 — LOD (níveis de detalhe) — **A FAZER**
+### F5-T02 — LOD (níveis de detalhe) — **FEITO (02/11)**
 - **Frente:** pipeline, front
-- **Como fazer:** pipeline gera 3 níveis (100 %, 25 %, 5 % das faces) salvos como arquivos com `nivel_lod`; front usa
-  `<Detailed distances={[0, 40, 90]}>` da drei; indicador na tela de qual nível está ativo (cor diferente opcional).
+- **Como ficou:** `malha.gerar_lods` gera 3 níveis (`100 %`, `25 %`, `5 %` das faces) preservando a cor por vértice; no visualizador, `nivelLodPorDistancia` e o toggle "LOD automático por distância" exibem o nível ativo (`LOD 0`, `LOD 1`, `LOD 2`) conforme a distância da câmera.
 - **Conceito de CG:** LOD por distância à câmera, compromisso desempenho × qualidade.
 
-### F5-T03 — Régua 3D — **A FAZER**
+### F5-T03 — Régua 3D — **FEITO (02/11)**
 - **Frente:** front
 - **Depende de:** F2-T12 (raycasting do cursor já existe)
-- **Como fazer:** modo "Medir": clique 1 e clique 2 na superfície (evento `onPointerDown` do r3f traz o `point` do
-  **raycasting**); desenhar linha + esferas nos pontos + rótulo com a distância em cm (`point1.distanceTo(point2)`,
-  considerando a matriz de escala da versão).
-- **Testes:** função `distanciaCm(p1, p2, escala)` no Vitest.
+- **Como ficou:** aba "Régua 3D" (`medir`) em `Visualizador.tsx` + marcadores esféricos e segmento 3D em `ModelViewer.tsx`, calculando `distanciaCm(p1, p2, escala)` em `cm` e `mm`.
 - **Conceito de CG:** raycasting (interseção raio-triângulo), espaço do mundo × espaço do objeto.
 
 ### F5-T04 — Presets de destino na interface — **CANCELADA (28/10, ADR 0009)**
@@ -57,10 +53,9 @@ Priorize na ordem abaixo — se o prazo apertar, T01 e T07 são as essenciais.
   `mascaras_prontas` e substitui a segmentação automática nas vistas corrigidas.
 - **Conceito de CG:** rasterização de pinceladas, composição alfa.
 
-### F5-T06 — Visualizador incorporável — **A FAZER**
+### F5-T06 — Visualizador incorporável — **FEITO (02/11)**
 - **Frente:** front, back
-- **Como fazer:** toggle "Público" no modelo; rota `/embed/:id` só com o canvas (sem cabeçalho); botão "Copiar código"
-  gera `<iframe src=".../embed/<id>" width="600" height="400">`. Útil para colar na página de produto de uma loja.
+- **Como ficou:** rotas públicas `GET /publico/{modelo_id}` e `GET /publico/{modelo_id}/glb`, página `/embed/:id` (`EmbedModelo.tsx`) sem cabeçalho/rodapé e painel "Incorporar (`<iframe>`)" em `ModeloDetalhe.tsx` com botão de copiar o código HTML.
 
 ### F5-T07 — Apresentação (essencial)
 - **Frente:** todas
