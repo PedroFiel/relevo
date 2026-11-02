@@ -76,17 +76,16 @@ export default function EditorMascara({
     cv.height = A
     const ctx = cv.getContext?.('2d')
     if (!ctx) return
-    ctx.fillStyle = '#000000'
-    ctx.fillRect(0, 0, L, A)
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.clearRect(0, 0, L, A)
+    ctx.fillStyle = '#ff6b3d'
     if (contorno && contorno.length > 2) {
-      ctx.fillStyle = '#ffffff'
       ctx.beginPath()
       contorno.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)))
       ctx.closePath()
       ctx.fill()
     } else {
       // Sem contorno prévio: começa com um retângulo central para o usuário ajustar
-      ctx.fillStyle = '#ffffff'
       ctx.fillRect(Math.round(L * 0.15), Math.round(A * 0.2), Math.round(L * 0.7), Math.round(A * 0.6))
     }
     setModificada(false)
@@ -120,9 +119,9 @@ export default function EditorMascara({
   function pintarTraco(de: { x: number; y: number }, ate: { x: number; y: number }) {
     const ctx = mascaraRef.current?.getContext?.('2d')
     if (!ctx) return
-    const cor = ferramenta === 'pincel' ? '#ffffff' : '#000000'
-    ctx.strokeStyle = cor
-    ctx.fillStyle = cor
+    ctx.globalCompositeOperation = ferramenta === 'pincel' ? 'source-over' : 'destination-out'
+    ctx.strokeStyle = '#ff6b3d'
+    ctx.fillStyle = '#ff6b3d'
     ctx.lineWidth = raio * 2
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
@@ -133,6 +132,7 @@ export default function EditorMascara({
     ctx.beginPath()
     ctx.arc(ate.x, ate.y, raio, 0, Math.PI * 2)
     ctx.fill()
+    ctx.globalCompositeOperation = 'source-over'
     setModificada(true)
     renderizarVisor()
   }
@@ -162,7 +162,23 @@ export default function EditorMascara({
     const cv = mascaraRef.current
     let dataUrl = ''
     try {
-      dataUrl = cv?.toDataURL?.('image/png') ?? ''
+      const bin = document.createElement('canvas')
+      bin.width = L
+      bin.height = A
+      const bctx = bin.getContext?.('2d')
+      if (cv && bctx) {
+        // Composição de Porter–Duff: converte a camada alfa pintada em máscara binária (#ffffff sobre #000000)
+        bctx.drawImage(cv, 0, 0, L, A)
+        bctx.globalCompositeOperation = 'source-in'
+        bctx.fillStyle = '#ffffff'
+        bctx.fillRect(0, 0, L, A)
+        bctx.globalCompositeOperation = 'destination-over'
+        bctx.fillStyle = '#000000'
+        bctx.fillRect(0, 0, L, A)
+        dataUrl = bin.toDataURL?.('image/png') ?? ''
+      } else {
+        dataUrl = cv?.toDataURL?.('image/png') ?? ''
+      }
     } catch {
       dataUrl = ''
     }

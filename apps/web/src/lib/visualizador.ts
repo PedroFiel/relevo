@@ -129,6 +129,137 @@ export function nivelLodPorDistancia(
   }
 }
 
+/**
+ * Simplifica uma malha triangular por agrupamento espacial em grade uniforme
+ * (Vertex Clustering — Rossignac & Borrel, 1993) para os níveis LOD 1 e LOD 2 (F5-T02).
+ */
+export function simplificarMalhaLod(
+  posicoes: Float32Array,
+  indices: Uint32Array | Uint16Array | null,
+  cores: Float32Array | null,
+  itemSizeCor: number,
+  nivel: 0 | 1 | 2,
+): {
+  posicoes: Float32Array
+  indices: Uint32Array
+  cores: Float32Array | null
+} {
+  const numVerts = Math.floor(posicoes.length / 3)
+  const numTriOrig = indices ? Math.floor(indices.length / 3) : Math.floor(numVerts / 3)
+  if (nivel === 0 || numTriOrig <= 24) {
+    const idxPadrao = new Uint32Array(numTriOrig * 3)
+    if (indices) {
+      for (let i = 0; i < idxPadrao.length; i++) idxPadrao[i] = indices[i]
+    } else {
+      for (let i = 0; i < idxPadrao.length; i++) idxPadrao[i] = i
+    }
+    return {
+      posicoes: new Float32Array(posicoes),
+      indices: idxPadrao,
+      cores: cores ? new Float32Array(cores) : null,
+    }
+  }
+
+  let minX = Infinity
+  let minY = Infinity
+  let minZ = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  let maxZ = -Infinity
+  for (let i = 0; i < numVerts; i++) {
+    const x = posicoes[3 * i]
+    const y = posicoes[3 * i + 1]
+    const z = posicoes[3 * i + 2]
+    if (x < minX) minX = x
+    if (y < minY) minY = y
+    if (z < minZ) minZ = z
+    if (x > maxX) maxX = x
+    if (y > maxY) maxY = y
+    if (z > maxZ) maxZ = z
+  }
+
+  const spanX = Math.max(maxX - minX, 1e-5)
+  const spanY = Math.max(maxY - minY, 1e-5)
+  const spanZ = Math.max(maxZ - minZ, 1e-5)
+  const maxSpan = Math.max(spanX, spanY, spanZ)
+  const divisoes = nivel === 1 ? 28 : 12
+  const passo = maxSpan / divisoes
+  const gx = Math.max(2, Math.ceil(spanX / passo))
+  const gy = Math.max(2, Math.ceil(spanY / passo))
+  const gz = Math.max(2, Math.ceil(spanZ / passo))
+
+  const mapaCelula = new Map<number, number>()
+  const mapaVertice = new Uint32Array(numVerts)
+  const somaPos: number[] = []
+  const somaCor: number[] = []
+  const contagem: number[] = []
+
+  for (let i = 0; i < numVerts; i++) {
+    const ix = Math.min(gx - 1, Math.max(0, Math.floor(((posicoes[3 * i] - minX) / spanX) * gx)))
+    const iy = Math.min(gy - 1, Math.max(0, Math.floor(((posicoes[3 * i + 1] - minY) / spanY) * gy)))
+    const iz = Math.min(gz - 1, Math.max(0, Math.floor(((posicoes[3 * i + 2] - minZ) / spanZ) * gz)))
+    const chave = ix + gx * (iy + gy * iz)
+    let idCluster = mapaCelula.get(chave)
+    if (idCluster === undefined) {
+      idCluster = contagem.length
+      mapaCelula.set(chave, idCluster)
+      somaPos.push(0, 0, 0)
+      if (cores) {
+        for (let c = 0; c < itemSizeCor; c++) somaCor.push(0)
+      }
+      contagem.push(0)
+    }
+    mapaVertice[i] = idCluster
+    somaPos[3 * idCluster] += posicoes[3 * i]
+    somaPos[3 * idCluster + 1] += posicoes[3 * i + 1]
+    somaPos[3 * idCluster + 2] += posicoes[3 * i + 2]
+    if (cores) {
+      for (let c = 0; c < itemSizeCor; c++) {
+        somaCor[itemSizeCor * idCluster + c] += cores[itemSizeCor * i + c]
+      }
+    }
+    contagem[idCluster] += 1
+  }
+
+  const numClusters = contagem.length
+  const novasPosicoes = new Float32Array(numClusters * 3)
+  const novasCores = cores ? new Float32Array(numClusters * itemSizeCor) : null
+  for (let k = 0; k < numClusters; k++) {
+    const n = contagem[k]
+    novasPosicoes[3 * k] = somaPos[3 * k] / n
+    novasPosicoes[3 * k + 1] = somaPos[3 * k + 1] / n
+    novasPosicoes[3 * k + 2] = somaPos[3 * k + 2] / n
+    if (novasCores) {
+      for (let c = 0; c < itemSizeCor; c++) {
+        novasCores[itemSizeCor * k + c] = somaCor[itemSizeCor * k + c] / n
+      }
+    }
+  }
+
+  const novosIndicesLista: number[] = []
+  for (let t = 0; t < numTriOrig; t++) {
+    const v0 = indices ? indices[3 * t] : 3 * t
+    const v1 = indices ? indices[3 * t + 1] : 3 * t + 1
+    const v2 = indices ? indices[3 * t + 2] : 3 * t + 2
+    const c0 = mapaVertice[v0]
+    const c1 = mapaVertice[v1]
+    const c2 = mapaVertice[v2]
+    if (c0 !== c1 && c1 !== c2 && c2 !== c0) {
+      novosIndicesLista.push(c0, c1, c2)
+    }
+  }
+
+  if (novosIndicesLista.length < 12) {
+    return simplificarMalhaLod(posicoes, indices, cores, itemSizeCor, 0)
+  }
+
+  return {
+    posicoes: novasPosicoes,
+    indices: new Uint32Array(novosIndicesLista),
+    cores: novasCores,
+  }
+}
+
 /** Tudo que o rastreamento de raios precisa, já no espaço do MUNDO. */
 export type DadosRaios = {
   pos: Float32Array

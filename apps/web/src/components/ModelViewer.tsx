@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type Mutab
 import * as THREE from 'three'
 import { DIRECOES_PRESET, esfericaParaCartesiana, fatorDaRoda, pontoDeZoom } from '../lib/camera'
 import { ladoDoPlano, planoDeCorte, pontoNoPlano, type Vec3 } from '../lib/corte'
+import { comporComPivo } from '../lib/matrizes'
 import { planosDaSelecao, separar, type Malha } from '../lib/selecao'
 import type { ModoRender } from '../lib/modosRender'
 import fragAltura from '../shaders/altura.frag?raw'
@@ -18,6 +19,8 @@ import {
   AUXILIARES_INICIAIS,
   ILUMINACAO_INICIAL,
   TRANSFORMACAO_INICIAL,
+  nivelLodPorDistancia,
+  simplificarMalhaLod,
   type AuxiliaresCena,
   type Caixa,
   type Comando,
@@ -60,6 +63,7 @@ type Props = {
 // Mesma luz na rasterização e no rastreamento de raios; de cima e da esquerda, para a sombra cair
 // do lado que a câmera inicial vê
 const DIRECAO_LUZ: Vec3 = [-12, 30, 18]
+const PIVO_ORIGEM: Vec3 = [0, 0, 0]
 
 const rad = (g: number) => (g * Math.PI) / 180
 const graus = (r: number) => Math.round(((r * 180) / Math.PI) * 10) / 10
@@ -148,9 +152,49 @@ function garantirUV6Ilhas(geo: THREE.BufferGeometry) {
   geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
 }
 
+function construirGeometriaLod(geo: THREE.BufferGeometry, nivel: 0 | 1 | 2): THREE.BufferGeometry {
+  if (nivel === 0) return geo
+  const posAttr = geo.getAttribute('position')
+  if (!posAttr) return geo
+  const corAttr = geo.getAttribute('color')
+  const idxAttr = geo.getIndex()
+  const posArr = new Float32Array(posAttr.count * 3)
+  for (let i = 0; i < posAttr.count; i++) {
+    posArr[3 * i] = posAttr.getX(i)
+    posArr[3 * i + 1] = posAttr.getY(i)
+    posArr[3 * i + 2] = posAttr.getZ(i)
+  }
+  const itemSizeCor = corAttr ? corAttr.itemSize : 3
+  let corArr: Float32Array | null = null
+  if (corAttr) {
+    corArr = new Float32Array(corAttr.count * itemSizeCor)
+    for (let i = 0; i < corAttr.count; i++) {
+      corArr[itemSizeCor * i] = corAttr.getX(i)
+      corArr[itemSizeCor * i + 1] = corAttr.getY(i)
+      corArr[itemSizeCor * i + 2] = corAttr.getZ(i)
+      if (itemSizeCor === 4) corArr[itemSizeCor * i + 3] = corAttr.getW(i)
+    }
+  }
+  let idxArr: Uint32Array | null = null
+  if (idxAttr) {
+    idxArr = new Uint32Array(idxAttr.count)
+    for (let i = 0; i < idxAttr.count; i++) idxArr[i] = idxAttr.getX(i)
+  }
+  const simp = simplificarMalhaLod(posArr, idxArr, corArr, itemSizeCor, nivel)
+  const nova = new THREE.BufferGeometry()
+  nova.setAttribute('position', new THREE.BufferAttribute(simp.posicoes, 3))
+  nova.setIndex(new THREE.BufferAttribute(simp.indices, 1))
+  if (simp.cores) {
+    nova.setAttribute('color', new THREE.BufferAttribute(simp.cores, itemSizeCor))
+  }
+  nova.computeVertexNormals()
+  return nova
+}
+
 function Modelo({
   url,
   modo,
+  nivelLod = 0,
   corte,
   plano,
   cursorRef,
@@ -161,6 +205,7 @@ function Modelo({
 }: {
   url: string
   modo: ModoRender
+  nivelLod?: 0 | 1 | 2
   corte?: Corte
   plano: THREE.Plane
   cursorRef: MutableRefObject<THREE.Vector3 | null>
@@ -173,7 +218,7 @@ function Modelo({
   const cortar = !!corte?.ativo
   const tampa = cortar && !!corte?.tampa
 
-  // Clona a cena e troca o material conforme o modo; com corte, liga o plano e o stencil
+  // Clona a cena e troca o material (e o nível de detalhe LOD) conforme o modo; com corte, liga o plano e o stencil
   const objeto = useMemo(() => {
     const clone = scene.clone(true)
     const malhas: THREE.Mesh[] = []
@@ -182,6 +227,9 @@ function Modelo({
     })
     const caixaCena = new THREE.Box3().setFromObject(clone)
     for (const o of malhas) {
+      if (nivelLod > 0) {
+        o.geometry = construirGeometriaLod(o.geometry, nivelLod)
+      }
       // O pipeline grava a cor por vértice (atributo "color"); sem ela, usa cinza neutro.
       const temCor = o.geometry.hasAttribute('color')
       if (modo === 'uv') garantirUV6Ilhas(o.geometry)
@@ -243,15 +291,15 @@ function Modelo({
       }
     }
     return clone
-  }, [scene, modo, cortar, tampa, plano])
+  }, [scene, modo, nivelLod, cortar, tampa, plano])
 
   useEffect(() => {
-    const caixa = new THREE.Box3().setFromObject(objeto)
+    const caixa = new THREE.Box3().setFromObject(scene)
     onCaixa?.({ min: arred(caixa.min), max: arred(caixa.max) })
     let vertices = 0
     let triangulos = 0
-    objeto.traverse((o) => {
-      if (o instanceof THREE.Mesh && o.renderOrder === 2) {
+    scene.traverse((o) => {
+      if (o instanceof THREE.Mesh) {
         const pos = o.geometry.getAttribute('position')
         const idx = o.geometry.getIndex()
         if (pos) vertices += pos.count
@@ -260,7 +308,7 @@ function Modelo({
       }
     })
     onEstatisticas?.({ vertices, triangulos })
-  }, [objeto, onCaixa, onEstatisticas])
+  }, [scene, onCaixa, onEstatisticas])
 
   // Libera os materiais criados acima quando o modo/modelo muda (evita vazamento de GPU)
   useEffect(
@@ -677,13 +725,21 @@ function Cena(props: Props) {
   const { url, modo, corte, zoom, transformar, transformacao = TRANSFORMACAO_INICIAL, onTransformar, onCursor, onCaixa } = props
   const [tamanhoPlano, setTamanhoPlano] = useState(40)
   const [parte, setParte] = useState<THREE.Mesh | null>(null)
-  const { onSeparacao } = props
+  const [nivelLodCamera, setNivelLodCamera] = useState<0 | 1 | 2>(0)
+  const { onSeparacao, onCamera } = props
   const aoSeparar = useCallback(
     (m: THREE.Mesh | null, info: InfoSeparacao | null) => {
       setParte(m)
       onSeparacao?.(info)
     },
     [onSeparacao],
+  )
+  const aoCamera = useCallback(
+    (c: InfoCamera) => {
+      setNivelLodCamera(nivelLodPorDistancia(c.distancia, 0).nivel)
+      onCamera?.(c)
+    },
+    [onCamera],
   )
   // Estável (useCallback): o Modelo chama isto num efeito; uma função nova a cada render
   // disparava o efeito de novo -> setState -> render -> ... (laço infinito)
@@ -712,24 +768,37 @@ function Cena(props: Props) {
     if (grupo.current) plano.copy(base).applyMatrix4(grupo.current.matrixWorld)
   })
 
-  // Grupo controlado: os valores vêm do painel (campos numéricos/restaurar) ou do gizmo
+  const pivo = props.pivo ?? PIVO_ORIGEM
+  // Grupo controlado: aplica T(t) * T(p) * R * S * T(-p) para girar e escalar em torno do pivô (F4-T03)
   useEffect(() => {
     const g = grupo.current
     if (!g) return
-    g.position.set(...transformacao.posicao)
+    const esc: Vec3 = [transformacao.escala, transformacao.escala, transformacao.escala]
+    const m = comporComPivo(transformacao.posicao, transformacao.rotacao, esc, pivo, 'TRS')
+    g.position.set(m[3], m[7], m[11])
     g.rotation.set(...(transformacao.rotacao.map(rad) as Vec3), 'XYZ')
     g.scale.setScalar(transformacao.escala)
-  }, [transformacao])
+  }, [transformacao, pivo])
 
   function aoTransformar() {
     const g = grupo.current
     if (!g || !onTransformar) return
+    const rot: Vec3 = [graus(g.rotation.x), graus(g.rotation.y), graus(g.rotation.z)]
+    const escala = Math.round(((g.scale.x + g.scale.y + g.scale.z) / 3) * 1000) / 1000
+    const mPivo = comporComPivo([0, 0, 0], rot, [escala, escala, escala], pivo, 'TRS')
+    const posSemDeslocPivo = new THREE.Vector3(
+      g.position.x - mPivo[3],
+      g.position.y - mPivo[7],
+      g.position.z - mPivo[11],
+    )
     onTransformar({
-      posicao: arred(g.position),
-      rotacao: [graus(g.rotation.x), graus(g.rotation.y), graus(g.rotation.z)],
-      escala: Math.round(((g.scale.x + g.scale.y + g.scale.z) / 3) * 1000) / 1000,
+      posicao: arred(posSemDeslocPivo),
+      rotacao: rot,
+      escala,
     })
   }
+
+  const nivelLodAtivo: 0 | 1 | 2 = props.auxiliares?.lodAutomatico ? nivelLodCamera : 0
 
   return (
     <>
@@ -739,6 +808,7 @@ function Cena(props: Props) {
           key={url}
           url={url}
           modo={modo}
+          nivelLod={nivelLodAtivo}
           corte={corte}
           plano={plano}
           cursorRef={cursorRef}
@@ -771,7 +841,12 @@ function Cena(props: Props) {
           </lineSegments>
         )}
         {props.pivo && (props.pivo[0] !== 0 || props.pivo[1] !== 0 || props.pivo[2] !== 0) && (
-          <mesh position={props.pivo} raycast={() => {}} renderOrder={5}>
+          <mesh
+            position={props.pivo}
+            scale={1 / Math.max(transformacao.escala, 0.01)}
+            raycast={() => {}}
+            renderOrder={5}
+          >
             <sphereGeometry args={[0.36, 16, 12]} />
             <meshBasicMaterial color="#ff6b3d" depthTest={false} />
           </mesh>
@@ -801,7 +876,7 @@ function Cena(props: Props) {
         grupo={grupo}
         plano={plano}
         cortar={!!corte?.ativo}
-        onCamera={props.onCamera}
+        onCamera={aoCamera}
         onCena={props.onCena}
         aoSeparar={aoSeparar}
       />

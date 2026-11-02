@@ -12,10 +12,18 @@ Chaves usadas:
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import io
 import os
 import re
 import shutil
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Protocol
@@ -122,6 +130,141 @@ class LocalStorage:
             alvo.unlink(missing_ok=True)
 
 
+class _ClienteS3Http:
+    """Cliente HTTP S3/MinIO leve (AWS Signature V4) usando apenas a biblioteca padrão."""
+
+    def __init__(
+        self,
+        endpoint_url: str,
+        access_key: str,
+        secret_key: str,
+        region: str = "us-east-1",
+    ) -> None:
+        self.endpoint_url = endpoint_url.rstrip("/")
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.region = region
+        self._buckets_garantidos: set[str] = set()
+
+    def _assinar_e_enviar(
+        self,
+        metodo: str,
+        caminho: str,
+        query: dict[str, str] | None = None,
+        corpo: bytes = b"",
+    ) -> bytes:
+        parsed = urllib.parse.urlparse(self.endpoint_url)
+        host = parsed.netloc
+        uri_base = parsed.path.rstrip("/")
+        uri_canonica = f"{uri_base}/{caminho.lstrip('/')}"
+        qs_itens = sorted((query or {}).items())
+        qs_canonica = "&".join(
+            f"{urllib.parse.quote(k, safe='-_.~')}={urllib.parse.quote(v, safe='-_.~')}"
+            for k, v in qs_itens
+        )
+
+        agora = datetime.now(UTC)
+        amz_date = agora.strftime("%Y%m%dT%H%M%SZ")
+        datestamp = agora.strftime("%Y%m%d")
+        payload_hash = hashlib.sha256(corpo).hexdigest()
+
+        cabecalhos_canonicos = (
+            f"host:{host}\nx-amz-content-sha256:{payload_hash}\nx-amz-date:{amz_date}\n"
+        )
+        assinados = "host;x-amz-content-sha256;x-amz-date"
+        requisicao_canonica = "\n".join(
+            [metodo, uri_canonica, qs_canonica, cabecalhos_canonicos, assinados, payload_hash]
+        )
+
+        escopo = f"{datestamp}/{self.region}/s3/aws4_request"
+        string_assinatura = "\n".join(
+            [
+                "AWS4-HMAC-SHA256",
+                amz_date,
+                escopo,
+                hashlib.sha256(requisicao_canonica.encode("utf-8")).hexdigest(),
+            ]
+        )
+
+        def _hmac(chave: bytes, msg: str) -> bytes:
+            return hmac.new(chave, msg.encode("utf-8"), hashlib.sha256).digest()
+
+        k_date = _hmac(f"AWS4{self.secret_key}".encode(), datestamp)
+        k_region = _hmac(k_date, self.region)
+        k_service = _hmac(k_region, "s3")
+        k_signing = _hmac(k_service, "aws4_request")
+        assinatura = hmac.new(
+            k_signing, string_assinatura.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
+
+        autorizacao = (
+            f"AWS4-HMAC-SHA256 Credential={self.access_key}/{escopo}, "
+            f"SignedHeaders={assinados}, Signature={assinatura}"
+        )
+        url = f"{self.endpoint_url}/{caminho.lstrip('/')}"
+        if qs_canonica:
+            url = f"{url}?{qs_canonica}"
+
+        req = urllib.request.Request(
+            url,
+            data=corpo if metodo in ("PUT", "POST") else None,
+            method=metodo,
+            headers={
+                "Host": host,
+                "x-amz-date": amz_date,
+                "x-amz-content-sha256": payload_hash,
+                "Authorization": autorizacao,
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+            return resp.read()
+
+    def _garantir_bucket(self, bucket: str) -> None:
+        if bucket in self._buckets_garantidos:
+            return
+        try:
+            self._assinar_e_enviar("PUT", bucket)
+        except urllib.error.HTTPError as e:
+            if e.code not in (200, 409):
+                raise
+        self._buckets_garantidos.add(bucket)
+
+    def put_object(self, *, Bucket: str, Key: str, Body: bytes) -> None:
+        self._garantir_bucket(Bucket)
+        self._assinar_e_enviar("PUT", f"{Bucket}/{Key}", corpo=bytes(Body))
+
+    def get_object(self, *, Bucket: str, Key: str) -> dict[str, Any]:
+        dados = self._assinar_e_enviar("GET", f"{Bucket}/{Key}")
+        return {"Body": io.BytesIO(dados)}
+
+    def list_objects_v2(self, *, Bucket: str, Prefix: str) -> dict[str, Any]:
+        try:
+            xml_bytes = self._assinar_e_enviar(
+                "GET", Bucket, query={"list-type": "2", "prefix": Prefix}
+            )
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return {}
+            raise
+        raiz = ET.fromstring(xml_bytes)  # noqa: S314
+        achados: list[dict[str, str]] = []
+        for elem in raiz.iter():
+            if elem.tag.endswith("Key") and elem.text:
+                achados.append({"Key": elem.text})
+        return {"Contents": achados} if achados else {}
+
+    def delete_objects(self, *, Bucket: str, Delete: dict[str, Any]) -> None:
+        for item in Delete.get("Objects", []):
+            chave = item.get("Key")
+            if not chave:
+                continue
+            try:
+                self._assinar_e_enviar("DELETE", f"{Bucket}/{chave}")
+            except urllib.error.HTTPError as e:
+                if e.code != 404:
+                    raise
+
+
 class S3Storage:
     """Storage compatível com S3 / MinIO / Cloudflare R2 (F4-T08, decisão D9).
 
@@ -138,14 +281,11 @@ class S3Storage:
         self.bucket = bucket
         self._cache = LocalStorage(cache_dir)
         if cliente is None:
-            import boto3  # type: ignore[import-not-found]
-
-            cliente = boto3.client(
-                "s3",
+            cliente = _ClienteS3Http(
                 endpoint_url=settings.s3_endpoint_url,
-                aws_access_key_id=settings.s3_access_key,
-                aws_secret_access_key=settings.s3_secret_key,
-                region_name=settings.s3_region,
+                access_key=settings.s3_access_key,
+                secret_key=settings.s3_secret_key,
+                region=settings.s3_region,
             )
         self.cliente: Any = cliente
 

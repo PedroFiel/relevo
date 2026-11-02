@@ -382,15 +382,36 @@ def test_criar_versao_com_matriz_4x4_e_restaurar(cliente, criado):
     modelo_id = criado["modelo_id"]
     det1 = cliente.get(f"/modelos/{modelo_id}").json()
     dims1 = det1["versao"]["metricas"]["dimensoes_cm"]
+    url_glb1 = next(a["url"] for a in det1["versao"]["arquivos"] if a["tipo"] == "glb")
+    glb1 = cliente.get(url_glb1).content
+    malha1 = trimesh.load(io.BytesIO(glb1), file_type="glb", force="mesh")
+    centro1 = malha1.bounds.mean(axis=0)
 
-    # Matriz 4×4 column-major de escala 2× uniforme
-    escala_2x = [2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1]
-    r = cliente.post(f"/modelos/{modelo_id}/versoes", json={"transformacao": escala_2x})
+    # Matriz 4×4 row-major (convenção de src/lib/matrizes.ts):
+    # Rotação de 90° em torno de Y + escala 2× + translação (10, 5, -3)
+    # R_y(90°) * 2 = [[0, 0, 2], [0, 2, 0], [-2, 0, 0]]
+    m_row_major = [
+        0, 0, 2, 10,
+        0, 2, 0, 5,
+        -2, 0, 0, -3,
+        0, 0, 0, 1,
+    ]
+    r = cliente.post(f"/modelos/{modelo_id}/versoes", json={"transformacao": m_row_major})
     assert r.status_code == 201, r.text
     v2 = r.json()
     assert v2["numero"] == 2
-    assert v2["transformacao"] == escala_2x
-    np.testing.assert_allclose(v2["metricas"]["dimensoes_cm"], [d * 2 for d in dims1], atol=0.1)
+    assert v2["transformacao"] == m_row_major
+    # Como girou 90° em Y e escalou 2×, extensão X nova = 2 * Z antiga e Z nova = 2 * X antiga
+    dims_esperadas = [dims1[2] * 2, dims1[1] * 2, dims1[0] * 2]
+    np.testing.assert_allclose(v2["metricas"]["dimensoes_cm"], dims_esperadas, atol=0.1)
+
+    url_glb2 = next(a["url"] for a in v2["arquivos"] if a["tipo"] == "glb")
+    glb2 = cliente.get(url_glb2).content
+    malha2 = trimesh.load(io.BytesIO(glb2), file_type="glb", force="mesh")
+    centro_esperado = np.array(
+        [2 * centro1[2] + 10.0, 2 * centro1[1] + 5.0, -2 * centro1[0] - 3.0]
+    )
+    np.testing.assert_allclose(malha2.bounds.mean(axis=0), centro_esperado, atol=0.1)
 
     det2 = cliente.get(f"/modelos/{modelo_id}").json()
     assert len(det2["versoes"]) == 2 and det2["versao"]["numero"] == 2

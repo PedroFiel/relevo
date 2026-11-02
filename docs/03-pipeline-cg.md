@@ -77,7 +77,7 @@ que também passa a ter matriz (`Orientacao.matriz`): `M_total = M_ajuste · M_o
    (> 15 % da maior) na máscara bruta — sombra forte ou objeto no fundo.
 
 **Limitações:** objeto da mesma cor do fundo (tênis branco em fundo branco) continua falhando — o guia de fotos pede
-fundo contrastante; sombras largas/suaves entram na máscara; falta o pincel de correção (Fase 5). A versão antiga (Otsu) foi trocada porque falhava no caso comum de tênis
+fundo contrastante; quando sombras largas/suaves entram na máscara, o usuário pode corrigi-las manualmente com o **pincel de correção de máscara** (`EditorMascara.tsx`, F5-T05). A versão antiga (Otsu) foi trocada porque falhava no caso comum de tênis
 escuro com sola branca (relatório `docs/testes/relatorios/2026-10-01-fotos-reais-f0.md`).
 
 ## [1b] Orientação — calcanhar à esquerda, bico à direita
@@ -313,9 +313,9 @@ centro de cada um em cm usa o mesmo mapeamento da cor por vértice: `(i + PAD) �
 
 `processar(..., ao_progredir=cb)` chama `cb(etapa, percentual)` no **começo** de cada etapa, com o % já feito, e
 termina com `("concluido", 100)`. Etapas, na ordem: `segmentacao` (inclui ajuste, orientação e contorno),
-`alinhamento`, `visual_hull`, `marching_cubes`, `decimacao`, `cor` (some com `colorir=False`). O % vem dos pesos
-em `PESOS_ETAPAS` (≈ fatia do tempo medido nos tenis-01..03: 35/5/10/15/2/33), não de cronômetro. Se uma etapa
-levanta erro, não há a chamada final. `suavizacao` entra na lista quando a F1-T02 existir.
+`alinhamento`, `visual_hull`, `marching_cubes`, `suavizacao`, `decimacao`, `cor` (some com `colorir=False`). O % vem dos pesos
+em `PESOS_ETAPAS` (fatia do tempo medido nos tenis-01..03: 35/5/10/13/4/2/31), não de cronômetro. Se uma etapa
+levanta erro, não há a chamada final.
 
 ## Referências
 

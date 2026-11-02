@@ -285,10 +285,18 @@ def criar_versao_transformada(
     modelo_id: uuid.UUID,
     transformacao: list[float],
 ) -> VersaoOut:
-    """Aplica a matriz homogênea 4×4 (column-major, como no Three.js) e cria nova versão."""
+    """Aplica a matriz homogênea 4×4 (row-major, `src/lib/matrizes.ts`) e cria nova versão."""
     if len(transformacao) != 16 or not all(np.isfinite(transformacao)):
         raise ErroPedido(422, "A matriz de transformação precisa ter 16 números válidos.")
-    matriz = np.array(transformacao, dtype=np.float64).reshape(4, 4).T
+    matriz = np.array(transformacao, dtype=np.float64).reshape(4, 4)
+    if not np.allclose(matriz[3, :], [0.0, 0.0, 0.0, 1.0], atol=1e-6):
+        if np.allclose(matriz[:, 3], [0.0, 0.0, 0.0, 1.0], atol=1e-6):
+            matriz = matriz.T
+        else:
+            raise ErroPedido(
+                422,
+                "A matriz de transformação precisa ser afim homogênea (última linha [0, 0, 0, 1]).",
+            )
     if abs(float(np.linalg.det(matriz[:3, :3]))) < 1e-6:
         raise ErroPedido(422, "A transformação colapsa o modelo (escala zero ou inválida).")
 
