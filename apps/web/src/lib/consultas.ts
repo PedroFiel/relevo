@@ -35,7 +35,13 @@ export function useModelo(id: string) {
 }
 
 export function useConta() {
-  return useQuery({ queryKey: chaves.conta, queryFn: buscarConta, retry: false })
+  return useQuery({
+    queryKey: chaves.conta,
+    queryFn: buscarConta,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  })
 }
 
 export function useRecarregarCreditos() {
