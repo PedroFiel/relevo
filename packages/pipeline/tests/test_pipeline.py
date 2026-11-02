@@ -244,10 +244,11 @@ def test_suavizacao_taubin_preserva_volume_e_reduz_rugosidade():
     assert info["variacao_volume_pct"] < 3.0
     assert info["rugosidade_depois_graus"] < info["rugosidade_antes_graus"]
 
-    # Comparação didática com Laplaciano simples (sem restrição artificial de volume): encolhe mais que Taubin
+    # Comparação didática com Laplaciano simples (sem restrição de volume): encolhe mais que Taubin
     lap = bruta.copy()
     trimesh.smoothing.filter_laplacian(lap, lamb=0.5, iterations=10, volume_constraint=False)
-    encolhimento_lap = abs(float(lap.volume) - float(bruta.volume)) / abs(float(bruta.volume)) * 100
+    vol_bruta = abs(float(bruta.volume))
+    encolhimento_lap = abs(float(lap.volume) - float(bruta.volume)) / vol_bruta * 100
     assert info["variacao_volume_pct"] < encolhimento_lap
 
 

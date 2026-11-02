@@ -17,12 +17,11 @@ Pré-requisitos: **Python 3.11+**, **[uv](https://docs.astral.sh/uv/)**, **Node 
 
 ```bash
 make setup      # instala dependências Python (uv) e Node (npm) e cria o .env
-make db-up      # sobe PostgreSQL + Adminer (http://localhost:8080)
-make migrate    # aplica as migrações
+make db-up      # sobe PostgreSQL + Adminer (:8080) + MinIO S3 (:9000/:9001)
+make migrate    # aplica as migrações no banco
 make poc        # gera fotos sintéticas e roda o pipeline -> apps/web/public/samples/tenis-exemplo.glb
-make api        # API em http://localhost:8000  (documentação interativa em /docs)
-make web        # front em http://localhost:5173  -> abra /visualizador
-make test       # todos os testes
+make dev        # sobe API (http://localhost:8000) + Front (http://localhost:5173) juntos
+make test       # roda todos os testes (pytest + vitest)
 ```
 
 Sem `make` (Windows): veja os comandos equivalentes dentro do `Makefile`.

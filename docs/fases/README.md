@@ -15,14 +15,14 @@ flowchart LR
 
 **Fases 1 e 2 rodam em paralelo** (pessoas diferentes): o front usa o `.glb` gerado pela CLI enquanto a API não existe.
 
-| Fase | Objetivo | Frentes | Esforço estimado* | Doc |
+| Fase | Objetivo | Frentes | Status atual (02/11/2026) | Doc |
 |---|---|---|---|---|
-| 0 | Repositório, stacks instaladas, pipeline mínimo provado com fotos reais | todas | 1 semana | [fase-0](fase-0-setup-e-poc.md) |
-| 1 | Pipeline com suavização, decimação, cor, métricas, recorte da foto e contorno | pipeline | 2–2,5 semanas | [fase-1](fase-1-pipeline.md) |
-| 2 | Visualizador 3D completo com conceitos de CG visíveis + visor 2D (zoom, pan, clipping), corte 3D, raycasting e transformações | front | 2,5–3 semanas | [fase-2](fase-2-visualizador.md) |
-| 3 | API + banco + upload (com editor de foto) + status + visualizador + contorno/avisos integrados | back, banco, front | 2–2,5 semanas | [fase-3](fase-3-integracao-mvp.md) |
-| 4 | Login, créditos, editor de transformações, exportações, textura UV, versões, S3 | todas | 2–3 semanas | [fase-4](fase-4-produto.md) |
-| 5 | Raio-X do pipeline, LOD, régua 3D, correção de máscara, incorporação, apresentação | todas | 2 semanas | [fase-5](fase-5-diferenciais.md) |
+| 0 | Repositório, stacks instaladas, pipeline mínimo provado com fotos reais | todas | **Concluída no código** (falta só a medição manual com fita métrica do grupo em F0-T10) | [fase-0](fase-0-setup-e-poc.md) |
+| 1 | Pipeline com suavização, decimação, cor, métricas, recorte da foto e contorno | pipeline | **Núcleo 100 % concluído** (T02 a T08, T11, T12 prontas; faltam só T09 benchmark e T10 notebook) | [fase-1](fase-1-pipeline.md) |
+| 2 | Visualizador 3D completo com conceitos de CG visíveis + visor 2D (zoom, pan, clipping), corte 3D, raycasting e transformações | front | **Conceitos principais concluídos** (T01, T08–T15 prontas; faltam os controles extras T02–T07) | [fase-2](fase-2-visualizador.md) |
+| 3 | API + banco + upload (com editor de foto) + status + visualizador + contorno/avisos integrados | back, banco, front | **100 % concluída (MVP entregue)** (T01 a T14 prontas e testadas via E2E) | [fase-3](fase-3-integracao-mvp.md) |
+| 4 | Login, créditos, editor de transformações, exportações, textura UV, versões, S3 | todas | **Em andamento** (T02 créditos, T03/T04 versões 4×4 e T05 exportação `.glb/.obj/.stl` prontas; faltam T01 login, T03b pivô/atalhos, T06/T07 UV e T08 S3) | [fase-4](fase-4-produto.md) |
+| 5 | Raio-X do pipeline, LOD, régua 3D, correção de máscara, incorporação, apresentação | todas | **Em andamento** (T01 Raio-X com 7 etapas e T05 pincel de máscara prontas; faltam T02 LOD, T03 régua 3D, T06 embed e T07 vídeo) | [fase-5](fase-5-diferenciais.md) |
 
 \* Estimativa para um grupo de 3–5 pessoas dedicando algumas horas por semana, executando com o Claude.
 Ajuste no STATUS quando souberem a data de entrega.

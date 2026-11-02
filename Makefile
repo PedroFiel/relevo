@@ -1,5 +1,5 @@
 # Atalhos do RELEVO. Rode `make help` para ver tudo.
-.PHONY: help setup db-up db-down migrate api web test test-py test-web e2e lint poc real reais
+.PHONY: help setup db-up db-down migrate dev api web test test-py test-web e2e lint poc real reais
 
 help:  ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
@@ -17,6 +17,11 @@ db-down:  ## derruba os containers (os dados ficam no volume)
 
 migrate:  ## aplica as migrações do banco
 	cd apps/api && uv run alembic upgrade head
+
+dev:  ## sobe a API (:8000) e o front (:5173) juntos no mesmo terminal
+	@trap 'kill 0' INT TERM EXIT; \
+	uv run uvicorn relevo_api.main:app --reload --port 8000 & \
+	cd apps/web && npm run dev
 
 api:  ## roda a API em http://localhost:8000 (docs em /docs)
 	uv run uvicorn relevo_api.main:app --reload --port 8000

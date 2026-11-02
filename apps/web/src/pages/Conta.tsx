@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Botao, Etiqueta, Painel } from '../components/ui'
-import { useConta, useRecarregarCreditos } from '../lib/consultas'
+import { obterToken } from '../lib/api'
+import { useConta, useRecarregarCreditos, useSair } from '../lib/consultas'
 
 const ROTULOS_MOTIVO: Record<string, string> = {
   'boas-vindas': 'Créditos de boas-vindas',
@@ -29,6 +30,8 @@ const data = (iso: string) =>
 export default function Conta() {
   const conta = useConta()
   const recarregar = useRecarregarCreditos()
+  const sair = useSair()
+  const autenticado = Boolean(obterToken())
 
   if (conta.isPending) {
     return (
@@ -39,10 +42,17 @@ export default function Conta() {
   }
 
   if (conta.isError) {
+    const semServidor = conta.error.message.includes('falar com o servidor') || conta.error.message.includes('erro 5')
     return (
       <main className="container pagina-simples vazio">
         <h1>Não deu para carregar a conta</h1>
         <p role="alert">{conta.error.message}</p>
+        {semServidor && (
+          <p className="conceito">
+            Dica: se você rodou apenas <code>make web</code>, a API na porta 8000 ainda não está ligada. Rode{' '}
+            <code>make dev</code> (sobe API + front juntos) ou <code>make api</code> em outro terminal.
+          </p>
+        )}
         <div className="acoes">
           <Botao onClick={() => void conta.refetch()} variante="primario">
             Tentar novamente
@@ -63,9 +73,25 @@ export default function Conta() {
             {dados.nome} · <span>{dados.email}</span>
           </p>
         </div>
-        <Botao para="/novo" variante="primario">
-          Novo modelo
-        </Botao>
+        <div className="acoes">
+          {autenticado ? (
+            <Botao onClick={sair} variante="fantasma">
+              Sair da conta
+            </Botao>
+          ) : (
+            <>
+              <Botao para="/entrar" variante="secundario">
+                Entrar
+              </Botao>
+              <Botao para="/cadastrar" variante="fantasma">
+                Criar conta
+              </Botao>
+            </>
+          )}
+          <Botao para="/novo" variante="primario">
+            Novo modelo
+          </Botao>
+        </div>
       </div>
 
       <Painel className="conta-saldo-painel">

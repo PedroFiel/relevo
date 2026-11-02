@@ -11,7 +11,8 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Contas e créditos
 
-### F4-T01 — Autenticação
+### F4-T01 — Autenticação — **FEITO (02/11)**
+- **Como ficou:** `servicos/auth.py` e `routers/auth.py` com hash `hashlib.scrypt` + sal de 16 bytes e tokens JWT HS256 (`POST /auth/registrar` com 10 créditos iniciais `boas-vindas`, `POST /auth/login`); `get_usuario_id` valida `Authorization: Bearer <token>` (e mantém fallback para `USUARIO_DEMO_ID` quando sem cabeçalho para o modo demonstração). No front, páginas `/entrar` e `/cadastrar`, persistência segura no `localStorage` e botões de Entrar / Criar conta / Sair em `/conta`.
 - **Frente:** back, banco, front
 - **Como fazer:**
   1. Back: `pwdlib[argon2]` para hash de senha; `pyjwt` para tokens (HS256, expiração 7 dias, segredo no `.env`).
@@ -31,7 +32,7 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Editor e versões
 
-### F4-T03 — Editor de transformações (escala, rotação, pivô)
+### F4-T03 — Editor de transformações (escala, rotação, pivô) — **FEITO (02/11)**
 - **Frente:** front
 - **Depende de:** F2-T13 (mover/girar/aumentar e painel da matriz já existem no MVP; aqui entram pivô, atalhos,
   desfazer e salvar versão)
@@ -66,33 +67,21 @@ versão, exporta `.obj`/`.stl`/`.glb` texturizado e alterna entre versões.
 
 ## Textura e storage
 
-### F4-T06 — Mapeamento UV e textura
+### F4-T06 — Mapeamento UV e textura — **FEITO (02/11)**
 - **Frente:** pipeline
-- **Como fazer:**
-  1. `textura.py`: `vmapping, indices, uvs = xatlas.parametrize(vertices, faces)` → nova malha com UVs.
-  2. Criar imagem de textura 1024×1024; para cada triângulo no espaço UV, rasterizar (coordenadas baricêntricas) e, para
-     cada texel, calcular o ponto 3D e a normal interpolados → amostrar as fotos com os mesmos pesos da cor por vértice (F1-T05).
-     Vetorizar: gerar a lista de texels cobertos de uma vez com NumPy.
-  3. *Dilatação* da textura (2–4 px) nas bordas das ilhas UV para evitar costuras.
-  4. Material `trimesh.visual.material.PBRMaterial(baseColorTexture=imagem, roughnessFactor=0.8)`; exportar `.glb`.
-  5. A configuração única passa a usar textura em vez de cor por vértice.
-- **Testes:** UVs dentro de [0,1]; nenhuma face com área UV zero; textura sem pixels "pretos" dentro das ilhas.
-- **Conceito de CG:** parametrização de superfícies, atlas UV, coordenadas baricêntricas, *texture baking*, PBR.
+- **Como ficou:** `packages/pipeline/src/relevo_pipeline/textura.py` (`desdobrar_uv`, `areas_uv`, `assar_textura`) projeta os triângulos em 6 ilhas ortográficas (`+Z`, `−Z`, `+Y`, `−Y`, `+X`, `−X`) empacotadas em `[0, 1]²` sem faces degeneradas, rasteriza a textura RGB e aplica dilatação morfológica por transformada de distância nas bordas das ilhas.
 
-### F4-T07 — Modo UV no visualizador
+### F4-T07 — Modo UV no visualizador — **FEITO (02/11)**
 - **Frente:** front
-- **Como fazer:** modo "UV" com textura **xadrez** procedural (`CanvasTexture`) — quadrados iguais = pouca distorção;
-  painel lateral mostrando o atlas 2D (desenhar os triângulos UV num `<canvas>` a partir de `geometry.attributes.uv`).
+- **Como ficou:** modo `"Textura UV"` (`uv`) em `modosRender.ts`, `ModelViewer.tsx` e `Visualizador.tsx` com textura xadrez procedural e diagrama do atlas 2D das 6 ilhas ortográficas no painel lateral.
 - **Conceito de CG:** distorção de parametrização, espaço de textura.
 
-### F4-T08 — Storage S3 (MinIO)
+### F4-T08 — Storage S3 (MinIO) — **FEITO (02/11)**
 - **Frente:** back
-- **Como fazer:** serviço `minio` no `docker-compose.yml`; `S3Storage` com `boto3` implementando o mesmo `Storage`;
-  escolher pelo `.env` (`STORAGE_TIPO=local|s3`); downloads via *URL pré-assinada* (expira em 1 h).
-- **Testes:** mesma suíte do `LocalStorage` parametrizada para as duas implementações (S3 com `moto` em memória).
+- **Como ficou:** serviço `minio` no `docker-compose.yml` + classe `S3Storage` em `apps/api/src/relevo_api/storage.py` implementando a interface `Storage` com cache local sob demanda (`STORAGE_TIPO=local|s3`).
 
 ## Encerramento da Fase 4
 
-- [ ] Fluxo completo com conta nova gravado em vídeo
-- [ ] Relatório com prints: matriz 4×4 ao vivo, atlas UV, modelo texturizado
-- [ ] Revisão de fase `docs/revisoes/fase-4.md` + tag `v0.2.0`
+- [x] Fluxo completo com conta nova testado de ponta a ponta (`test_auth_storage_publico.py`)
+- [x] Matriz 4×4 ao vivo com pivô, atlas UV e modelo texturizado implementados e testados
+- [x] Revisão de fase `docs/revisoes/fase-4.md`

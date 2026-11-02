@@ -62,7 +62,7 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
   await expect(page.getByText(/contorno com \d+ vértices/)).toHaveCount(3)
   await expect(page.getByText(/recorte \d+ × \d+ px/)).toHaveCount(1)
 
-  // Raio-X (F5-T01): fotos → silhuetas → voxels, com a explicação de cada etapa
+  // Raio-X (F5-T01 + F1-T02): percorre todas as 7 etapas (fotos → silhuetas → voxels → malha bruta → suavizada Taubin → decimada → final)
   await page.getByRole('button', { name: 'Raio-X do pipeline' }).click()
   await expect(page.getByRole('heading', { level: 3, name: /1\. Fotos/ })).toBeVisible()
   await page.getByRole('button', { name: 'Próxima etapa' }).click()
@@ -70,6 +70,36 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
   await page.getByRole('button', { name: 'Próxima etapa' }).click()
   await expect(page.getByRole('heading', { level: 3, name: /3\. Voxels/ })).toBeVisible()
   await expect(page.locator('.raio-x-palco canvas')).toBeVisible()
+  await page.getByRole('button', { name: 'Próxima etapa' }).click()
+  await expect(page.getByRole('heading', { level: 3, name: /4\. Malha bruta/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Próxima etapa' }).click()
+  await expect(page.getByRole('heading', { level: 3, name: /5\. Suavizada · Filtro de Taubin/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Próxima etapa' }).click()
+  await expect(page.getByRole('heading', { level: 3, name: /6\. Decimada/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Próxima etapa' }).click()
+  await expect(page.getByRole('heading', { level: 3, name: /7\. Final · Cor por vértice/ })).toBeVisible()
+
+  // Incorporar iframe (F5-T06): painel de embed e rota pública /embed/:id
+  await page.getByRole('button', { name: 'Incorporar (<iframe>)' }).click()
+  await expect(page.getByLabel('Código HTML do iframe')).toContainText(`/embed/${id}`)
+  const respPublico = await request.get(`/api/publico/${id}`)
+  expect(respPublico.status()).toBe(200)
+  const respPublicoGlb = await request.get(`/api/publico/${id}/glb`)
+  expect(respPublicoGlb.status()).toBe(200)
+  expect((await respPublicoGlb.body()).subarray(0, 4).toString()).toBe('glTF')
+
+  // Pincel de correção da máscara (F5-T05): abrir editor na aba Fotos, pintar e regerar v2
+  await page.getByRole('button', { name: /Fotos e contornos/ }).click()
+  await page.getByRole('button', { name: 'Corrigir com pincel Lateral' }).click()
+  const canvasMascara = page.getByLabel('Pintar máscara da foto Lateral')
+  await expect(canvasMascara).toBeVisible()
+  const boxMascara = (await canvasMascara.boundingBox())!
+  await page.mouse.move(boxMascara.x + boxMascara.width * 0.5, boxMascara.y + boxMascara.height * 0.5)
+  await page.mouse.down()
+  await page.mouse.move(boxMascara.x + boxMascara.width * 0.55, boxMascara.y + boxMascara.height * 0.5, { steps: 4 })
+  await page.mouse.up()
+  await page.getByRole('button', { name: 'Regerar modelo com esta máscara' }).click()
+  await expect(page.getByText('versão 2')).toBeVisible({ timeout: 90_000 })
 
   // Download (.glb, .obj e .stl — F4-T05)
   const href = (await baixar.getAttribute('href'))!
@@ -88,13 +118,19 @@ test('do upload ao download, e apagar no fim', async ({ page, request }) => {
   expect(stl.status()).toBe(200)
   expect(stl.headers()['content-type']).toContain('model/stl')
 
-  // Salvar transformação 4×4 como nova versão e restaurar v1 (F4-T03, F4-T04)
+  // Salvar transformação 4×4 como nova versão (v3) e restaurar v1 (F4-T03, F4-T04)
   await page.getByRole('button', { name: 'Modelo 3D' }).click()
   await page.getByRole('tab', { name: 'Transformar' }).click()
   await page.getByRole('button', { name: 'Salvar como nova versão' }).click()
-  await expect(page.getByText('versão 2')).toBeVisible()
+  await expect(page.getByText('versão 3')).toBeVisible()
   await page.getByRole('button', { name: 'v1' }).click()
   await expect(page.getByText('versão 1')).toBeVisible()
+
+  // Visualizar página pública /embed/:id no navegador (F5-T06)
+  await page.goto(`/embed/${id}`)
+  await expect(page.getByText(NOME)).toBeVisible()
+  await expect(page.locator('.embed-palco canvas')).toBeVisible()
+  await page.goto(`/modelos/${id}`)
 
   // Conta e créditos (F4-T02): saldo e histórico visíveis em /conta
   await page.getByRole('link', { name: 'Conta e créditos' }).click()
@@ -114,4 +150,27 @@ test('foto que não é imagem é recusada antes de enviar', async ({ page }) => 
   await page.getByLabel('Foto Lateral').setInputFiles({ name: 'notas.txt', mimeType: 'text/plain', buffer: Buffer.from('oi') })
   await expect(page.getByRole('alert')).toContainText('não é JPEG nem PNG')
   await expect(page.getByRole('button', { name: 'Gerar modelo 3D' })).toBeDisabled()
+})
+
+test('criar conta, ver 10 créditos de boas-vindas, sair e entrar com JWT (F4-T01)', async ({ page }) => {
+  const email = `e2e-${Date.now()}@relevo.local`
+  await page.goto('/cadastrar')
+  await page.getByLabel('Nome').fill('Integrante E2E')
+  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel(/Senha/).fill('senha1234')
+  await page.getByRole('button', { name: 'Criar conta' }).click()
+
+  await expect(page).toHaveURL('/conta')
+  await expect(page.getByText('Integrante E2E')).toBeVisible()
+  await expect(page.getByLabel('Saldo de créditos')).toContainText('10 créditos')
+  await expect(page.getByText('Créditos de boas-vindas')).toBeVisible()
+
+  // Sair e entrar novamente com a mesma conta
+  await page.getByRole('button', { name: 'Sair da conta' }).click()
+  await page.goto('/entrar')
+  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('Senha').fill('senha1234')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page).toHaveURL('/conta')
+  await expect(page.getByText(email)).toBeVisible()
 })

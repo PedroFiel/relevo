@@ -5,30 +5,45 @@ import ErroModelo from '../components/ErroModelo'
 import ModelViewer from '../components/ModelViewer'
 import RenderRaios from '../components/RenderRaios'
 import { AMOSTRAS, arquivoValido } from '../lib/amostras'
+import type { PresetCamera } from '../lib/camera'
 import { EIXOS, type Vec3 } from '../lib/corte'
-import { compor, linhasDaMatriz, type Ordem } from '../lib/matrizes'
+import { comporComPivo, linhasDaMatriz, type Ordem } from '../lib/matrizes'
 import { MODOS, type ModoRender } from '../lib/modosRender'
 import {
+  AUXILIARES_INICIAIS,
+  ILUMINACAO_INICIAL,
   TRANSFORMACAO_INICIAL,
+  calcularEstatisticas,
+  distanciaCm,
+  nearDaProfundidade,
+  nivelLodPorDistancia,
+  type AuxiliaresCena,
   type Caixa,
   type Comando,
   type Corte,
   type Cursor,
   type DadosRaios,
+  type Iluminacao,
   type InfoCamera,
   type InfoSeparacao,
   type Transformacao,
   type Zoom,
-  nearDaProfundidade,
 } from '../lib/visualizador'
 
-type Ferramenta = 'ampliar' | 'recortar' | 'separar' | 'transformar' | 'raios'
+type Ferramenta = 'ampliar' | 'recortar' | 'separar' | 'transformar' | 'medir' | 'raios'
 const FERRAMENTAS: { id: Ferramenta; rotulo: string }[] = [
   { id: 'ampliar', rotulo: 'Ampliar' },
   { id: 'recortar', rotulo: 'Recortar' },
   { id: 'separar', rotulo: 'Selecionar e mover' },
   { id: 'transformar', rotulo: 'Transformar' },
+  { id: 'medir', rotulo: 'Régua 3D' },
   { id: 'raios', rotulo: 'Rastrear raios' },
+]
+const PRESETS_CAMERA: { id: PresetCamera; rotulo: string }[] = [
+  { id: 'perspectiva', rotulo: '3/4' },
+  { id: 'lateral', rotulo: 'Lateral' },
+  { id: 'topo', rotulo: 'Topo' },
+  { id: 'frente', rotulo: 'Frente' },
 ]
 type ModoGizmo = 'translate' | 'rotate' | 'scale'
 const GIZMOS: { id: ModoGizmo; rotulo: string }[] = [
@@ -91,7 +106,14 @@ export default function Visualizador({
   const [cursor, setCursor] = useState<Cursor>(null)
   const [gizmo, setGizmo] = useState<{ ativo: boolean; modo: ModoGizmo }>({ ativo: false, modo: 'translate' })
   const [transf, setTransf] = useState<Transformacao>(TRANSFORMACAO_INICIAL)
+  const [historicoTransf, setHistoricoTransf] = useState<Transformacao[]>([])
+  const [pivo, setPivo] = useState<Vec3>([0, 0, 0])
+  const [escolhendoPivo, setEscolhendoPivo] = useState(false)
   const [ordem, setOrdem] = useState<Ordem>('TRS')
+  const [iluminacao, setIluminacao] = useState<Iluminacao>(ILUMINACAO_INICIAL)
+  const [auxiliares, setAuxiliares] = useState<AuxiliaresCena>(AUXILIARES_INICIAIS)
+  const [estatisticasBrutas, setEstatisticasBrutas] = useState<{ vertices: number; triangulos: number } | null>(null)
+  const [medicao, setMedicao] = useState<{ p1: Vec3 | null; p2: Vec3 | null }>({ p1: null, p2: null })
   const [raios, setRaios] = useState<DadosRaios | null>(null)
   // Selecionar e mover: desenhando o retângulo? qual gizmo na parte? resultado da separação
   const [desenhando, setDesenhando] = useState(false)
@@ -115,10 +137,69 @@ export default function Visualizador({
   function trocarModelo(novaUrl: string) {
     setUrl(novaUrl)
     setTransf(TRANSFORMACAO_INICIAL)
+    setHistoricoTransf([])
+    setPivo([0, 0, 0])
+    setEscolhendoPivo(false)
+    setMedicao({ p1: null, p2: null })
     setCursor(null)
     setRaios(null)
     setSeparacao(null)
   }
+
+  const atualizarTransf = useCallback((nova: Transformacao | ((antiga: Transformacao) => Transformacao)) => {
+    setTransf((atualTransf) => {
+      const resolvida = typeof nova === 'function' ? nova(atualTransf) : nova
+      setHistoricoTransf((h) => [...h.slice(-19), atualTransf])
+      return resolvida
+    })
+  }, [])
+
+  const desfazerTransf = useCallback(() => {
+    setHistoricoTransf((h) => {
+      if (h.length === 0) return h
+      const anterior = h[h.length - 1]
+      setTransf(anterior)
+      return h.slice(0, -1)
+    })
+  }, [])
+
+  const aoClicarPonto = useCallback(
+    (pontoLocal: Vec3) => {
+      if (escolhendoPivo) {
+        setPivo(pontoLocal)
+        setEscolhendoPivo(false)
+        return
+      }
+      if (ferramenta === 'medir') {
+        setMedicao((m) => {
+          if (!m.p1 || (m.p1 && m.p2)) return { p1: pontoLocal, p2: null }
+          return { p1: m.p1, p2: pontoLocal }
+        })
+      }
+    },
+    [escolhendoPivo, ferramenta],
+  )
+
+  // Atalhos de teclado da aba Transformar: G (Mover), R (Girar), S (Aumentar), Esc (Restaurar), Ctrl+Z (Desfazer) (F4-T03b)
+  useEffect(() => {
+    if (ferramenta !== 'transformar') return
+    function aoTeclar(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        desfazerTransf()
+        return
+      }
+      const k = e.key.toLowerCase()
+      if (k === 'g') setGizmo({ ativo: true, modo: 'translate' })
+      else if (k === 'r') setGizmo({ ativo: true, modo: 'rotate' })
+      else if (k === 's') setGizmo({ ativo: true, modo: 'scale' })
+      else if (e.key === 'Escape') atualizarTransf(TRANSFORMACAO_INICIAL)
+    }
+    window.addEventListener('keydown', aoTeclar)
+    return () => window.removeEventListener('keydown', aoTeclar)
+  }, [ferramenta, desfazerTransf, atualizarTransf])
 
   // ---- Selecionar e mover: retângulo na tela -> NDC -> comando 'separar' ----
   function iniciarArrasto(e: PE<HTMLDivElement>) {
@@ -184,9 +265,19 @@ export default function Visualizador({
 
   const limites = caixa ? [caixa.min[EIXO_IDX[corte.eixo]], caixa.max[EIXO_IDX[corte.eixo]]] : [-15, 15]
   const dims: Vec3 | null = caixa ? (caixa.max.map((v, i) => (v - caixa.min[i]) * transf.escala) as Vec3) : null
-  const matriz = compor(transf.posicao, transf.rotacao, [transf.escala, transf.escala, transf.escala], ordem)
+  const matriz = comporComPivo(transf.posicao, transf.rotacao, [transf.escala, transf.escala, transf.escala], pivo, ordem)
   const mudarVetor = (chave: 'posicao' | 'rotacao', i: number) => (v: number) =>
-    setTransf((t) => ({ ...t, [chave]: t[chave].map((x, j) => (j === i ? v : x)) as Vec3 }))
+    atualizarTransf((t) => ({ ...t, [chave]: t[chave].map((x, j) => (j === i ? v : x)) as Vec3 }))
+  const estatisticas =
+    caixa && estatisticasBrutas
+      ? calcularEstatisticas(estatisticasBrutas.vertices, estatisticasBrutas.triangulos, caixa)
+      : null
+  const infoLod =
+    auxiliares.lodAutomatico && estatisticas
+      ? nivelLodPorDistancia(infoCamera?.distancia ?? 40, estatisticas.triangulos)
+      : null
+  const distanciaMedida =
+    medicao.p1 && medicao.p2 ? distanciaCm(medicao.p1, medicao.p2, transf.escala) : null
   const campo = (rotulo: string, valor: number, aoMudar: (v: number) => void, passo = 0.5) => (
     <label key={rotulo} className="campo">
       {rotulo}
@@ -243,9 +334,15 @@ export default function Visualizador({
                 comando={comando}
                 transformar={gizmo}
                 transformacao={transf}
-                onTransformar={setTransf}
+                onTransformar={atualizarTransf}
                 onCursor={setCursor}
                 onCaixa={aoCaixa}
+                onEstatisticas={setEstatisticasBrutas}
+                onCliquePonto={aoClicarPonto}
+                medicao={medicao}
+                pivo={pivo}
+                iluminacao={iluminacao}
+                auxiliares={auxiliares}
                 onCamera={setInfoCamera}
                 onCena={setRaios}
                 gizmoParte={ferramenta === 'separar' && separacao ? gizmoParte : null}
@@ -298,10 +395,102 @@ export default function Visualizador({
                 <button onClick={() => pedir({ tipo: 'ampliar', fator: 1 / 0.7 })}>－ Reduzir</button>
                 <button onClick={() => pedir({ tipo: 'enquadrar' })}>Enquadrar</button>
               </div>
+              <div className="toolbar" role="group" aria-label="Vistas da câmera">
+                {PRESETS_CAMERA.map((p) => (
+                  <button key={p.id} onClick={() => pedir({ tipo: 'preset', preset: p.id })}>
+                    {p.rotulo}
+                  </button>
+                ))}
+              </div>
               <label>
                 <input type="checkbox" checked={zoom.noPonto} onChange={(e) => setZoom({ ...zoom, noPonto: e.target.checked })} />{' '}
                 Roda do mouse amplia no ponto sob o cursor
               </label>
+
+              <h3>Auxiliares e nível de detalhe (LOD)</h3>
+              <div className="opcoes-grade">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={auxiliares.grade}
+                    onChange={(e) => setAuxiliares({ ...auxiliares, grade: e.target.checked })}
+                  />{' '}
+                  Grade no chão (2 cm)
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={auxiliares.eixos}
+                    onChange={(e) => setAuxiliares({ ...auxiliares, eixos: e.target.checked })}
+                  />{' '}
+                  Eixos XYZ
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={auxiliares.lodAutomatico}
+                    onChange={(e) => setAuxiliares({ ...auxiliares, lodAutomatico: e.target.checked })}
+                  />{' '}
+                  LOD automático por distância
+                </label>
+              </div>
+              {estatisticas && (
+                <p className="leitura" aria-label="Estatísticas da malha">
+                  {estatisticas.vertices.toLocaleString('pt-BR')} vértices ·{' '}
+                  {(infoLod ? infoLod.triangulos : estatisticas.triangulos).toLocaleString('pt-BR')} triângulos
+                  {infoLod && ` (${infoLod.rotulo})`} ·{' '}
+                  {estatisticas.dimensoesCm.map((d) => fmt(d)).join(' × ')} cm
+                </p>
+              )}
+
+              <h3>Iluminação (Lambert / Blinn–Phong)</h3>
+              <div className="campos">
+                <label className="campo">
+                  Azimute da luz ({iluminacao.azimute}°)
+                  <input
+                    type="range"
+                    min={-180}
+                    max={180}
+                    step={5}
+                    value={iluminacao.azimute}
+                    onChange={(e) => setIluminacao({ ...iluminacao, azimute: Number(e.target.value) })}
+                  />
+                </label>
+                <label className="campo">
+                  Elevação ({iluminacao.elevacao}°)
+                  <input
+                    type="range"
+                    min={5}
+                    max={85}
+                    step={5}
+                    value={iluminacao.elevacao}
+                    onChange={(e) => setIluminacao({ ...iluminacao, elevacao: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={iluminacao.sombraChao}
+                  onChange={(e) => setIluminacao({ ...iluminacao, sombraChao: e.target.checked })}
+                />{' '}
+                Sombra de contato no chão
+              </label>
+
+              {modo === 'uv' && (
+                <div className="uv-atlas-card" aria-label="Atlas UV em 6 ilhas">
+                  <h3>Atlas UV [0, 1]² — 6 ilhas ortográficas</h3>
+                  <div className="uv-atlas-grade">
+                    <span>+Z Lateral</span>
+                    <span>−Z Outro lado</span>
+                    <span>+Y Topo</span>
+                    <span>−Y Sola</span>
+                    <span>+X Frente</span>
+                    <span>−X Trás</span>
+                  </div>
+                </div>
+              )}
+
               <ComoFunciona>
                 <p>
                   Ampliar é mudar o que a câmera enxerga: aqui a câmera <strong>anda</strong> (dolly) e a perspectiva muda — o
@@ -419,13 +608,32 @@ export default function Visualizador({
                     {g.rotulo}
                   </button>
                 ))}
-                <button onClick={() => setTransf(TRANSFORMACAO_INICIAL)}>Restaurar</button>
+                <button onClick={() => atualizarTransf(TRANSFORMACAO_INICIAL)}>Restaurar</button>
+                <button onClick={desfazerTransf} disabled={historicoTransf.length === 0}>
+                  Desfazer
+                </button>
               </div>
-              <p className="conceito">Arraste as setas/anéis/cubos no modelo ou digite os valores.</p>
+              <p className="conceito">
+                Arraste as setas/anéis/cubos no modelo, digite os valores ou use os atalhos <code>G</code> (mover),{' '}
+                <code>R</code> (girar), <code>S</code> (aumentar) e <code>Ctrl+Z</code>.
+              </p>
               <div className="campos">
                 {(['x', 'y', 'z'] as const).map((e, i) => campo(`Posição ${e} (cm)`, transf.posicao[i], mudarVetor('posicao', i)))}
                 {(['x', 'y', 'z'] as const).map((e, i) => campo(`Rotação ${e} (°)`, transf.rotacao[i], mudarVetor('rotacao', i), 5))}
-                {campo('Escala (%)', Math.round(transf.escala * 1000) / 10, (v) => setTransf({ ...transf, escala: Math.max(0.1, v / 100) }), 5)}
+                {campo('Escala (%)', Math.round(transf.escala * 1000) / 10, (v) => atualizarTransf({ ...transf, escala: Math.max(0.1, v / 100) }), 5)}
+              </div>
+              <div className="toolbar" role="group" aria-label="Ponto de pivô">
+                <button
+                  aria-pressed={escolhendoPivo}
+                  onClick={() => setEscolhendoPivo((v) => !v)}
+                >
+                  {escolhendoPivo ? 'Clique num ponto do tênis…' : 'Definir pivô por clique'}
+                </button>
+                {(pivo[0] !== 0 || pivo[1] !== 0 || pivo[2] !== 0) && (
+                  <button onClick={() => setPivo([0, 0, 0])}>
+                    Pivô na origem ({fmt(pivo[0])}, {fmt(pivo[1])}, {fmt(pivo[2])})
+                  </button>
+                )}
               </div>
               {dims && <p className="leitura">Dimensões: {fmt(dims[0])} × {fmt(dims[1])} × {fmt(dims[2])} cm (C × A × L)</p>}
               <div className="toolbar" role="group" aria-label="Ordem da composição">
@@ -448,9 +656,48 @@ export default function Visualizador({
               <ComoFunciona>
                 <p>
                   Coordenadas homogêneas: o ponto vira (x, y, z, 1) e mover, girar e aumentar viram multiplicação por uma matriz
-                  4×4. A matriz da direita age primeiro: em <code>T·R·S</code> o modelo aumenta, gira e depois anda. Troque para
-                  <code> S·R·T</code> e veja a translação ser girada e escalada junto.
+                  4×4. Quando você escolhe um <strong>pivô</strong> <code>p</code>, girar usa <code>T(p)·R·T(−p)</code>: leva o
+                  pivô à origem, gira e devolve ao lugar.
                   {ordem === 'SRT' && ' (O modelo continua usando T·R·S; esta é só a conta.)'}
+                </p>
+              </ComoFunciona>
+            </section>
+          )}
+
+          {ferramenta === 'medir' && (
+            <section role="tabpanel" aria-label="Régua 3D">
+              <p className="conceito">
+                Clique em <strong>dois pontos</strong> da superfície do calçado para medir a distância real em centímetros (F5-T03).
+              </p>
+              <div className="toolbar">
+                <button
+                  onClick={() => setMedicao({ p1: null, p2: null })}
+                  disabled={!medicao.p1 && !medicao.p2}
+                >
+                  Limpar medição
+                </button>
+              </div>
+              {medicao.p1 && (
+                <p className="leitura">
+                  Ponto A: ({fmt(medicao.p1[0])}, {fmt(medicao.p1[1])}, {fmt(medicao.p1[2])}) cm
+                </p>
+              )}
+              {medicao.p2 && (
+                <p className="leitura">
+                  Ponto B: ({fmt(medicao.p2[0])}, {fmt(medicao.p2[1])}, {fmt(medicao.p2[2])}) cm
+                </p>
+              )}
+              {distanciaMedida !== null && (
+                <p className="leitura DestaqueMedida" aria-label="Distância medida">
+                  <strong>Distância AB: {distanciaMedida.toLocaleString('pt-BR')} cm</strong> (
+                  {Math.round(distanciaMedida * 10)} mm)
+                </p>
+              )}
+              <ComoFunciona>
+                <p>
+                  Cada clique lança um <strong>raio</strong> da câmera pela tela até a malha 3D (<em>raycasting</em>) e acha a
+                  interseção exata <code>p = (x, y, z)</code> em centímetros (calibrados pelo comprimento informado no envio). A
+                  distância entre <code>A</code> e <code>B</code> é a norma euclidiana <code>‖B − A‖₂ · escala</code>.
                 </p>
               </ComoFunciona>
             </section>

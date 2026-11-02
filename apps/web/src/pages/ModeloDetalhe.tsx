@@ -59,6 +59,8 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
   const restaurarVersao = useRestaurarVersao(dados.id)
   const regerar = useRegerarModelo(dados.id)
   const [confirmando, setConfirmando] = useState(false)
+  const [mostrandoEmbed, setMostrandoEmbed] = useState(false)
+  const [copiado, setCopiado] = useState(false)
   const job = jobAoVivo ?? dados.job
   const processando = jobAberto(job)
   const status = processando ? 'processando' : dados.status
@@ -67,6 +69,14 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
   const m = versao?.metricas
   const tempo = m?.tempos_s ? Object.values(m.tempos_s).reduce((a, b) => a + b, 0) : null
   const versoes = dados.versoes ?? []
+  const origemEmbed = typeof window !== 'undefined' ? window.location.origin : ''
+  const codigoIframe = `<iframe src="${origemEmbed}/embed/${dados.id}" width="600" height="400" style="border:0;border-radius:12px" title="${dados.nome} — RELEVO 3D" loading="lazy"></iframe>`
+
+  function copiarIframe() {
+    void navigator.clipboard?.writeText(codigoIframe)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
 
   return (
     <main className="container largo detalhe">
@@ -113,6 +123,9 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
               <a className="botao" href={urlExportarVersao(versao.id, 'stl')} download={`${dados.nome}.stl`}>
                 Baixar .stl
               </a>
+              <Botao variante="secundario" onClick={() => setMostrandoEmbed((v) => !v)}>
+                {mostrandoEmbed ? 'Fechar incorporar' : 'Incorporar (<iframe>)'}
+              </Botao>
             </>
           )}
           {glb && (!versao || !versao.id) && (
@@ -139,6 +152,22 @@ function Conteudo({ dados, jobAoVivo }: { dados: Detalhe; jobAoVivo?: Detalhe['j
       {restaurarVersao.isError && <p role="alert" className="erro-envio">{restaurarVersao.error.message}</p>}
       {confirmando && !apagar.isError && (
         <p className="conceito">Apagar remove o modelo, as fotos e os arquivos para sempre.</p>
+      )}
+      {mostrandoEmbed && (
+        <Painel titulo="Incorporar em outro site ou loja virtual (F5-T06)" className="embed-painel">
+          <p className="conceito">
+            Cole este código HTML em qualquer página de e-commerce para exibir o modelo 3D interativo:
+          </p>
+          <pre className="matriz" aria-label="Código HTML do iframe">{codigoIframe}</pre>
+          <div className="acoes">
+            <Botao onClick={copiarIframe} variante="primario">
+              {copiado ? 'Código copiado!' : 'Copiar código HTML'}
+            </Botao>
+            <a className="botao" href={`/embed/${dados.id}`} target="_blank" rel="noreferrer">
+              Abrir visualização incorporada ↗
+            </a>
+          </div>
+        </Painel>
       )}
 
       {processando && job && (

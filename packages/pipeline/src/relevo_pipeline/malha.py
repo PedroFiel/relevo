@@ -168,3 +168,53 @@ def erro_geometrico_cm(original: trimesh.Trimesh, reduzida: trimesh.Trimesh) -> 
     mais_proximo = trimesh.triangles.closest_point(reduzida.triangles[idx.ravel()], repetidos)
     dist = np.linalg.norm(mais_proximo - repetidos, axis=1).reshape(-1, k).min(axis=1)
     return float(dist.mean()), float(dist.max())
+
+
+# ---------- [7] Níveis de detalhe — LOD (F5-T02) ----------
+FRACOES_LOD: tuple[float, ...] = (1.0, 0.25, 0.05)
+
+
+def gerar_lods(
+    malha: trimesh.Trimesh, fracoes: tuple[float, ...] = FRACOES_LOD
+) -> list[dict]:
+    """Gera 3 níveis de detalhe (100 %, 25 % e 5 % das faces, F5-T02) preservando a cor por vértice.
+
+    Devolve `{"nivel": i, "fracao": f, "malha": m, "faces": int, "erro_medio_mm": float}`.
+    """
+    faces_base = int(len(malha.faces))
+    tem_cor = malha.visual.kind == "vertex" and len(malha.visual.vertex_colors) == len(
+        malha.vertices
+    )
+    arvore_cor = cKDTree(malha.vertices) if tem_cor else None
+    cores_orig = np.asarray(malha.visual.vertex_colors) if tem_cor else None
+
+    saida: list[dict] = []
+    for i, fracao in enumerate(fracoes):
+        if fracao >= 0.999 or faces_base == 0:
+            saida.append(
+                {
+                    "nivel": i,
+                    "fracao": float(fracao),
+                    "malha": malha,
+                    "faces": faces_base,
+                    "erro_medio_mm": 0.0,
+                }
+            )
+            continue
+        alvo = max(24, int(round(faces_base * fracao)))
+        m_lod, info = decimar(malha, faces_alvo=alvo)
+        if arvore_cor is not None and cores_orig is not None and m_lod is not malha:
+            _, idx_v = arvore_cor.query(m_lod.vertices, k=1)
+            m_lod = m_lod.copy()
+            m_lod.visual.vertex_colors = cores_orig[idx_v]
+        saida.append(
+            {
+                "nivel": i,
+                "fracao": float(fracao),
+                "malha": m_lod,
+                "faces": int(len(m_lod.faces)),
+                "erro_medio_mm": float(info.get("erro_medio_mm", 0.0)),
+            }
+        )
+    return saida
+

@@ -79,6 +79,33 @@ class ContaOut(BaseModel):
     movimentos: list[MovimentoCreditoOut]
 
 
+class RegistroIn(BaseModel):
+    nome: str
+    email: str
+    senha: str
+
+
+class LoginIn(BaseModel):
+    email: str
+    senha: str
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    usuario: ContaOut
+
+
+class ModeloPublicoOut(BaseModel):
+    id: uuid.UUID
+    nome: str
+    comprimento_cm: float
+    glb_url: str
+    dimensoes_cm: list[float] | None = None
+    faces: int | None = None
+    vertices: int | None = None
+
+
 class ModeloResumoOut(BaseModel):
     id: uuid.UUID
     nome: str

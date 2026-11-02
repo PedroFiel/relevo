@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from relevo_api.config import settings
 from relevo_api.db import banco_disponivel, get_fabrica_sessao
-from relevo_api.routers import amostras, arquivos, conta, jobs, modelos
+from relevo_api.routers import amostras, arquivos, auth, conta, jobs, modelos
 from relevo_api.servicos.modelos import ErroPedido
 from relevo_api.servicos.processamento import marcar_interrompidos
 
@@ -41,9 +41,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(modelos.router)
+app.include_router(modelos.router_publico)
 app.include_router(jobs.router)
 app.include_router(arquivos.router)
 app.include_router(conta.router)
+app.include_router(auth.router)
 app.include_router(amostras.router)
 
 

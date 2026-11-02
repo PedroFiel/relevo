@@ -5,12 +5,17 @@ import {
   buscarConta,
   buscarJob,
   buscarModelo,
+  buscarModeloPublico,
   criarModelo,
   criarVersao,
+  limparToken,
   listarModelos,
+  loginUsuario,
   recarregarCreditos,
   regerarModelo,
+  registrarUsuario,
   restaurarVersao,
+  salvarToken,
   type Job,
 } from './api'
 import type { Vista } from './vistas'
@@ -18,6 +23,7 @@ import type { Vista } from './vistas'
 export const chaves = {
   modelos: ['modelos'] as const,
   modelo: (id: string) => ['modelos', id] as const,
+  publico: (id: string) => ['publico', id] as const,
   job: (id: string) => ['jobs', id] as const,
   conta: ['conta'] as const,
 }
@@ -35,7 +41,13 @@ export function useModelo(id: string) {
 }
 
 export function useConta() {
-  return useQuery({ queryKey: chaves.conta, queryFn: buscarConta, retry: false })
+  return useQuery({
+    queryKey: chaves.conta,
+    queryFn: buscarConta,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  })
 }
 
 export function useRecarregarCreditos() {
@@ -117,5 +129,46 @@ export function useApagarModelo() {
       cliente.removeQueries({ queryKey: chaves.modelo(id) })
       return cliente.invalidateQueries({ queryKey: chaves.modelos })
     },
+  })
+}
+
+export function useRegistrar() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: registrarUsuario,
+    onSuccess: (resposta) => {
+      salvarToken(resposta.access_token)
+      cliente.setQueryData(chaves.conta, resposta.usuario)
+      void cliente.invalidateQueries({ queryKey: chaves.modelos })
+    },
+  })
+}
+
+export function useLogin() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: loginUsuario,
+    onSuccess: (resposta) => {
+      salvarToken(resposta.access_token)
+      cliente.setQueryData(chaves.conta, resposta.usuario)
+      void cliente.invalidateQueries({ queryKey: chaves.modelos })
+    },
+  })
+}
+
+export function useSair() {
+  const cliente = useQueryClient()
+  return () => {
+    limparToken()
+    void cliente.invalidateQueries({ queryKey: chaves.conta })
+    void cliente.invalidateQueries({ queryKey: chaves.modelos })
+  }
+}
+
+export function useModeloPublico(id: string) {
+  return useQuery({
+    queryKey: chaves.publico(id),
+    queryFn: () => buscarModeloPublico(id),
+    retry: false,
   })
 }

@@ -29,6 +29,7 @@ from relevo_api.schemas import (
     ImagemOut,
     JobOut,
     ModeloDetalheOut,
+    ModeloPublicoOut,
     ModeloResumoOut,
     VersaoOut,
     VersaoResumoOut,
@@ -517,3 +518,27 @@ def _url_imagem(imagem: Imagem) -> str:
 def _url_miniatura(modelo: Modelo) -> str | None:
     lateral = next((i for i in modelo.imagens if i.vista == "lateral"), None)
     return _url_imagem(lateral) if lateral else None
+
+
+def buscar_modelo_publico(db: Session, modelo_id: uuid.UUID) -> tuple[ModeloPublicoOut, Arquivo]:
+    """Busca metadados públicos e o `.glb` ativo de um modelo pronto para incorporação (F5-T06)."""
+    modelo = db.get(Modelo, modelo_id)
+    if modelo is None or modelo.status != "pronto" or modelo.versao_atual is None:
+        raise ErroPedido(404, "Modelo público não encontrado ou ainda não está pronto.")
+    versao = next((v for v in modelo.versoes if v.numero == modelo.versao_atual), None)
+    if versao is None:
+        raise ErroPedido(404, "Versão ativa do modelo não encontrada.")
+    glb = next((a for a in versao.arquivos if a.tipo == "glb"), None)
+    if glb is None:
+        raise ErroPedido(404, "Arquivo 3D do modelo não encontrado.")
+    metricas = versao.metricas or {}
+    resumo = ModeloPublicoOut(
+        id=modelo.id,
+        nome=modelo.nome,
+        comprimento_cm=float(modelo.comprimento_cm),
+        glb_url=f"/publico/{modelo.id}/glb",
+        dimensoes_cm=metricas.get("dimensoes_cm"),
+        faces=metricas.get("faces"),
+        vertices=metricas.get("vertices"),
+    )
+    return resumo, glb

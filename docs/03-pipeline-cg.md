@@ -12,8 +12,7 @@ onde está no código e como testamos.**
 
 Vistas aceitas (ADR 0007): `lateral` e `topo` (obrigatórias), `frente` (recomendada), `outro_lado`, `sola`, `tras`.
 
-Status: etapas 1–4 e 8 implementadas na **Fase 0** (prova de conceito). Etapas 5–7 entram na **Fase 1** (cor por vértice)
-e **Fase 4** (textura UV).
+Status: **todas as etapas (0 a 8), mais o mapeamento UV (`textura.py`) e os níveis de detalhe LOD (`malha.gerar_lods`), estão 100 % implementadas e testadas.**
 
 ---
 
@@ -281,14 +280,11 @@ com amostragem **bilinear**.
 - **Detalhe visual** depende da resolução da malha: a 128 voxels (~0,23 cm/vértice) o cadarço e o logo ficam borrados;
   a 256 aparecem. Por isso o `make real` usa 256 (~1,5 s).
 
-**Textura UV (Fase 4):** `xatlas` "desdobra" a malha num plano (atlas UV, minimizando distorção). Para cada *texel* do
-atlas, calculamos o ponto 3D correspondente e amostramos as fotos com a mesma regra de pesos → imagem de textura
-`baseColor` num material **PBR** do glTF.
+**Textura UV (Fase 4 — `textura.py`, F4-T06):** `desdobrar_uv(malha)` classifica cada triângulo pelo maior componente absoluto da sua normal (`+Z`, `−Z`, `+Y`, `−Y`, `+X`, `−X` — as 6 vistas ortográficas do calçado) e empacota as 6 ilhas numa grade 3×2 dentro de $[0, 1]^2$, garantindo área UV estritamente positiva para toda face 3D válida. `assar_textura(malha, fotos, vistas)` rasteriza os triângulos no atlas RGB e aplica dilatação morfológica por transformada de distância (`distance_transform_edt`) nas bordas das ilhas para eliminar costuras na filtragem bilinear da GPU.
 
-## [8] Exportação
+## [8] Exportação e Níveis de Detalhe (LOD)
 
-**Arquivo:** `exportar.py`. `.glb` (glTF binário: geometria + material + textura num arquivo, padrão da web),
-`.obj` (universal, texto), `.stl` (só geometria, impressão 3D).
+**Arquivos:** `exportar.py` e `malha.py` (`gerar_lods`, F5-T02). Exporta `.glb` (glTF binário: geometria + material + cor/textura num arquivo, padrão da web), `.obj` (universal, texto) e `.stl` (só geometria, impressão 3D), além de gerar os 3 níveis de detalhe (`100 %`, `25 %` e `5 %` das faces) preservando a cor por vértice.
 
 ---
 

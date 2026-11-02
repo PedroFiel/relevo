@@ -7,11 +7,11 @@ como é testada. Fontes no fim.
 ## Onde cada coisa fica
 
 ```
-make web   ->  http://localhost:5173
+make dev   ->  http://localhost:5173 (front) + http://localhost:8000 (API)
                ├── Modelo 3D  (/visualizador)  ferramentas ao lado do modelo, em abas:
-               │     Ampliar · Recortar · Selecionar e mover · Transformar · Rastrear raios
+               │     Ampliar · Recortar · Selecionar e mover · Transformar · Régua 3D · Rastrear raios
                └── Fotos 2D   (/fotos)         as fotos que ENTRAM no pipeline: contorno, zoom,
-                                               recorte da foto e "Aplicar e gerar o 3D" (precisa de `make api`)
+                                               recorte da foto e "Aplicar e gerar o 3D"
 ```
 
 **Por que duas metades?** Na disciplina, recorte, zoom e janela aparecem em **visualização 2D** (janela → visor,
@@ -117,6 +117,31 @@ O RELEVO tem os dois: as **fotos** (2D, a entrada) e o **modelo** (3D, a saída)
 | **Exemplo medido** | tenis-01, resolução 128: grade 128 × 64 × 48, ~26 mil voxels de casca (`voxels.glb` 311 KB), malha bruta 61 084 faces (1,1 MB), decimada 20 000, máscaras ~9 KB cada |
 | **Código** | `exportar.intermediarios`, `exportar.voxels_de_superficie` (pipeline); `servicos/processamento.py` (salva como `arquivos` tipo `mascara`/`etapa`); `lib/raioX.ts`, `components/RaioX.tsx`, `components/CenaRaioX.tsx` (front) |
 | **Testes** | `test_intermediarios.py` (casca de um cubo; voxels na mesma caixa da malha; malha bruta antes da decimação); `test_modelos.py` (versão com as 5 etapas); `lib/raioX.test.ts`, `components/RaioX.test.tsx` (slider, setas, apresentação); E2E vai até os voxels |
+
+## 10. Modos extras de renderização, Shaders GLSL e Atlas UV (F2-T03, F2-T05, F4-T07)
+
+| | |
+|---|---|
+| **Conceito** | *flat* × *smooth shading*, malha sobreposta (*wireframe overlay*), pipeline programável (*vertex/fragment shaders* GLSL) e parametrização UV em 6 ilhas |
+| **Na tela** | barra de modos acima do canvas 3D: **Sólido**, **Wireframe**, **Sólido + arestas**, **Flat**, **Normais**, **Altura (GLSL)**, **Fresnel (GLSL)** e **Textura UV** (exibe o padrão xadrez 3D + diagrama das 6 ilhas ortográficas no painel) |
+| **Código** | `lib/modosRender.ts`, `shaders/altura.vert`, `shaders/altura.frag`, `shaders/fresnel.vert`, `shaders/fresnel.frag`, `components/ModelViewer.tsx` |
+
+## 11. Régua 3D, Pivô por clique e Níveis de Detalhe — LOD (F4-T03, F5-T02, F5-T03)
+
+| | |
+|---|---|
+| **Conceito** | *raycasting* em superfície triangular, métrica euclidiana em escala calibrada ($\text{cm}$), rotação em torno de ponto arbitrário $M = T(p)\cdot R\cdot S\cdot T(-p)$ e *Level of Detail* (LOD) por distância |
+| **Na tela** | aba **Régua 3D** (clique em 2 pontos na superfície do tênis para ver o segmento 3D e a distância em `cm` e `mm`); aba **Transformar** → **Definir pivô por clique** + atalhos `G`/`R`/`S`/`Ctrl+Z`; aba **Ampliar** → **LOD automático por distância** (`LOD 0`, `LOD 1`, `LOD 2`) |
+| **Código** | `lib/matrizes.ts` (`comporComPivo`), `lib/visualizador.ts` (`distanciaCm`, `nivelLodPorDistancia`), `pages/Visualizador.tsx` |
+| **Testes** | `lib/cgEstudio.test.ts` |
+
+## 12. Pincel de correção da máscara e Visualizador incorporável (F5-T05, F5-T06)
+
+| | |
+|---|---|
+| **Conceito** | edição interativa de máscara binária por rasterização de pinceladas circulares em `<canvas>` e incorporação WebGL isolada via `<iframe>` |
+| **Na tela** | `/modelos/:id` → aba **Fotos e contornos** → **Corrigir máscara (pincel)** → **Salvar e regerar 3D**; botão **Incorporar (`<iframe>`)** no topo do modelo e rota pública `/embed/:id` |
+| **Código** | `components/EditorMascara.tsx`, `pages/EmbedModelo.tsx`, `routers/modelos.py` (`POST /modelos/{id}/regerar`, `GET /publico/{id}`) |
 
 ## Fontes
 

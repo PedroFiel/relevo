@@ -144,16 +144,15 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
   superfície, como nuvem de pontos em cm) e `malha-bruta.glb` (`ResultadoPipeline.malha_bruta`, antes da decimação e
   da cor). `malha_suave.glb` fica para quando a F1-T02 existir; a decimada é a própria `modelo.glb` (vista em arame).
 
-### F1-T09 — Desempenho
+### F1-T09 — Desempenho — **FEITO (02/11)**
 - **Frente:** pipeline
 - **Como fazer:** medir com `tempos_s`; meta < 10 s na resolução 128 no notebook mais fraco do grupo. Se a cor estiver
   lenta, vetorizar com NumPy (sem laço por vértice). Registrar a tabela resolução × tempo × faces no relatório da fase.
-- **Testes:** teste marcado `@pytest.mark.lento` que falha se a configuração única passar de 15 s.
+- **Testes:** teste marcado `@pytest.mark.lento` (`test_desempenho_configuracao_padrao_abaixo_de_15s` em `test_textura_lod_desempenho.py`) que falha se a configuração única passar de 15 s.
 
-### F1-T10 — Notebook didático
+### F1-T10 — Notebook didático — **FEITO (02/11)**
 - **Frente:** pipeline
-- **Como fazer:** `notebooks/01-pipeline-passo-a-passo.ipynb` com cada etapa visualizada (imagens com matplotlib,
-  fatias do volume de voxels, malha com `trimesh.Scene.show()` ou screenshot). Será usado na apresentação.
+- **Como fazer:** `notebooks/01-pipeline-passo-a-passo.ipynb` com cada etapa visualizada (segmentação, contorno Moore/Douglas–Peucker, alinhamento, Visual Hull, Taubin, Garland–Heckbert, UV e LOD). Será usado na apresentação.
 - **Aceite:** "Run all" funciona do zero após `uv sync`.
 
 ### F1-T11 — Ajuste da foto: recorte e rotação (região de interesse)
@@ -196,7 +195,7 @@ em < 10 s, e um `metricas.json` com IoU de reprojeção > 0,90 nos exemplos sint
 
 ## Encerramento da Fase 1
 
-- [ ] Todas as tarefas com testes passando
-- [ ] Relatório em `docs/testes/relatorios/` com os tênis reais: prints antes/depois, métricas (IoU, erro dimensional, faces, tempo)
-- [ ] `docs/03-pipeline-cg.md` atualizado se alguma decisão mudou
-- [ ] Revisão de fase `docs/revisoes/fase-1.md`
+- [x] Todas as tarefas com testes passando
+- [x] Relatório em `docs/testes/relatorios/` com os tênis reais: prints antes/depois, métricas (IoU, erro dimensional, faces, tempo)
+- [x] `docs/03-pipeline-cg.md` atualizado se alguma decisão mudou
+- [x] Revisão de fase `docs/revisoes/fase-1.md`
