@@ -28,12 +28,59 @@ const data = (iso: string) =>
  * e extrato auditável da tabela `movimentos_credito` (débito ao gerar/regerar e estorno se o job falhar).
  */
 export default function Conta() {
+  const autenticado = Boolean(obterToken())
   const conta = useConta()
   const recarregar = useRecarregarCreditos()
   const sair = useSair()
-  const autenticado = Boolean(obterToken())
 
-  if (conta.isPending) {
+  if (!autenticado) {
+    return (
+      <main className="container pagina-simples conta-pagina">
+        <div className="detalhe-topo">
+          <div>
+            <h1>Conta e créditos</h1>
+            <p className="subtitulo" style={{ marginBottom: 0 }}>
+              Você ainda não está conectado a uma conta.
+            </p>
+          </div>
+        </div>
+
+        <div className="conta-auth-grade">
+          <Painel className="conta-auth-card">
+            <h2>Já tem uma conta?</h2>
+            <p className="conceito">
+              Entre com seu e-mail e senha para acessar seus modelos 3D salvos e seu saldo de créditos.
+            </p>
+            <div className="acoes" style={{ marginTop: 16 }}>
+              <Botao para="/entrar" variante="secundario">
+                Entrar na conta
+              </Botao>
+            </div>
+          </Painel>
+
+          <Painel className="conta-auth-card destaque">
+            <h2>Criar nova conta</h2>
+            <p className="conceito">
+              Cadastre-se para salvar seus próprios modelos. Novas contas ganham automaticamente{' '}
+              <strong>10 créditos de boas-vindas</strong> para gerar malhas 3D.
+            </p>
+            <div className="acoes" style={{ marginTop: 16 }}>
+              <Botao para="/cadastrar" variante="primario">
+                Criar conta (+10 créditos)
+              </Botao>
+            </div>
+          </Painel>
+        </div>
+
+        <p className="conceito" style={{ marginTop: 24, textAlign: 'center' }}>
+          Quer apenas testar sem se cadastrar? Você pode enviar fotos direto em <Link to="/novo">Novo modelo</Link> ou
+          aprender as fotos ideais no <Link to="/guia">Guia de fotos</Link>.
+        </p>
+      </main>
+    )
+  }
+
+  if (conta.isLoading) {
     return (
       <main className="container pagina-simples">
         <p className="conceito">Carregando sua conta…</p>
@@ -42,7 +89,10 @@ export default function Conta() {
   }
 
   if (conta.isError) {
-    const semServidor = conta.error.message.includes('falar com o servidor') || conta.error.message.includes('erro 5')
+    const semServidor =
+      conta.error.message.includes('falar com o servidor') ||
+      conta.error.message.includes('erro 5') ||
+      conta.error.message.includes('offline')
     return (
       <main className="container pagina-simples vazio">
         <h1>Não deu para carregar a conta</h1>
@@ -57,12 +107,22 @@ export default function Conta() {
           <Botao onClick={() => void conta.refetch()} variante="primario">
             Tentar novamente
           </Botao>
+          <Botao onClick={sair} variante="fantasma">
+            Sair da conta
+          </Botao>
+          <Botao para="/entrar" variante="secundario">
+            Entrar
+          </Botao>
+          <Botao para="/cadastrar" variante="fantasma">
+            Criar conta
+          </Botao>
         </div>
       </main>
     )
   }
 
   const dados = conta.data
+  if (!dados) return null
 
   return (
     <main className="container pagina-simples conta-pagina">

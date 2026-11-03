@@ -4,7 +4,7 @@ import uuid
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, Query, Response, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -28,14 +28,22 @@ router = APIRouter(prefix="/modelos", tags=["modelos"])
 router_publico = APIRouter(prefix="/publico", tags=["publico"])
 
 
-def get_usuario_id(authorization: Annotated[str | None, Header()] = None) -> uuid.UUID:
-    """Devolve o usuário do token JWT (`Bearer`) ou o usuário demo se sem cabeçalho (F4-T01)."""
-    if not authorization:
+def get_usuario_id(
+    authorization: Annotated[str | None, Header()] = None,
+    token: Annotated[str | None, Query()] = None,
+) -> uuid.UUID:
+    """Devolve o usuário do token JWT (`Bearer` ou `?token=...`) ou usuário demo (F4-T01)."""
+    jwt_str: str | None = None
+    if authorization:
+        esquema, _, jwt_str = authorization.partition(" ")
+        if esquema.lower() != "bearer" or not jwt_str.strip():
+            raise servico.ErroPedido(401, "Cabeçalho Authorization inválido; use Bearer <token>.")
+    elif token:
+        jwt_str = token.strip()
+
+    if not jwt_str:
         return USUARIO_DEMO_ID
-    esquema, _, token = authorization.partition(" ")
-    if esquema.lower() != "bearer" or not token.strip():
-        raise servico.ErroPedido(401, "Cabeçalho Authorization inválido; use Bearer <token>.")
-    return servico_auth.decodificar_token_jwt(token)
+    return servico_auth.decodificar_token_jwt(jwt_str)
 
 
 Db = Annotated[Session, Depends(get_db)]

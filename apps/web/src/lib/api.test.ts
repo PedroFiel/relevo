@@ -1,6 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fetchFalso } from '../testes/auxiliares'
-import { ErroApi, apagarModelo, buscarJob, buscarModelo, criarModelo, formularioModelo, listarModelos, urlApi } from './api'
+import {
+  ErroApi,
+  apagarModelo,
+  buscarJob,
+  buscarModelo,
+  criarModelo,
+  formularioModelo,
+  limparToken,
+  listarModelos,
+  salvarToken,
+  urlApi,
+} from './api'
 
 const foto = (nome: string) => new File([new Uint8Array([0xff, 0xd8, 0xff])], nome, { type: 'image/jpeg' })
 
@@ -15,6 +26,11 @@ describe('cliente da API (F3-T07)', () => {
     expect(f.mock.calls.map((c) => c[0])).toEqual(['/api/jobs/j1', '/api/modelos', '/api/modelos/m1'])
     expect(urlApi('/arquivos/a1/download')).toBe('/api/arquivos/a1/download')
     expect(urlApi('/api/imagens/i1')).toBe('/api/imagens/i1')
+
+    salvarToken('token-teste-123')
+    expect(urlApi('/arquivos/a1/download')).toBe('/api/arquivos/a1/download?token=token-teste-123')
+    expect(urlApi('/versoes/v1/exportar?formato=obj')).toBe('/api/versoes/v1/exportar?formato=obj&token=token-teste-123')
+    limparToken()
   })
 
   it('erro 400 vira ErroApi com a mensagem do back', async () => {

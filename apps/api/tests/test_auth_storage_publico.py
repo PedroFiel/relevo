@@ -85,6 +85,23 @@ def test_registro_login_e_isolamento_entre_usuarios(cliente, fotos_png):
     )
     assert delete_b.status_code == 404
 
+    # Alice consegue baixar seu GLB e fotos via query param ?token= (usado pelo Three.js e <img>)
+    detalhe_a = cliente.get(
+        f"/modelos/{modelo_id_a}", headers={"Authorization": f"Bearer {token_a}"}
+    )
+    assert detalhe_a.status_code == 200
+    arquivo_glb = next(a for a in detalhe_a.json()["versao"]["arquivos"] if a["tipo"] == "glb")
+    url_download = arquivo_glb["url"]
+
+    # Sem token -> 404
+    assert cliente.get(url_download).status_code == 404
+    # Com token do Bob -> 404
+    assert cliente.get(f"{url_download}?token={token_b}").status_code == 404
+    # Com token da Alice -> 200
+    res_glb = cliente.get(f"{url_download}?token={token_a}")
+    assert res_glb.status_code == 200
+    assert res_glb.content[:4] == b"glTF"
+
     # Mas a rota pública /publico/{id} serve o embed sem exigir token (F5-T06)
     pub = cliente.get(f"/publico/{modelo_id_a}")
     assert pub.status_code == 200

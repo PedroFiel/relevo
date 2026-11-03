@@ -158,7 +158,11 @@ export function limparToken(): void {
 
 /** URL que a API devolve (`/arquivos/…`, `/imagens/…`) → URL que o navegador usa. */
 export function urlApi(caminho: string): string {
-  return caminho.startsWith(BASE_API) ? caminho : `${BASE_API}${caminho}`
+  const base = caminho.startsWith(BASE_API) ? caminho : `${BASE_API}${caminho}`
+  const token = obterToken()
+  if (!token || base.includes('token=')) return base
+  const separador = base.includes('?') ? '&' : '?'
+  return `${base}${separador}token=${encodeURIComponent(token)}`
 }
 
 async function pedir<T>(caminho: string, init?: RequestInit): Promise<T> {
