@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type PointerEvent as PE, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as PE, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import AbasEstudio from '../components/AbasEstudio'
 import ErroModelo from '../components/ErroModelo'
@@ -89,9 +89,25 @@ export default function Visualizador({
     return a ? `${a.url}${busca.get('v') ? `?v=${busca.get('v')}` : ''}` : AMOSTRAS[0].url
   })
   const [local, setLocal] = useState<{ nome: string; url: string } | null>(null)
+  const [arrastandoArquivo, setArrastandoArquivo] = useState(false)
   const [erro, setErro] = useState('')
   const atual = MODOS.find((m) => m.id === modo)!
   const Raiz = urlFixa ? 'div' : 'main'
+
+  const formato = useMemo(() => {
+    if (local && url === local.url) {
+      const ext = local.nome.split('.').pop()?.toLowerCase()
+      if (ext === 'obj') return 'obj'
+      if (ext === 'stl') return 'stl'
+      if (ext === 'gltf') return 'gltf'
+      return 'glb'
+    }
+    const limpa = url.split('?')[0].split('#')[0].toLowerCase()
+    if (limpa.endsWith('.obj')) return 'obj'
+    if (limpa.endsWith('.stl')) return 'stl'
+    if (limpa.endsWith('.gltf')) return 'gltf'
+    return 'glb'
+  }, [local, url])
 
   const [ferramenta, setFerramenta] = useState<Ferramenta>('ampliar')
   const [caixa, setCaixa] = useState<Caixa | null>(null)
@@ -241,18 +257,42 @@ export default function Visualizador({
     setSemSelecao(s === null && ultimoPedido.current === 'separar')
   }, [])
 
-  function abrirArquivo(e: ChangeEvent<HTMLInputElement>) {
-    const arquivo = e.target.files?.[0]
-    e.target.value = '' // permite escolher o mesmo arquivo de novo
-    if (!arquivo) return
+  function carregarArquivo(arquivo: File) {
     if (!arquivoValido(arquivo.name)) {
-      setErro('Esse formato não abre aqui. Escolha um arquivo .glb (gerado pelo RELEVO).')
+      setErro('Esse formato não é suportado. Escolha um arquivo 3D .glb, .obj ou .stl (gerado pelo RELEVO).')
       return
     }
     setErro('')
     const novo = { nome: arquivo.name, url: URL.createObjectURL(arquivo) }
     setLocal(novo)
     trocarModelo(novo.url)
+  }
+
+  function abrirArquivo(e: ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0]
+    e.target.value = '' // permite escolher o mesmo arquivo de novo
+    if (!arquivo) return
+    carregarArquivo(arquivo)
+  }
+
+  function aoArrastarSobre(e: React.DragEvent) {
+    e.preventDefault()
+    if (!arrastandoArquivo) setArrastandoArquivo(true)
+  }
+
+  function aoSairArrasto(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setArrastandoArquivo(false)
+    }
+  }
+
+  function aoSoltarArquivo(e: React.DragEvent) {
+    e.preventDefault()
+    setArrastandoArquivo(false)
+    const arquivo = e.dataTransfer.files?.[0]
+    if (arquivo) {
+      carregarArquivo(arquivo)
+    }
   }
 
   // Abrir uma ferramenta liga o que ela mostra no modelo (o gizmo só na aba Transformar)
@@ -301,13 +341,18 @@ export default function Visualizador({
           </button>
         ))}
         {local && (
-          <button aria-pressed={url === local.url} onClick={() => trocarModelo(local.url)}>
+          <button
+            aria-pressed={url === local.url}
+            onClick={() => trocarModelo(local.url)}
+            title={`Arquivo local carregado: ${local.nome}`}
+          >
+            <span className="tag-formato">{formato.toUpperCase()}</span>{' '}
             {local.nome}
           </button>
         )}
-        <label className="botao-arquivo">
-          Abrir arquivo .glb…
-          <input type="file" accept=".glb,.gltf" onChange={abrirArquivo} hidden />
+        <label className="botao-arquivo" title="Abrir arquivo 3D (.glb, .obj, .stl)">
+          Abrir 3D (.glb, .obj, .stl)…
+          <input type="file" accept=".glb,.gltf,.obj,.stl" onChange={abrirArquivo} hidden />
         </label>
       </div>
       )}
@@ -323,10 +368,25 @@ export default function Visualizador({
             ))}
             <span className="conceito" style={{ margin: 0, alignSelf: 'center' }}>{atual.conceito}</span>
           </div>
-          <div className="viewer">
+          <div
+            className="viewer"
+            onDragOver={aoArrastarSobre}
+            onDragLeave={aoSairArrasto}
+            onDrop={aoSoltarArquivo}
+          >
+            {arrastandoArquivo && (
+              <div className="overlay-drop-3d" aria-hidden="true">
+                <div className="conteudo-drop-3d">
+                  <span className="icone-drop">📦</span>
+                  <strong>Solte o arquivo 3D aqui para visualizar</strong>
+                  <span>Suporta modelos .glb, .obj e .stl</span>
+                </div>
+              </div>
+            )}
             <ErroModelo key={url}>
               <ModelViewer
                 url={url}
+                formato={formato}
                 modo={modo}
                 corte={corte}
                 zoom={zoom}

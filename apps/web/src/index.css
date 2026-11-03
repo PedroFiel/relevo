@@ -79,6 +79,29 @@ a:hover { color: var(--accent-forte); }
 .selo-creditos-ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--sucesso); flex: none; }
 .selo-creditos.sem-creditos { border-color: var(--aviso); color: var(--aviso); }
 .selo-creditos.sem-creditos .selo-creditos-ponto { background: var(--aviso); }
+
+.cabecalho-auth { display: flex; align-items: center; gap: var(--esp-2); }
+.link-usuario { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--raio); color: var(--text); text-decoration: none; font-size: 0.88rem; font-weight: 500; background: var(--surface); border: 1px solid var(--border); transition: border-color 0.15s ease, background 0.15s ease; }
+.link-usuario:hover, .link-usuario.active { border-color: var(--border-forte); background: var(--surface-2); color: var(--text); }
+.avatar-letra { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--sobre-accent); display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; }
+.usuario-nome { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-sair { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: var(--raio); padding: 5px 10px; font-size: 0.84rem; font-weight: 500; cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; }
+.btn-sair:hover { color: var(--erro); border-color: var(--erro); }
+.acoes-auth-topo { display: flex; align-items: center; gap: var(--esp-2); }
+.btn-link-auth { color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: var(--raio); font-size: 0.88rem; font-weight: 500; transition: color 0.15s ease, background 0.15s ease; }
+.btn-link-auth:hover, .btn-link-auth.active { color: var(--text); background: var(--surface); }
+.btn-cadastrar-topo { background: var(--accent); color: var(--sobre-accent); font-weight: 700; text-decoration: none; padding: 6px 14px; border-radius: var(--raio); font-size: 0.88rem; transition: background 0.15s ease; }
+.btn-cadastrar-topo:hover { background: var(--accent-forte); color: var(--sobre-accent); }
+
+/* Grade de opções de autenticação na página de conta */
+.conta-auth-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--esp-4); margin-top: var(--esp-4); margin-bottom: var(--esp-5); }
+.conta-auth-card { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+.conta-auth-card.destaque { border-color: var(--accent-borda); background: linear-gradient(180deg, var(--accent-suave), var(--surface)); }
+.conta-auth-card h2 { font-size: 1.15rem; margin-top: 0; margin-bottom: var(--esp-2); }
+.aviso-banner { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-3); flex-wrap: wrap; padding: var(--esp-3) var(--esp-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--raio); color: var(--muted); font-size: 0.9rem; }
+.aviso-banner a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.aviso-banner a:hover { text-decoration: underline; }
+
 .rodape { border-top: 1px solid var(--border); color: var(--muted); font-size: var(--texto-p); background: rgba(21, 24, 32, 0.45); }
 .rodape .container { padding-top: var(--esp-4); padding-bottom: var(--esp-4); display: flex; gap: var(--esp-3); flex-wrap: wrap; justify-content: space-between; align-items: center; }
 
@@ -174,6 +197,56 @@ a:hover { color: var(--accent-forte); }
 .toolbar .botao-arquivo {
   background: var(--surface); color: var(--text); border: 1px dashed var(--border);
   border-radius: 8px; padding: 8px 14px; font-size: 0.88rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.toolbar .botao-arquivo:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.tag-formato {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--accent-suave);
+  color: var(--accent);
+  border: 1px solid var(--accent-borda);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.overlay-drop-3d {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 13, 18, 0.88);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+}
+.conteudo-drop-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  text-align: center;
+}
+.conteudo-drop-3d .icone-drop {
+  font-size: 2.4rem;
+}
+.conteudo-drop-3d strong {
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+.conteudo-drop-3d span {
+  font-size: 0.88rem;
+  color: var(--muted);
 }
 .toolbar button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); background: var(--accent-suave); }
 .viewer { height: 70vh; min-height: 360px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); position: relative; }
@@ -200,9 +273,14 @@ a:hover { color: var(--accent-forte); }
 /* Editor de máscara com pincel (F5-T05) */
 .editor-mascara { margin-bottom: var(--esp-4); border-color: var(--accent-borda); }
 .editor-mascara-barra { display: flex; gap: var(--esp-3); align-items: center; flex-wrap: wrap; margin: var(--esp-3) 0; }
-.editor-mascara-slider { min-width: 200px; flex: 1 1 220px; max-width: 320px; }
-.editor-mascara-visor { height: min(58vh, 440px); margin-bottom: var(--esp-3); display: grid; place-items: center; }
-.editor-mascara-visor canvas { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; }
+.editor-mascara-slider { min-width: 180px; flex: 1 1 200px; max-width: 260px; }
+.editor-mascara-controles-zoom { display: inline-flex; align-items: center; gap: 3px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--raio); padding: 3px; }
+.editor-mascara-controles-zoom button { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.84rem; cursor: pointer; font-weight: 600; transition: background 0.15s ease, border-color 0.15s ease; }
+.editor-mascara-controles-zoom button:hover { background: var(--surface-2); border-color: var(--border-forte); }
+.editor-mascara-zoom-texto { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; padding: 0 6px; min-width: 48px; text-align: center; }
+.editor-mascara-visor { position: relative; width: 100%; height: min(65vh, 520px); min-height: 320px; margin-bottom: var(--esp-3); background: #0c0e12; border: 1px solid var(--border); border-radius: var(--raio); overflow: hidden; touch-action: none; user-select: none; }
+.editor-mascara-visor canvas { width: 100%; height: 100%; display: block; }
+.editor-mascara-dica { font-size: 0.84rem; color: var(--muted); margin-top: -4px; margin-bottom: var(--esp-3); display: flex; gap: var(--esp-3); flex-wrap: wrap; justify-content: space-between; align-items: center; }
 
 /* Avisos do pipeline — borda uniforme 1 px + fundo sutil (sem border-left grossa) */
 .avisos { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }

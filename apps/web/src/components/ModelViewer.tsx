@@ -1,7 +1,9 @@
 import { OrbitControls, TransformControls, useGLTF, useProgress } from '@react-three/drei'
-import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import * as THREE from 'three'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { DIRECOES_PRESET, esfericaParaCartesiana, fatorDaRoda, pontoDeZoom } from '../lib/camera'
 import { ladoDoPlano, planoDeCorte, pontoNoPlano, type Vec3 } from '../lib/corte'
 import { comporComPivo } from '../lib/matrizes'
@@ -33,9 +35,11 @@ import {
   type Transformacao,
   type Zoom,
 } from '../lib/visualizador'
+import { inferirFormato, type Formato3D } from '../lib/amostras'
 
 type Props = {
   url: string
+  formato?: Formato3D
   modo: ModoRender
   corte?: Corte
   zoom?: Zoom
@@ -191,19 +195,8 @@ function construirGeometriaLod(geo: THREE.BufferGeometry, nivel: 0 | 1 | 2): THR
   return nova
 }
 
-function Modelo({
-  url,
-  modo,
-  nivelLod = 0,
-  corte,
-  plano,
-  cursorRef,
-  onCursor,
-  onCaixa,
-  onEstatisticas,
-  onCliquePonto,
-}: {
-  url: string
+type MalhaModeloProps = {
+  cena: THREE.Group
   modo: ModoRender
   nivelLod?: 0 | 1 | 2
   corte?: Corte
@@ -213,20 +206,35 @@ function Modelo({
   onCaixa?: (c: Caixa) => void
   onEstatisticas?: (e: { vertices: number; triangulos: number }) => void
   onCliquePonto?: (pontoLocal: Vec3) => void
-}) {
-  const { scene } = useGLTF(url)
+}
+
+function MalhaModelo({
+  cena,
+  modo,
+  nivelLod = 0,
+  corte,
+  plano,
+  cursorRef,
+  onCursor,
+  onCaixa,
+  onEstatisticas,
+  onCliquePonto,
+}: MalhaModeloProps) {
   const cortar = !!corte?.ativo
   const tampa = cortar && !!corte?.tampa
 
   // Clona a cena e troca o material (e o nível de detalhe LOD) conforme o modo; com corte, liga o plano e o stencil
   const objeto = useMemo(() => {
-    const clone = scene.clone(true)
+    const clone = cena.clone(true)
     const malhas: THREE.Mesh[] = []
     clone.traverse((o) => {
       if (o instanceof THREE.Mesh) malhas.push(o)
     })
     const caixaCena = new THREE.Box3().setFromObject(clone)
     for (const o of malhas) {
+      if (!o.geometry.hasAttribute('normal')) {
+        o.geometry.computeVertexNormals()
+      }
       if (nivelLod > 0) {
         o.geometry = construirGeometriaLod(o.geometry, nivelLod)
       }
@@ -291,14 +299,14 @@ function Modelo({
       }
     }
     return clone
-  }, [scene, modo, nivelLod, cortar, tampa, plano])
+  }, [cena, modo, nivelLod, cortar, tampa, plano])
 
   useEffect(() => {
-    const caixa = new THREE.Box3().setFromObject(scene)
+    const caixa = new THREE.Box3().setFromObject(cena)
     onCaixa?.({ min: arred(caixa.min), max: arred(caixa.max) })
     let vertices = 0
     let triangulos = 0
-    scene.traverse((o) => {
+    cena.traverse((o) => {
       if (o instanceof THREE.Mesh) {
         const pos = o.geometry.getAttribute('position')
         const idx = o.geometry.getIndex()
@@ -308,7 +316,7 @@ function Modelo({
       }
     })
     onEstatisticas?.({ vertices, triangulos })
-  }, [scene, onCaixa, onEstatisticas])
+  }, [cena, onCaixa, onEstatisticas])
 
   // Libera os materiais criados acima quando o modo/modelo muda (evita vazamento de GPU)
   useEffect(
@@ -361,6 +369,43 @@ function Modelo({
       }}
     />
   )
+}
+
+type ModeloSubProps = Omit<MalhaModeloProps, 'cena'> & { url: string }
+
+function ModeloGLTF(props: ModeloSubProps) {
+  const { scene } = useGLTF(props.url)
+  return <MalhaModelo {...props} cena={scene} />
+}
+
+function ModeloOBJ(props: ModeloSubProps) {
+  const obj = useLoader(OBJLoader, props.url)
+  return <MalhaModelo {...props} cena={obj} />
+}
+
+function ModeloSTL(props: ModeloSubProps) {
+  const geo = useLoader(STLLoader, props.url)
+  const cena = useMemo(() => {
+    if (!geo.hasAttribute('normal')) {
+      geo.computeVertexNormals()
+    }
+    geo.computeBoundingBox()
+    const mesh = new THREE.Mesh(geo)
+    mesh.renderOrder = 2
+    const g = new THREE.Group()
+    g.add(mesh)
+    return g
+  }, [geo])
+  return <MalhaModelo {...props} cena={cena} />
+}
+
+type ModeloProps = ModeloSubProps & { formato?: Formato3D }
+
+function Modelo(props: ModeloProps) {
+  const tipo = inferirFormato(props.url, props.formato)
+  if (tipo === 'obj') return <ModeloOBJ {...props} />
+  if (tipo === 'stl') return <ModeloSTL {...props} />
+  return <ModeloGLTF {...props} />
 }
 
 /** "Tampa" do corte: um plano grande sobre o plano de corte, pintado só onde o stencil ≠ 0. */
@@ -807,6 +852,7 @@ function Cena(props: Props) {
         <Modelo
           key={url}
           url={url}
+          formato={props.formato}
           modo={modo}
           nivelLod={nivelLodAtivo}
           corte={corte}

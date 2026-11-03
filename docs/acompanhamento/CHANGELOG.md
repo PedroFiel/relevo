@@ -4,6 +4,12 @@ Mudanças visíveis para quem usa ou avalia o projeto. Formato: [Keep a Changelo
 
 ## [Não lançado]
 
+### Adicionado / Corrigido (02/11/2026 — UX, Visualizador Multi-formato e Autenticação)
+- **Suporte a múltiplos formatos no Visualizador 3D (`.obj`, `.stl`, `.glb`) e Drag-and-Drop** (`ModelViewer.tsx`, `Visualizador.tsx`, `amostras.ts`): integração de `OBJLoader` e `STLLoader` com cálculo de normais, suporte a arrastar e soltar arquivos 3D diretamente no estúdio e etiquetas de formato.
+- **Navegação Pan & Zoom no Editor de Máscaras** (`EditorMascara.tsx`): suporte completo a zoom (roda do mouse, botões ± e botão Enquadrar) e pan (arraste com barra de espaço ou botão do meio) para restaurar e corrigir silhuetas em qualquer área da foto.
+- **Autenticação visual e gerenciamento de conta** (`AppLayout.tsx`, `Conta.tsx`, `vite.config.ts`): botões "Entrar" e "Criar conta" no cabeçalho quando deslogado, avatar, botão de logout e saldo de créditos quando logado, gateway de visitante em `/conta` e proxy Vite com tratamento amigável de status 503.
+- **Token via Query Parameter para Assets 3D e Imagens** (`routers/modelos.py`, `api.ts`): autenticação segura de URLs de texturas, fotos e arquivos `.glb` consumidos nativamente por `<img />` e carregadores WebGL sem cabeçalho `Authorization`.
+
 ### Adicionado (02/11/2026 — fechamento das Fases 1, 2, 4 e 5)
 - **Suavização de Taubin ($\lambda|\mu$) e IoU da malha 3D** no pipeline (`malha.py`, `metricas.py`): filtro passa-baixa sem encolhimento com exportação de `malha-suave.glb` para a 5ª etapa do Raio-X, e reprojeção rasterizada dos triângulos nas vistas (`iou_malha_medio` > 0,90). [F1-T02, F1-T07]
 - **Mapeamento UV em 6 ilhas (`textura.py`) e Níveis de Detalhe — LOD (`malha.gerar_lods`, `simplificarMalhaLod`)**: desdobramento ortográfico em grade 3×2 com dilatação por transformada de distância e simplificação em 3 níveis (`100 %`, `25 %`, `5 %`). [F4-T06, F4-T07, F5-T02]
