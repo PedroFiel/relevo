@@ -11,6 +11,7 @@ import {
   limparToken,
   listarModelos,
   loginUsuario,
+  obterToken,
   recarregarCreditos,
   regerarModelo,
   registrarUsuario,
@@ -41,9 +42,11 @@ export function useModelo(id: string) {
 }
 
 export function useConta() {
+  const token = obterToken()
   return useQuery({
     queryKey: chaves.conta,
     queryFn: buscarConta,
+    enabled: Boolean(token),
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: 60_000,
@@ -160,6 +163,7 @@ export function useSair() {
   const cliente = useQueryClient()
   return () => {
     limparToken()
+    cliente.setQueryData(chaves.conta, null)
     void cliente.invalidateQueries({ queryKey: chaves.conta })
     void cliente.invalidateQueries({ queryKey: chaves.modelos })
   }

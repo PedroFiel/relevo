@@ -7,10 +7,11 @@ describe('amostras', () => {
     expect(AMOSTRAS.every((a) => a.url.startsWith('/samples/'))).toBe(true)
   })
 
-  it('aceita glb/gltf (qualquer caixa) e recusa o resto', () => {
+  it('aceita formatos 3d (glb, gltf, obj, stl) e recusa o resto', () => {
     expect(arquivoValido('tenis.glb')).toBe(true)
     expect(arquivoValido('TENIS.GLTF')).toBe(true)
-    expect(arquivoValido('tenis.obj')).toBe(false)
+    expect(arquivoValido('tenis.obj')).toBe(true)
+    expect(arquivoValido('TENIS.STL')).toBe(true)
     expect(arquivoValido('foto.jpg')).toBe(false)
   })
 })

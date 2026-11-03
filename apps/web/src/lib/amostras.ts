@@ -16,7 +16,23 @@ export const AMOSTRAS: Amostra[] = [
   { id: 'exemplo', rotulo: 'Exemplo sintético', url: '/samples/tenis-exemplo.glb' },
 ]
 
-/** Aceita só .glb/.gltf — o visualizador não abre outros formatos. */
+export type Formato3D = 'glb' | 'gltf' | 'obj' | 'stl'
+
+/** Aceita os formatos 3D suportados pelo RELEVO: .glb, .gltf, .obj e .stl. */
 export function arquivoValido(nome: string): boolean {
-  return /\.(glb|gltf)$/i.test(nome)
+  return /\.(glb|gltf|obj|stl)$/i.test(nome)
+}
+
+/** Detecta o formato a partir da extensão ou do parâmetro explícito. */
+export function inferirFormato(url: string, formato?: Formato3D): 'glb' | 'obj' | 'stl' {
+  if (formato) {
+    const f = formato.toLowerCase().trim()
+    if (f === 'obj') return 'obj'
+    if (f === 'stl') return 'stl'
+    return 'glb'
+  }
+  const limpa = url.toLowerCase()
+  if (limpa.includes('.obj') || limpa.includes('formato=obj')) return 'obj'
+  if (limpa.includes('.stl') || limpa.includes('formato=stl')) return 'stl'
+  return 'glb'
 }
